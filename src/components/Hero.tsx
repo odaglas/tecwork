@@ -28,8 +28,8 @@ export const Hero = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button size="lg" variant="success" className="text-lg px-8 py-6">
-              Buscar Técnico Ahora
+            <Button size="lg" variant="success" className="text-lg px-8 py-6" asChild>
+              <a href="/cliente">Buscar Técnico Ahora</a>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10">
               Registrarse como Técnico
