@@ -102,8 +102,8 @@ const ClientHome = () => {
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="sm">
-                    Ver Detalles
+                  <Button variant="outline" size="sm" asChild>
+                    <a href="/tecnico/felipe-vidal">Ver Detalles</a>
                   </Button>
                   <Button variant="ghost" size="sm" className="text-muted-foreground">
                     Cancelar Ticket
