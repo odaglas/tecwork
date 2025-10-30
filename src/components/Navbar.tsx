@@ -29,6 +29,9 @@ export const Navbar = () => {
             <a href="/cliente" className="text-foreground hover:text-primary transition-fast font-medium">
               Portal Cliente
             </a>
+            <a href="/dashboard-tecnico" className="text-foreground hover:text-primary transition-fast font-medium">
+              Portal Técnico
+            </a>
             <Button variant="outline" size="sm">
               Iniciar Sesión
             </Button>
@@ -59,6 +62,9 @@ export const Navbar = () => {
               </a>
               <a href="/cliente" className="text-foreground hover:text-primary transition-fast font-medium">
                 Portal Cliente
+              </a>
+              <a href="/dashboard-tecnico" className="text-foreground hover:text-primary transition-fast font-medium">
+                Portal Técnico
               </a>
               <Button variant="outline" size="sm" className="w-full">
                 Iniciar Sesión
