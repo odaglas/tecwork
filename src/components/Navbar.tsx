@@ -27,18 +27,11 @@ export const Navbar = () => {
             <a href="/#seguridad" className="text-foreground hover:text-primary transition-fast font-medium">
               Seguridad
             </a>
-            <a href="/cliente" className="text-foreground hover:text-primary transition-fast font-medium">
-              Portal Cliente
-            </a>
-            <a href="/dashboard-tecnico" className="text-foreground hover:text-primary transition-fast font-medium">
-              Portal Técnico
-            </a>
-            <Button variant="outline" size="sm">
-              Iniciar Sesión
-            </Button>
-            <Button variant="success" size="sm">
-              Registrarse
-            </Button>
+            <Link to="/login">
+              <Button variant="outline" size="sm">
+                Iniciar Sesión
+              </Button>
+            </Link>
           </div>
           
           <button 
@@ -61,18 +54,11 @@ export const Navbar = () => {
               <a href="/#seguridad" className="text-foreground hover:text-primary transition-fast font-medium">
                 Seguridad
               </a>
-              <a href="/cliente" className="text-foreground hover:text-primary transition-fast font-medium">
-                Portal Cliente
-              </a>
-              <a href="/dashboard-tecnico" className="text-foreground hover:text-primary transition-fast font-medium">
-                Portal Técnico
-              </a>
-              <Button variant="outline" size="sm" className="w-full">
-                Iniciar Sesión
-              </Button>
-              <Button variant="success" size="sm" className="w-full">
-                Registrarse
-              </Button>
+              <Link to="/login">
+                <Button variant="outline" size="sm" className="w-full">
+                  Iniciar Sesión
+                </Button>
+              </Link>
             </div>
           </div>
         )}
