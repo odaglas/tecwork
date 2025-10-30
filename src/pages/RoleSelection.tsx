@@ -25,7 +25,7 @@ const RoleSelection = () => {
           <Button 
             className="w-full h-14 text-lg"
             size="lg"
-            onClick={() => navigate("/cliente")}
+            onClick={() => navigate("/login")}
           >
             Soy Cliente
           </Button>
@@ -34,7 +34,7 @@ const RoleSelection = () => {
             variant="outline"
             className="w-full h-14 text-lg"
             size="lg"
-            onClick={() => navigate("/dashboard-tecnico")}
+            onClick={() => navigate("/login-tecnico")}
           >
             Soy Técnico
           </Button>
