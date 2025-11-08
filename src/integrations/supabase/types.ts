@@ -14,16 +14,411 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      calificacion: {
+        Row: {
+          cliente_id: string
+          comentario: string | null
+          created_at: string | null
+          id: string
+          puntaje: number
+          tecnico_id: string
+          ticket_id: string
+        }
+        Insert: {
+          cliente_id: string
+          comentario?: string | null
+          created_at?: string | null
+          id?: string
+          puntaje: number
+          tecnico_id: string
+          ticket_id: string
+        }
+        Update: {
+          cliente_id?: string
+          comentario?: string | null
+          created_at?: string | null
+          id?: string
+          puntaje?: number
+          tecnico_id?: string
+          ticket_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calificacion_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificacion_tecnico_id_fkey"
+            columns: ["tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "tecnico_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "calificacion_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cliente_profile: {
+        Row: {
+          comuna: string | null
+          created_at: string | null
+          direccion: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comuna?: string | null
+          created_at?: string | null
+          direccion?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comuna?: string | null
+          created_at?: string | null
+          direccion?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      cotizacion: {
+        Row: {
+          created_at: string | null
+          descripcion: string
+          estado: Database["public"]["Enums"]["cotizacion_estado"] | null
+          id: string
+          tecnico_id: string
+          ticket_id: string
+          tiempo_estimado_dias: number
+          updated_at: string | null
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string | null
+          descripcion: string
+          estado?: Database["public"]["Enums"]["cotizacion_estado"] | null
+          id?: string
+          tecnico_id: string
+          ticket_id: string
+          tiempo_estimado_dias: number
+          updated_at?: string | null
+          valor_total: number
+        }
+        Update: {
+          created_at?: string | null
+          descripcion?: string
+          estado?: Database["public"]["Enums"]["cotizacion_estado"] | null
+          id?: string
+          tecnico_id?: string
+          ticket_id?: string
+          tiempo_estimado_dias?: number
+          updated_at?: string | null
+          valor_total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cotizacion_tecnico_id_fkey"
+            columns: ["tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "tecnico_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotizacion_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documentacion_tecnico: {
+        Row: {
+          archivo_url: string
+          created_at: string | null
+          estado: Database["public"]["Enums"]["documento_estado"] | null
+          id: string
+          nombre_documento: string
+          tecnico_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          archivo_url: string
+          created_at?: string | null
+          estado?: Database["public"]["Enums"]["documento_estado"] | null
+          id?: string
+          nombre_documento: string
+          tecnico_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          archivo_url?: string
+          created_at?: string | null
+          estado?: Database["public"]["Enums"]["documento_estado"] | null
+          id?: string
+          nombre_documento?: string
+          tecnico_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documentacion_tecnico_tecnico_id_fkey"
+            columns: ["tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "tecnico_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pago: {
+        Row: {
+          cotizacion_id: string
+          created_at: string | null
+          estado_pago: Database["public"]["Enums"]["pago_estado"] | null
+          id: string
+          monto_total: number
+          ticket_id: string
+          transbank_token: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cotizacion_id: string
+          created_at?: string | null
+          estado_pago?: Database["public"]["Enums"]["pago_estado"] | null
+          id?: string
+          monto_total: number
+          ticket_id: string
+          transbank_token?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cotizacion_id?: string
+          created_at?: string | null
+          estado_pago?: Database["public"]["Enums"]["pago_estado"] | null
+          id?: string
+          monto_total?: number
+          ticket_id?: string
+          transbank_token?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pago_cotizacion_id_fkey"
+            columns: ["cotizacion_id"]
+            isOneToOne: false
+            referencedRelation: "cotizacion"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pago_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          email: string
+          id: string
+          nombre: string
+          rut: string
+          telefono: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          id: string
+          nombre: string
+          rut: string
+          telefono: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          id?: string
+          nombre?: string
+          rut?: string
+          telefono?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      tecnico_profile: {
+        Row: {
+          comunas_cobertura: string[] | null
+          created_at: string | null
+          descripcion_perfil: string | null
+          especialidad_principal: string
+          id: string
+          is_validated: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          comunas_cobertura?: string[] | null
+          created_at?: string | null
+          descripcion_perfil?: string | null
+          especialidad_principal: string
+          id?: string
+          is_validated?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          comunas_cobertura?: string[] | null
+          created_at?: string | null
+          descripcion_perfil?: string | null
+          especialidad_principal?: string
+          id?: string
+          is_validated?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ticket: {
+        Row: {
+          categoria: string
+          cliente_id: string
+          comuna: string
+          created_at: string | null
+          descripcion: string
+          estado: Database["public"]["Enums"]["ticket_estado"] | null
+          id: string
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          categoria: string
+          cliente_id: string
+          comuna: string
+          created_at?: string | null
+          descripcion: string
+          estado?: Database["public"]["Enums"]["ticket_estado"] | null
+          id?: string
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          categoria?: string
+          cliente_id?: string
+          comuna?: string
+          created_at?: string | null
+          descripcion?: string
+          estado?: Database["public"]["Enums"]["ticket_estado"] | null
+          id?: string
+          titulo?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ticket_adjunto: {
+        Row: {
+          archivo_url: string
+          created_at: string | null
+          id: string
+          ticket_id: string
+          tipo: Database["public"]["Enums"]["adjunto_tipo"]
+        }
+        Insert: {
+          archivo_url: string
+          created_at?: string | null
+          id?: string
+          ticket_id: string
+          tipo: Database["public"]["Enums"]["adjunto_tipo"]
+        }
+        Update: {
+          archivo_url?: string
+          created_at?: string | null
+          id?: string
+          ticket_id?: string
+          tipo?: Database["public"]["Enums"]["adjunto_tipo"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_adjunto_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      adjunto_tipo: "imagen" | "video"
+      app_role: "cliente" | "tecnico" | "admin"
+      cotizacion_estado: "pendiente" | "aceptada" | "rechazada"
+      documento_estado: "pendiente" | "aprobado" | "rechazado"
+      pago_estado:
+        | "pendiente_cliente"
+        | "pagado_retenido"
+        | "liberado_tecnico"
+        | "disputa"
+      ticket_estado:
+        | "abierto"
+        | "cotizando"
+        | "en_progreso"
+        | "finalizado"
+        | "cancelado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +545,24 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      adjunto_tipo: ["imagen", "video"],
+      app_role: ["cliente", "tecnico", "admin"],
+      cotizacion_estado: ["pendiente", "aceptada", "rechazada"],
+      documento_estado: ["pendiente", "aprobado", "rechazado"],
+      pago_estado: [
+        "pendiente_cliente",
+        "pagado_retenido",
+        "liberado_tecnico",
+        "disputa",
+      ],
+      ticket_estado: [
+        "abierto",
+        "cotizando",
+        "en_progreso",
+        "finalizado",
+        "cancelado",
+      ],
+    },
   },
 } as const
