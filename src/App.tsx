@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import TechnicianLogin from "./pages/TechnicianLogin";
 import ClientHome from "./pages/ClientHome";
 import CreateTicket from "./pages/CreateTicket";
+import CompareQuotes from "./pages/CompareQuotes";
 import TechnicianProfile from "./pages/TechnicianProfile";
 import TechnicianDashboard from "./pages/TechnicianDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/login-tecnico" element={<TechnicianLogin />} />
           <Route path="/cliente" element={<ClientHome />} />
           <Route path="/crear-ticket" element={<CreateTicket />} />
+          <Route path="/comparar-cotizaciones" element={<CompareQuotes />} />
           <Route path="/tecnico/:id" element={<TechnicianProfile />} />
           <Route path="/dashboard-tecnico" element={<TechnicianDashboard />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
