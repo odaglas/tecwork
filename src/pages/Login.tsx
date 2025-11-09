@@ -2,17 +2,73 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/cliente");
+      }
+    };
+    checkUser();
+  }, [navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement authentication logic
-    console.log("Login attempt:", { email, password });
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Correo o contraseña incorrectos");
+        }
+        throw error;
+      }
+
+      if (data.session) {
+        // Check if user has cliente role
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .eq("role", "cliente")
+          .single();
+
+        if (roleData) {
+          toast({
+            title: "¡Bienvenido!",
+            description: "Has iniciado sesión correctamente.",
+          });
+          navigate("/cliente");
+        } else {
+          await supabase.auth.signOut();
+          throw new Error("Esta cuenta no es de cliente. Usa el login de técnico.");
+        }
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error al iniciar sesión",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,8 +117,8 @@ const Login = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full" size="lg">
-            Ingresar
+          <Button type="submit" className="w-full" size="lg" disabled={loading}>
+            {loading ? "Iniciando sesión..." : "Ingresar"}
           </Button>
 
           <div className="text-center">
@@ -79,7 +135,7 @@ const Login = () => {
         <div className="text-center pt-4">
           <p className="text-sm text-muted-foreground">
             ¿No tienes cuenta?{" "}
-            <Link to="/registro" className="text-primary hover:underline font-medium">
+            <Link to="/registro-cliente" className="text-primary hover:underline font-medium">
               Regístrate aquí
             </Link>
           </p>

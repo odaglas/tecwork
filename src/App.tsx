@@ -7,6 +7,8 @@ import RoleSelection from "./pages/RoleSelection";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import TechnicianLogin from "./pages/TechnicianLogin";
+import ClientRegister from "./pages/ClientRegister";
+import TechnicianRegister from "./pages/TechnicianRegister";
 import ClientHome from "./pages/ClientHome";
 import CreateTicket from "./pages/CreateTicket";
 import CompareQuotes from "./pages/CompareQuotes";
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/inicio" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/login-tecnico" element={<TechnicianLogin />} />
+          <Route path="/registro-cliente" element={<ClientRegister />} />
+          <Route path="/registro-tecnico" element={<TechnicianRegister />} />
           <Route path="/cliente" element={<ClientHome />} />
           <Route path="/crear-ticket" element={<CreateTicket />} />
           <Route path="/comparar-cotizaciones" element={<CompareQuotes />} />
