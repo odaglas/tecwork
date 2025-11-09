@@ -1,1 +1,19 @@
 project_id = "ampghgwtegljosvxaoco"
+
+[functions.get-available-tickets]
+verify_jwt = true
+
+[functions.create-cotizacion]
+verify_jwt = true
+
+[functions.accept-cotizacion]
+verify_jwt = true
+
+[functions.confirm-payment]
+verify_jwt = true
+
+[functions.release-payment]
+verify_jwt = true
+
+[functions.create-calificacion]
+verify_jwt = true
