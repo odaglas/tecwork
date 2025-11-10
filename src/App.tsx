@@ -13,6 +13,7 @@ import ClientHome from "./pages/ClientHome";
 import CreateTicket from "./pages/CreateTicket";
 import CompareQuotes from "./pages/CompareQuotes";
 import TicketDetail from "./pages/TicketDetail";
+import TechnicianTicketDetail from "./pages/TechnicianTicketDetail";
 import Chat from "./pages/Chat";
 import TechnicianProfile from "./pages/TechnicianProfile";
 import TechnicianDashboard from "./pages/TechnicianDashboard";
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/comparar-cotizaciones" element={<CompareQuotes />} />
           <Route path="/chat/:id" element={<Chat />} />
           <Route path="/tecnico/:id" element={<TechnicianProfile />} />
+          <Route path="/tecnico/ticket/:id" element={<TechnicianTicketDetail />} />
           <Route path="/dashboard-tecnico" element={<TechnicianDashboard />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
