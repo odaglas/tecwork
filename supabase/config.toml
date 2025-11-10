@@ -17,3 +17,9 @@ verify_jwt = true
 
 [functions.create-calificacion]
 verify_jwt = true
+
+[functions.get-pending-validations]
+verify_jwt = true
+
+[functions.validate-technician]
+verify_jwt = true
