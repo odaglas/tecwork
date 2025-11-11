@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock, Filter } from "lucide-react";
-import { Link } from "react-router-dom";
+import { TechnicianHeader } from "@/components/TechnicianHeader";
 
 const TechnicianDashboard = () => {
   const availableJobs = [
@@ -42,20 +42,7 @@ const TechnicianDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-10 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">T</span>
-            </div>
-            <span className="text-xl font-bold text-foreground">TecWork</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Felipe Vidal</span>
-          </div>
-        </div>
-      </header>
+      <TechnicianHeader />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

@@ -3,6 +3,7 @@ import { ArrowLeft, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ClientHeader } from "@/components/ClientHeader";
 
 const TicketDetail = () => {
   const navigate = useNavigate();
@@ -74,20 +75,7 @@ const TicketDetail = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
-        <div className="max-w-4xl mx-auto flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="text-primary-foreground hover:bg-primary-hover"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h2 className="text-xl font-semibold">Detalle de mi Ticket</h2>
-        </div>
-      </header>
+      <ClientHeader />
 
       {/* Main Content */}
       <main className="max-w-4xl mx-auto p-6 space-y-6">

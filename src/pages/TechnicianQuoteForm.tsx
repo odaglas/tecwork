@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { TechnicianHeader } from "@/components/TechnicianHeader";
 
 const TechnicianQuoteForm = () => {
   const navigate = useNavigate();
@@ -28,20 +28,7 @@ const TechnicianQuoteForm = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary text-primary-foreground py-4 px-6 shadow-md">
-        <div className="max-w-3xl mx-auto flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="text-primary-foreground hover:bg-primary-hover"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h2 className="text-xl font-semibold">Enviar Cotización</h2>
-        </div>
-      </header>
+      <TechnicianHeader />
 
       {/* Main Content */}
       <main className="max-w-3xl mx-auto p-6">

@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Star, Shield, Award, CheckCircle2, MapPin, Briefcase } from "lucide-react";
+import { TechnicianHeader } from "@/components/TechnicianHeader";
 
 const reviews = [
   {
@@ -48,24 +49,7 @@ const TechnicianProfile = () => {
 
   return (
     <div className="min-h-screen bg-secondary">
-      {/* Header */}
-      <header className="bg-background border-b border-border sticky top-0 z-50 shadow-sm">
-        <div className="container px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" asChild>
-              <a href="/cliente">
-                <ArrowLeft className="h-6 w-6" />
-              </a>
-            </Button>
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">T</span>
-              </div>
-              <span className="text-2xl font-bold text-primary">TecWork</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <TechnicianHeader />
 
       {/* Main Content */}
       <main className="container px-4 py-8 max-w-4xl">

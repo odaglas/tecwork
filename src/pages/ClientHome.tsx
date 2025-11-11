@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Search, Droplet, Zap, Wrench, Monitor, Clock } from "lucide-react";
+import { Search, Droplet, Zap, Wrench, Monitor, Clock } from "lucide-react";
+import { ClientHeader } from "@/components/ClientHeader";
 
 const categories = [
   { icon: Droplet, label: "Gasfitería", color: "text-primary" },
@@ -14,24 +15,7 @@ const categories = [
 const ClientHome = () => {
   return (
     <div className="min-h-screen bg-secondary">
-      {/* Header */}
-      <header className="bg-background border-b border-border sticky top-0 z-50 shadow-sm">
-        <div className="container px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">T</span>
-              </div>
-              <span className="text-2xl font-bold text-primary">TecWork</span>
-            </div>
-            
-            <button className="relative p-2 hover:bg-accent rounded-full transition-fast">
-              <Bell className="h-6 w-6 text-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-success rounded-full"></span>
-            </button>
-          </div>
-        </div>
-      </header>
+      <ClientHeader />
 
       {/* Main Content */}
       <main className="container px-4 py-8">

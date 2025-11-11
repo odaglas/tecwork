@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Star } from "lucide-react";
+import { ClientHeader } from "@/components/ClientHeader";
 
 const CompareQuotes = () => {
   const navigate = useNavigate();
@@ -37,23 +38,7 @@ const CompareQuotes = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="text-foreground hover:text-primary transition-fast"
-          >
-            <ArrowLeft className="w-6 h-6" />
-          </button>
-          <Link to="/inicio" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-md">
-              <span className="text-primary-foreground font-bold text-xl">T</span>
-            </div>
-            <span className="text-xl font-bold text-primary">TecWork</span>
-          </Link>
-        </div>
-      </header>
+      <ClientHeader />
 
       {/* Content */}
       <div className="container mx-auto px-4 py-8 max-w-3xl">

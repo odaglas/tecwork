@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
-import { ArrowLeft, Send } from "lucide-react";
+import { Send } from "lucide-react";
+import { ClientHeader } from "@/components/ClientHeader";
 
 interface Message {
   id: number;
@@ -67,44 +68,7 @@ const Chat = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
-      {/* Header */}
-      <header className="bg-card border-b border-border sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => navigate(-1)}
-              className="text-foreground hover:text-primary transition-fast"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-            
-            <Link to="/inicio" className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-primary-foreground font-bold text-xl">T</span>
-              </div>
-              <span className="text-xl font-bold text-primary">TecWork</span>
-            </Link>
-
-            <div className="ml-auto flex items-center gap-3">
-              <div className="text-right">
-                <h2 className="font-semibold text-foreground">
-                  {technicianName} (Técnico)
-                </h2>
-                <div className="flex items-center gap-2 justify-end">
-                  <div
-                    className={`w-2 h-2 rounded-full ${
-                      isOnline ? "bg-success" : "bg-muted-foreground"
-                    }`}
-                  />
-                  <span className="text-sm text-muted-foreground">
-                    {isOnline ? "En línea" : "Desconectado"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
+      <ClientHeader />
 
       {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto">
