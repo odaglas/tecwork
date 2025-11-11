@@ -25,6 +25,8 @@ const CreateTicket = () => {
     e.preventDefault();
     // TODO: Implement ticket creation logic
     console.log("Create ticket:", { title, category, description, comuna, files });
+    // Redirigir al home del cliente después de crear el ticket
+    navigate("/cliente/home");
   };
 
   return (

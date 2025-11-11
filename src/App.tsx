@@ -17,6 +17,7 @@ import TechnicianTicketDetail from "./pages/TechnicianTicketDetail";
 import Chat from "./pages/Chat";
 import TechnicianProfile from "./pages/TechnicianProfile";
 import TechnicianDashboard from "./pages/TechnicianDashboard";
+import TechnicianQuoteForm from "./pages/TechnicianQuoteForm";
 import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -35,14 +36,15 @@ const App = () => (
           <Route path="/login-tecnico" element={<TechnicianLogin />} />
           <Route path="/registro-cliente" element={<ClientRegister />} />
           <Route path="/registro-tecnico" element={<TechnicianRegister />} />
-          <Route path="/cliente" element={<ClientHome />} />
-          <Route path="/crear-ticket" element={<CreateTicket />} />
-          <Route path="/ticket/:id" element={<TicketDetail />} />
+          <Route path="/cliente/home" element={<ClientHome />} />
+          <Route path="/cliente/crear-ticket" element={<CreateTicket />} />
+          <Route path="/cliente/ticket/:id" element={<TicketDetail />} />
           <Route path="/comparar-cotizaciones" element={<CompareQuotes />} />
           <Route path="/chat/:id" element={<Chat />} />
-          <Route path="/tecnico/:id" element={<TechnicianProfile />} />
+          <Route path="/tecnico/perfil/:id" element={<TechnicianProfile />} />
           <Route path="/tecnico/ticket/:id" element={<TechnicianTicketDetail />} />
-          <Route path="/dashboard-tecnico" element={<TechnicianDashboard />} />
+          <Route path="/tecnico/cotizar/:ticketId" element={<TechnicianQuoteForm />} />
+          <Route path="/tecnico/dashboard" element={<TechnicianDashboard />} />
           <Route path="/admin/*" element={<AdminDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

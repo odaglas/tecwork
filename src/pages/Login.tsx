@@ -17,7 +17,7 @@ const Login = () => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        navigate("/cliente");
+        navigate("/cliente/home");
       }
     };
     checkUser();
@@ -54,7 +54,7 @@ const Login = () => {
             title: "¡Bienvenido!",
             description: "Has iniciado sesión correctamente.",
           });
-          navigate("/cliente");
+          navigate("/cliente/home");
         } else {
           await supabase.auth.signOut();
           throw new Error("Esta cuenta no es de cliente. Usa el login de técnico.");

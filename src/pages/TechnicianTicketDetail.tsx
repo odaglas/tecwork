@@ -24,7 +24,7 @@ const TechnicianTicketDetail = () => {
 
   const handleSendQuote = () => {
     console.log("Opening quote form for ticket:", ticket.id);
-    // Navigate to quote form or open modal
+    navigate(`/tecnico/cotizar/${ticket.id}`);
   };
 
   return (

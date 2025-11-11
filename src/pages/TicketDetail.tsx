@@ -69,7 +69,7 @@ const TicketDetail = () => {
   };
 
   const handleViewProfile = (tecnicoId: string) => {
-    navigate(`/tecnico/${tecnicoId}`);
+    navigate(`/tecnico/perfil/${tecnicoId}`);
   };
 
   return (

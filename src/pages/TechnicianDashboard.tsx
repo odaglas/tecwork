@@ -100,7 +100,12 @@ const TechnicianDashboard = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button className="w-full">Cotizar</Button>
+                <Button 
+                  className="w-full"
+                  onClick={() => window.location.href = `/tecnico/ticket/${job.id}`}
+                >
+                  Cotizar
+                </Button>
               </CardFooter>
             </Card>
           ))}

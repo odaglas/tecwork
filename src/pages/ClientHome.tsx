@@ -76,6 +76,7 @@ const ClientHome = () => {
             variant="success"
             size="lg"
             className="w-full md:w-auto text-lg px-8 py-6"
+            onClick={() => window.location.href = "/cliente/crear-ticket"}
           >
             Crear un Ticket de Servicio
           </Button>
@@ -102,8 +103,8 @@ const ClientHome = () => {
                 </div>
                 
                 <div className="flex flex-col gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <a href="/tecnico/felipe-vidal">Ver Detalles</a>
+                  <Button variant="outline" size="sm" onClick={() => window.location.href = "/cliente/ticket/1"}>
+                    Ver Detalles
                   </Button>
                   <Button variant="ghost" size="sm" className="text-muted-foreground">
                     Cancelar Ticket
