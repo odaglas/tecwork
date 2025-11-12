@@ -51,7 +51,7 @@ const TechnicianRegister = () => {
         email: validatedData.email,
         password: validatedData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/dashboard-tecnico`,
+          emailRedirectTo: `${window.location.origin}/tecnico/dashboard`,
           data: {
             nombre: validatedData.nombre,
             rut: validatedData.rut,
@@ -101,7 +101,7 @@ const TechnicianRegister = () => {
           description: "Tu cuenta de técnico ha sido creada. Pendiente de validación.",
         });
 
-        navigate("/dashboard-tecnico");
+        navigate("/tecnico/dashboard");
       }
     } catch (error: any) {
       console.error("Error en registro:", error);

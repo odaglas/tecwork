@@ -102,7 +102,7 @@ const ClientRegister = () => {
           description: "Tu cuenta ha sido creada correctamente.",
         });
 
-        navigate("/cliente");
+        navigate("/cliente/home");
       }
     } catch (error: any) {
       console.error("Error en registro:", error);
