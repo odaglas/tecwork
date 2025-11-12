@@ -56,6 +56,7 @@ const TechnicianRegister = () => {
             nombre: validatedData.nombre,
             rut: validatedData.rut,
             telefono: validatedData.telefono,
+            role: "tecnico", // Role assigned securely via database trigger
           },
         },
       });
@@ -74,15 +75,6 @@ const TechnicianRegister = () => {
           });
 
         if (profileError) throw profileError;
-
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: authData.user.id,
-            role: "tecnico",
-          });
-
-        if (roleError) throw roleError;
 
         const { error: tecnicoError } = await supabase
           .from("tecnico_profile")

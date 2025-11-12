@@ -1,9 +1,18 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const CreateCotizacionSchema = z.object({
+  ticket_id: z.string().uuid({ message: "ticket_id debe ser un UUID válido" }),
+  valor_total: z.number().int().min(1000, { message: "valor_total debe ser al menos 1000 CLP" }).max(100000000, { message: "valor_total no puede exceder 100.000.000 CLP" }),
+  descripcion: z.string().min(10, { message: "descripcion debe tener al menos 10 caracteres" }).max(2000, { message: "descripcion no puede exceder 2000 caracteres" }).trim(),
+  tiempo_estimado_dias: z.number().int().min(1, { message: "tiempo_estimado_dias debe ser al menos 1 día" }).max(365, { message: "tiempo_estimado_dias no puede exceder 365 días" })
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,8 +37,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get request body
-    const { ticket_id, valor_total, descripcion, tiempo_estimado_dias } = await req.json();
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validatedBody = CreateCotizacionSchema.parse(rawBody);
+    const { ticket_id, valor_total, descripcion, tiempo_estimado_dias } = validatedBody;
 
     if (!ticket_id || !valor_total || !descripcion || !tiempo_estimado_dias) {
       return new Response(
@@ -118,6 +129,18 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Unexpected error:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Datos inválidos', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

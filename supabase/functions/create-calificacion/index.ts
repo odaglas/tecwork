@@ -1,9 +1,17 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const CreateCalificacionSchema = z.object({
+  ticket_id: z.string().uuid({ message: "ticket_id debe ser un UUID válido" }),
+  puntaje: z.number().int().min(1, { message: "puntaje debe ser al menos 1" }).max(5, { message: "puntaje no puede exceder 5" }),
+  comentario: z.string().max(1000, { message: "comentario no puede exceder 1000 caracteres" }).trim().optional()
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,7 +36,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { ticket_id, puntaje, comentario } = await req.json();
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validatedBody = CreateCalificacionSchema.parse(rawBody);
+    const { ticket_id, puntaje, comentario } = validatedBody;
 
     if (!ticket_id || !puntaje) {
       return new Response(
@@ -136,6 +147,18 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Unexpected error:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Datos inválidos', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

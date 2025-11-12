@@ -1,9 +1,16 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const ConfirmPaymentSchema = z.object({
+  pago_id: z.string().uuid({ message: "pago_id debe ser un UUID válido" }),
+  transbank_token: z.string().min(10, { message: "transbank_token debe tener al menos 10 caracteres" }).max(200, { message: "transbank_token no puede exceder 200 caracteres" }).trim()
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,7 +35,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { pago_id, transbank_token } = await req.json();
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validatedBody = ConfirmPaymentSchema.parse(rawBody);
+    const { pago_id, transbank_token } = validatedBody;
 
     if (!pago_id || !transbank_token) {
       return new Response(
@@ -99,6 +109,18 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Unexpected error:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Datos inválidos', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

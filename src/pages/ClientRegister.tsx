@@ -51,11 +51,12 @@ const ClientRegister = () => {
         email: validatedData.email,
         password: validatedData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/cliente`,
+          emailRedirectTo: `${window.location.origin}/cliente/home`,
           data: {
             nombre: validatedData.nombre,
             rut: validatedData.rut,
             telefono: validatedData.telefono,
+            role: "cliente", // Role assigned securely via database trigger
           },
         },
       });
@@ -75,16 +76,6 @@ const ClientRegister = () => {
           });
 
         if (profileError) throw profileError;
-
-        // Assign cliente role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({
-            user_id: authData.user.id,
-            role: "cliente",
-          });
-
-        if (roleError) throw roleError;
 
         // Create cliente profile
         const { error: clienteError } = await supabase
