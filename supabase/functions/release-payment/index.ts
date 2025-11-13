@@ -1,9 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const ReleasePaymentSchema = z.object({
+  pago_id: z.string().uuid({ message: "pago_id debe ser un UUID válido" })
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,14 +34,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { pago_id } = await req.json();
-
-    if (!pago_id) {
-      return new Response(
-        JSON.stringify({ error: 'ID de pago requerido' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validatedBody = ReleasePaymentSchema.parse(rawBody);
+    const { pago_id } = validatedBody;
 
     // Get pago with ticket info
     const { data: pago, error: pagoError } = await supabase
@@ -115,6 +117,18 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Unexpected error:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Datos inválidos', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

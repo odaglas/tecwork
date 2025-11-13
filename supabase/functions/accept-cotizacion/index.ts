@@ -1,9 +1,15 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+// Input validation schema
+const AcceptCotizacionSchema = z.object({
+  cotizacion_id: z.string().uuid({ message: "cotizacion_id debe ser un UUID válido" })
+});
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -28,14 +34,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { cotizacion_id } = await req.json();
-
-    if (!cotizacion_id) {
-      return new Response(
-        JSON.stringify({ error: 'ID de cotización requerido' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Parse and validate input
+    const rawBody = await req.json();
+    const validatedBody = AcceptCotizacionSchema.parse(rawBody);
+    const { cotizacion_id } = validatedBody;
 
     // Get cotizacion with ticket info
     const { data: cotizacion, error: cotizacionError } = await supabase
@@ -140,6 +142,18 @@ Deno.serve(async (req) => {
     );
   } catch (error) {
     console.error('Unexpected error:', error);
+    
+    // Handle validation errors
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Datos inválidos', 
+          details: error.errors 
+        }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

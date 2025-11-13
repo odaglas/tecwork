@@ -8,12 +8,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export const ClientHeader = () => {
-  const handleLogout = () => {
-    // TODO: Implement logout logic
-    console.log("Logging out...");
-    window.location.href = "/login";
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
   };
 
   return (
