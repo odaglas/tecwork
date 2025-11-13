@@ -1,4 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
+import { z } from 'https://deno.land/x/zod@v3.22.4/mod.ts';
+
+const ValidateTechnicianSchema = z.object({
+  tecnico_id: z.string().uuid({ message: "tecnico_id debe ser un UUID válido" }),
+  aprobar: z.boolean()
+});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -50,15 +56,9 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Parse request body
-    const { tecnico_id, aprobar } = await req.json();
-
-    if (!tecnico_id || typeof aprobar !== 'boolean') {
-      return new Response(
-        JSON.stringify({ error: 'Parámetros inválidos. Se requiere tecnico_id y aprobar (boolean)' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // Parse and validate request body
+    const rawBody = await req.json();
+    const { tecnico_id, aprobar } = ValidateTechnicianSchema.parse(rawBody);
 
     // Verify technician exists
     const { data: techProfile, error: techError } = await supabaseClient
@@ -116,6 +116,13 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return new Response(
+        JSON.stringify({ error: 'Datos inválidos', details: error.errors }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     console.error('Unexpected error:', error);
     return new Response(
       JSON.stringify({ error: 'Error interno del servidor' }),
