@@ -2,9 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Droplet, Zap, Wrench, Monitor, Clock, Users } from "lucide-react";
+import { Search, Droplet, Zap, Wrench, Monitor, Clock } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
-import { useNavigate } from "react-router-dom";
 
 const categories = [
   { icon: Droplet, label: "Gasfitería", color: "text-primary" },
@@ -14,8 +13,6 @@ const categories = [
 ];
 
 const ClientHome = () => {
-  const navigate = useNavigate();
-  
   return (
     <div className="min-h-screen bg-secondary">
       <ClientHeader />
@@ -57,24 +54,15 @@ const ClientHome = () => {
           </div>
         </div>
 
-        {/* CTA Buttons */}
-        <div className="mb-8 flex flex-col sm:flex-row gap-4">
+        {/* CTA Button */}
+        <div className="mb-8">
           <Button
-            variant="default"
+            variant="success"
             size="lg"
-            className="w-full sm:w-auto text-lg px-8 py-6"
-            onClick={() => navigate("/cliente/crear-ticket")}
+            className="w-full md:w-auto text-lg px-8 py-6"
+            onClick={() => window.location.href = "/cliente/crear-ticket"}
           >
             Crear un Ticket de Servicio
-          </Button>
-          <Button
-            variant="outline"
-            size="lg"
-            className="w-full sm:w-auto text-lg px-8 py-6"
-            onClick={() => navigate("/cliente/tecnicos")}
-          >
-            <Users className="mr-2 h-5 w-5" />
-            Ver Perfiles de Técnicos
           </Button>
         </div>
 
