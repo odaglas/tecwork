@@ -66,54 +66,74 @@ const ClientRegister = () => {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
 
-      if (authData.user && authData.session) {
-        // Wait a moment to ensure session is fully established
-        await new Promise(resolve => setTimeout(resolve, 100));
+      if (!authData.user) {
+        throw new Error("No se pudo crear el usuario. Por favor intenta nuevamente.");
+      }
 
-        // Verify session is active
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error("Error al establecer la sesión. Por favor intenta iniciar sesión.");
-        }
+      console.log("Usuario creado exitosamente:", authData.user.id);
 
-        // Create profile
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            email: validatedData.email,
-            nombre: validatedData.nombre,
-            rut: validatedData.rut,
-            telefono: validatedData.telefono,
-          });
-
-        if (profileError) throw profileError;
-
-        // Create cliente profile
-        const { error: clienteError } = await supabase
-          .from("cliente_profile")
-          .insert({
-            user_id: authData.user.id,
-            direccion: validatedData.direccion,
-            comuna: validatedData.comuna,
-          });
-
-        if (clienteError) throw clienteError;
-
-        toast({
-          title: "¡Registro exitoso!",
-          description: "Tu cuenta ha sido creada correctamente.",
+      // Create profile - using the authenticated session
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: authData.user.id,
+          email: validatedData.email,
+          nombre: validatedData.nombre,
+          rut: validatedData.rut,
+          telefono: validatedData.telefono,
         });
 
-        navigate("/cliente/home");
+      if (profileError) {
+        console.error("Profile error:", profileError);
+        throw profileError;
       }
+
+      console.log("Perfil creado exitosamente");
+
+      // Create cliente profile
+      const { error: clienteError } = await supabase
+        .from("cliente_profile")
+        .insert({
+          user_id: authData.user.id,
+          direccion: validatedData.direccion,
+          comuna: validatedData.comuna,
+        });
+
+      if (clienteError) {
+        console.error("Cliente profile error:", clienteError);
+        throw clienteError;
+      }
+
+      console.log("Cliente perfil creado exitosamente");
+
+      toast({
+        title: "¡Registro exitoso!",
+        description: "Tu cuenta ha sido creada correctamente.",
+      });
+
+      navigate("/cliente/home");
     } catch (error: any) {
       console.error("Error en registro:", error);
+      
+      let errorMessage = error.message || "Por favor verifica tus datos e intenta nuevamente.";
+      
+      // Provide more specific error messages
+      if (error.message?.includes("duplicate key")) {
+        errorMessage = "Este correo electrónico ya está registrado. Por favor inicia sesión.";
+      } else if (error.message?.includes("email_not_confirmed")) {
+        errorMessage = "Por favor confirma tu correo electrónico antes de iniciar sesión.";
+      } else if (error.code === "over_email_send_rate_limit") {
+        errorMessage = "Demasiados intentos. Por favor espera unos minutos antes de intentar nuevamente.";
+      }
+      
       toast({
         title: "Error al registrar",
-        description: error.message || "Por favor verifica tus datos e intenta nuevamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
