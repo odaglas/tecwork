@@ -32,9 +32,10 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<RoleSelection />} />
+          <Route path="/" element={<Index />} />
           <Route path="/inicio" element={<Index />} />
-          <Route path="/login" element={<Login />} />
+          <Route path="/login" element={<RoleSelection />} />
+          <Route path="/login-cliente" element={<Login />} />
           <Route path="/login-tecnico" element={<TechnicianLogin />} />
           <Route path="/registro-cliente" element={<ClientRegister />} />
           <Route path="/registro-tecnico" element={<TechnicianRegister />} />

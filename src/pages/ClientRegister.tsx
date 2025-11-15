@@ -116,7 +116,7 @@ const ClientRegister = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center gap-4">
-          <Link to="/inicio" className="flex flex-col items-center gap-2">
+          <Link to="/" className="flex flex-col items-center gap-2">
             <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-primary-foreground font-bold text-3xl">T</span>
             </div>
@@ -244,7 +244,7 @@ const ClientRegister = () => {
         <div className="text-center pt-4">
           <p className="text-sm text-muted-foreground">
             ¿Ya tienes cuenta?{" "}
-            <Link to="/login" className="text-primary hover:underline font-medium">
+            <Link to="/login-cliente" className="text-primary hover:underline font-medium">
               Inicia sesión aquí
             </Link>
           </p>
