@@ -23,6 +23,7 @@ const technicianRegisterSchema = z.object({
   telefono: z.string().min(9, { message: "Teléfono inválido" }),
   especialidad_principal: z.string().min(1, { message: "Debe seleccionar una especialidad" }),
   descripcion_perfil: z.string().optional(),
+  documento: z.instanceof(File, { message: "Debe cargar un certificado o licencia" }),
 });
 
 const TechnicianRegister = () => {
@@ -39,13 +40,18 @@ const TechnicianRegister = () => {
     descripcion_perfil: "",
   });
   const [selectedComunas, setSelectedComunas] = useState<string[]>([]);
+  const [documento, setDocumento] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const validatedData = technicianRegisterSchema.parse(formData);
+      if (!documento) {
+        throw new Error("Debe cargar un certificado o licencia");
+      }
+      
+      const validatedData = technicianRegisterSchema.parse({ ...formData, documento });
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: validatedData.email,
@@ -88,9 +94,36 @@ const TechnicianRegister = () => {
 
         if (tecnicoError) throw tecnicoError;
 
+        // Upload document
+        const fileExt = documento.name.split('.').pop();
+        const fileName = `${authData.user.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('tecnico-documents')
+          .upload(fileName, documento);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('tecnico-documents')
+          .getPublicUrl(fileName);
+
+        // Save document reference in database
+        const { error: docError } = await supabase
+          .from("documentacion_tecnico")
+          .insert({
+            tecnico_id: (await supabase.from("tecnico_profile").select("id").eq("user_id", authData.user.id).single()).data?.id,
+            nombre_documento: documento.name,
+            archivo_url: urlData.publicUrl,
+            estado: "pendiente",
+          });
+
+        if (docError) throw docError;
+
         toast({
           title: "¡Registro exitoso!",
-          description: "Tu cuenta de técnico ha sido creada. Pendiente de validación.",
+          description: "Tu cuenta ha sido creada. Un administrador validará tus documentos pronto.",
         });
 
         navigate("/tecnico/dashboard");
@@ -206,6 +239,21 @@ const TechnicianRegister = () => {
               onChange={(e) => setFormData({ ...formData, descripcion_perfil: e.target.value })}
               className="min-h-[100px]"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="documento">Certificado o Licencia SEC *</Label>
+            <Input
+              id="documento"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setDocumento(e.target.files?.[0] || null)}
+              required
+              className="cursor-pointer"
+            />
+            <p className="text-xs text-muted-foreground">
+              Formatos aceptados: PDF, JPG, PNG (máx. 10MB)
+            </p>
           </div>
 
           <div className="space-y-2">

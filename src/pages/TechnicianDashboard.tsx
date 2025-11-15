@@ -1,10 +1,38 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Clock, Filter } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { MapPin, Clock, Filter, AlertCircle } from "lucide-react";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const TechnicianDashboard = () => {
+  const [isValidated, setIsValidated] = useState<boolean | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkValidation = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data } = await supabase
+            .from("tecnico_profile")
+            .select("is_validated")
+            .eq("user_id", user.id)
+            .single();
+
+          setIsValidated(data?.is_validated || false);
+        }
+      } catch (error) {
+        console.error("Error checking validation:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkValidation();
+  }, []);
   const availableJobs = [
     {
       id: 1,
@@ -46,6 +74,19 @@ const TechnicianDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Validation Warning */}
+        {!loading && isValidated === false && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Cuenta pendiente de validación</AlertTitle>
+            <AlertDescription>
+              Tu cuenta de técnico está siendo revisada por nuestro equipo. Una vez aprobada, 
+              podrás acceder a todos los trabajos disponibles y comenzar a enviar cotizaciones. 
+              Te notificaremos por correo cuando tu cuenta esté lista.
+            </AlertDescription>
+          </Alert>
+        )}
+
         {/* Title and Filters */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-6">Nuevos Trabajos Disponibles</h1>

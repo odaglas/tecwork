@@ -11,7 +11,8 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [isValidated, setIsValidated] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -25,20 +26,41 @@ export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) =
           return;
         }
 
-        const { data: roleData, error } = await supabase
+        // Fetch all user roles
+        const { data: rolesData, error } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id)
-          .single();
+          .eq("user_id", user.id);
 
-        if (error || !roleData) {
+        if (error || !rolesData || rolesData.length === 0) {
           setHasAccess(false);
           setIsLoading(false);
           return;
         }
 
-        setUserRole(roleData.role);
-        setHasAccess(roleData.role === allowedRole);
+        const roles = rolesData.map(r => r.role);
+        setUserRoles(roles);
+
+        // Check if user has the required role
+        const hasRequiredRole = roles.includes(allowedRole);
+
+        // For tecnicos, check validation status
+        if (hasRequiredRole && allowedRole === "tecnico") {
+          const { data: tecnicoData } = await supabase
+            .from("tecnico_profile")
+            .select("is_validated")
+            .eq("user_id", user.id)
+            .single();
+
+          if (tecnicoData && !tecnicoData.is_validated) {
+            setIsValidated(false);
+            setHasAccess(false);
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        setHasAccess(hasRequiredRole);
       } catch (error) {
         console.error("Error checking access:", error);
         setHasAccess(false);
@@ -51,14 +73,22 @@ export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) =
   }, [allowedRole]);
 
   useEffect(() => {
-    if (!isLoading && !hasAccess && userRole) {
-      toast({
-        title: "Acceso denegado",
-        description: "No tienes permisos para acceder a esta página",
-        variant: "destructive",
-      });
+    if (!isLoading && !hasAccess && userRoles.length > 0) {
+      if (!isValidated) {
+        toast({
+          title: "Cuenta pendiente de validación",
+          description: "Tu cuenta de técnico está siendo revisada por un administrador. Te notificaremos cuando esté aprobada.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Acceso denegado",
+          description: "No tienes permisos para acceder a esta página",
+          variant: "destructive",
+        });
+      }
     }
-  }, [isLoading, hasAccess, userRole, toast]);
+  }, [isLoading, hasAccess, userRoles, isValidated, toast]);
 
   if (isLoading) {
     return (
@@ -69,12 +99,17 @@ export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) =
   }
 
   if (!hasAccess) {
-    // Redirect based on user's actual role
-    if (userRole === "cliente") {
-      return <Navigate to="/cliente/home" replace />;
-    } else if (userRole === "tecnico") {
+    // If tecnico is not validated, redirect to a waiting page
+    if (!isValidated && allowedRole === "tecnico") {
       return <Navigate to="/tecnico/dashboard" replace />;
-    } else if (userRole === "admin") {
+    }
+
+    // Redirect based on user's first role
+    if (userRoles.includes("cliente")) {
+      return <Navigate to="/cliente/home" replace />;
+    } else if (userRoles.includes("tecnico")) {
+      return <Navigate to="/tecnico/dashboard" replace />;
+    } else if (userRoles.includes("admin")) {
       return <Navigate to="/admin" replace />;
     }
     // No role found, redirect to login
