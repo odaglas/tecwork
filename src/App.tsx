@@ -21,6 +21,7 @@ import TechnicianPublicProfile from "./pages/TechnicianPublicProfile";
 import TechnicianDashboard from "./pages/TechnicianDashboard";
 import TechnicianQuoteForm from "./pages/TechnicianQuoteForm";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminLogin from "./pages/AdminLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/login" element={<RoleSelection />} />
           <Route path="/login-cliente" element={<Login />} />
           <Route path="/login-tecnico" element={<TechnicianLogin />} />
+          <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/registro-cliente" element={<ClientRegister />} />
           <Route path="/registro-tecnico" element={<TechnicianRegister />} />
           
