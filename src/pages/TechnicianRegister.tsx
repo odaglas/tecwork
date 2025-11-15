@@ -149,7 +149,7 @@ const TechnicianRegister = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8 my-8">
         <div className="flex flex-col items-center gap-4">
-          <Link to="/inicio" className="flex flex-col items-center gap-2">
+          <Link to="/" className="flex flex-col items-center gap-2">
             <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-primary-foreground font-bold text-3xl">T</span>
             </div>

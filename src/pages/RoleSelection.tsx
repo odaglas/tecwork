@@ -25,7 +25,7 @@ const RoleSelection = () => {
           <Button 
             className="w-full h-14 text-lg"
             size="lg"
-            onClick={() => navigate("/login")}
+            onClick={() => navigate("/login-cliente")}
           >
             Soy Cliente
           </Button>
@@ -43,7 +43,7 @@ const RoleSelection = () => {
         {/* Optional Footer Link */}
         <div className="pt-8">
           <button 
-            onClick={() => navigate("/inicio")}
+            onClick={() => navigate("/")}
             className="text-sm text-muted-foreground hover:text-primary transition-smooth underline"
           >
             Conocer más sobre TecWork
