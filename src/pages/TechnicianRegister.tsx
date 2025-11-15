@@ -74,7 +74,16 @@ const TechnicianRegister = () => {
 
       if (authError) throw authError;
 
-      if (authData.user) {
+      if (authData.user && authData.session) {
+        // Wait a moment to ensure session is fully established
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Verify session is active
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          throw new Error("Error al establecer la sesión. Por favor intenta iniciar sesión.");
+        }
+
         const { error: profileError } = await supabase
           .from("profiles")
           .insert({
