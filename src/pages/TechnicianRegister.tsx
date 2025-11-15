@@ -72,81 +72,112 @@ const TechnicianRegister = () => {
         },
       });
 
-      if (authError) throw authError;
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw authError;
+      }
 
-      if (authData.user && authData.session) {
-        // Wait a moment to ensure session is fully established
-        await new Promise(resolve => setTimeout(resolve, 100));
+      if (!authData.user) {
+        throw new Error("No se pudo crear el usuario. Por favor intenta nuevamente.");
+      }
 
-        // Verify session is active
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          throw new Error("Error al establecer la sesión. Por favor intenta iniciar sesión.");
-        }
+      console.log("Usuario creado exitosamente:", authData.user.id);
 
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .insert({
-            id: authData.user.id,
-            email: validatedData.email,
-            nombre: validatedData.nombre,
-            rut: validatedData.rut,
-            telefono: validatedData.telefono,
-          });
-
-        if (profileError) throw profileError;
-
-        const { error: tecnicoError } = await supabase
-          .from("tecnico_profile")
-          .insert({
-            user_id: authData.user.id,
-            especialidad_principal: validatedData.especialidad_principal,
-            comunas_cobertura: selectedComunas,
-            descripcion_perfil: validatedData.descripcion_perfil || null,
-            is_validated: false,
-          });
-
-        if (tecnicoError) throw tecnicoError;
-
-        // Upload document
-        const fileExt = documento.name.split('.').pop();
-        const fileName = `${authData.user.id}/${Date.now()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('tecnico-documents')
-          .upload(fileName, documento);
-
-        if (uploadError) throw uploadError;
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-          .from('tecnico-documents')
-          .getPublicUrl(fileName);
-
-        // Save document reference in database
-        const { error: docError } = await supabase
-          .from("documentacion_tecnico")
-          .insert({
-            tecnico_id: (await supabase.from("tecnico_profile").select("id").eq("user_id", authData.user.id).single()).data?.id,
-            nombre_documento: documento.name,
-            archivo_url: urlData.publicUrl,
-            estado: "pendiente",
-          });
-
-        if (docError) throw docError;
-
-        toast({
-          title: "¡Registro exitoso!",
-          description: "Tu cuenta ha sido creada. Un administrador validará tus documentos pronto.",
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: authData.user.id,
+          email: validatedData.email,
+          nombre: validatedData.nombre,
+          rut: validatedData.rut,
+          telefono: validatedData.telefono,
         });
 
-        navigate("/tecnico/dashboard");
+      if (profileError) {
+        console.error("Profile error:", profileError);
+        throw profileError;
       }
+
+      console.log("Perfil creado exitosamente");
+
+      const { error: tecnicoError } = await supabase
+        .from("tecnico_profile")
+        .insert({
+          user_id: authData.user.id,
+          especialidad_principal: validatedData.especialidad_principal,
+          comunas_cobertura: selectedComunas,
+          descripcion_perfil: validatedData.descripcion_perfil || null,
+          is_validated: false,
+        });
+
+      if (tecnicoError) {
+        console.error("Tecnico profile error:", tecnicoError);
+        throw tecnicoError;
+      }
+
+      console.log("Técnico perfil creado exitosamente");
+
+      // Upload document
+      const fileExt = documento.name.split('.').pop();
+      const fileName = `${authData.user.id}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('tecnico-documents')
+        .upload(fileName, documento);
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+
+      console.log("Documento subido exitosamente");
+
+      // Get public URL
+      const { data: urlData } = supabase.storage
+        .from('tecnico-documents')
+        .getPublicUrl(fileName);
+
+      // Save document reference in database
+      const { error: docError } = await supabase
+        .from("documentacion_tecnico")
+        .insert({
+          tecnico_id: (await supabase.from("tecnico_profile").select("id").eq("user_id", authData.user.id).single()).data?.id,
+          nombre_documento: documento.name,
+          archivo_url: urlData.publicUrl,
+          estado: "pendiente",
+        });
+
+      if (docError) {
+        console.error("Document reference error:", docError);
+        throw docError;
+      }
+
+      console.log("Referencia de documento guardada exitosamente");
+
+      toast({
+        title: "¡Registro exitoso!",
+        description: "Tu cuenta ha sido creada. Un administrador validará tus documentos pronto.",
+      });
+
+      navigate("/tecnico/dashboard");
+
     } catch (error: any) {
       console.error("Error en registro:", error);
+      
+      let errorMessage = error.message || "Por favor verifica tus datos e intenta nuevamente.";
+      
+      // Provide more specific error messages
+      if (error.message?.includes("duplicate key")) {
+        errorMessage = "Este correo electrónico ya está registrado. Por favor inicia sesión.";
+      } else if (error.message?.includes("email_not_confirmed")) {
+        errorMessage = "Por favor confirma tu correo electrónico antes de iniciar sesión.";
+      } else if (error.code === "over_email_send_rate_limit") {
+        errorMessage = "Demasiados intentos. Por favor espera unos minutos antes de intentar nuevamente.";
+      }
+      
       toast({
         title: "Error al registrar",
-        description: error.message || "Por favor verifica tus datos e intenta nuevamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
