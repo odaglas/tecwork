@@ -11,6 +11,7 @@ import TechnicianLogin from "./pages/TechnicianLogin";
 import ClientRegister from "./pages/ClientRegister";
 import TechnicianRegister from "./pages/TechnicianRegister";
 import ClientHome from "./pages/ClientHome";
+import BrowseTechnicians from "./pages/BrowseTechnicians";
 import CreateTicket from "./pages/CreateTicket";
 import CompareQuotes from "./pages/CompareQuotes";
 import TicketDetail from "./pages/TicketDetail";
@@ -45,6 +46,7 @@ const App = () => (
           {/* Cliente routes - protected */}
           <Route path="/cliente/home" element={<ProtectedRoute allowedRole="cliente"><ClientHome /></ProtectedRoute>} />
           <Route path="/cliente/crear-ticket" element={<ProtectedRoute allowedRole="cliente"><CreateTicket /></ProtectedRoute>} />
+          <Route path="/cliente/tecnicos" element={<ProtectedRoute allowedRole="cliente"><BrowseTechnicians /></ProtectedRoute>} />
           <Route path="/cliente/ticket/:id" element={<ProtectedRoute allowedRole="cliente"><TicketDetail /></ProtectedRoute>} />
           <Route path="/comparar-cotizaciones" element={<ProtectedRoute allowedRole="cliente"><CompareQuotes /></ProtectedRoute>} />
           <Route path="/chat/:id" element={<ProtectedRoute allowedRole="cliente"><Chat /></ProtectedRoute>} />
