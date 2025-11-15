@@ -18,12 +18,16 @@ import { Textarea } from "@/components/ui/textarea";
 const technicianRegisterSchema = z.object({
   email: z.string().email({ message: "Correo electrónico inválido" }),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
+  confirmPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
   rut: z.string().min(8, { message: "RUT inválido" }),
   telefono: z.string().min(9, { message: "Teléfono inválido" }),
   especialidad_principal: z.string().min(1, { message: "Debe seleccionar una especialidad" }),
   descripcion_perfil: z.string().optional(),
   documento: z.instanceof(File, { message: "Debe cargar un certificado o licencia" }),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden",
+  path: ["confirmPassword"],
 });
 
 const TechnicianRegister = () => {
@@ -33,6 +37,7 @@ const TechnicianRegister = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     nombre: "",
     rut: "",
     telefono: "",
@@ -264,6 +269,18 @@ const TechnicianRegister = () => {
               placeholder="Mínimo 6 caracteres"
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Repite tu contraseña"
+              value={formData.confirmPassword}
+              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
               required
             />
           </div>
