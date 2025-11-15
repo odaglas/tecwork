@@ -41,6 +41,17 @@ const TechnicianLogin = () => {
       }
 
       if (data.session) {
+        // SECURITY CHECK: Block admin users from using this endpoint
+        const { data: isAdmin } = await supabase.rpc('has_role', {
+          _user_id: data.user.id,
+          _role: 'admin'
+        });
+
+        if (isAdmin) {
+          await supabase.auth.signOut();
+          throw new Error("Acceso denegado. Use el portal administrativo.");
+        }
+
         // Check if user has tecnico role
         const { data: roleData } = await supabase
           .from("user_roles")
