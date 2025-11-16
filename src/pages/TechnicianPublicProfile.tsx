@@ -19,8 +19,6 @@ interface TechnicianProfile {
 
 interface Profile {
   nombre: string;
-  telefono: string;
-  email: string;
 }
 
 interface Rating {
@@ -61,10 +59,10 @@ const TechnicianPublicProfile = () => {
 
         setTecnicoProfile(tecnicoData);
 
-        // Fetch basic profile info
+        // Fetch basic profile info (only nombre, no contact details for clientes)
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("nombre, telefono, email")
+          .select("nombre")
           .eq("id", tecnicoData.user_id)
           .single();
 
@@ -191,13 +189,6 @@ const TechnicianPublicProfile = () => {
               </div>
             )}
 
-            <div>
-              <h3 className="font-semibold mb-2">Contacto</h3>
-              <div className="space-y-1 text-muted-foreground">
-                <p>📧 {profile.email}</p>
-                <p>📱 {profile.telefono}</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
