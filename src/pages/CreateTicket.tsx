@@ -10,9 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Camera, ArrowLeft } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const CreateTicket = () => {
   const navigate = useNavigate();
@@ -21,13 +23,62 @@ const CreateTicket = () => {
   const [description, setDescription] = useState("");
   const [comuna, setComuna] = useState("");
   const [files, setFiles] = useState<FileList | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [clienteId, setClienteId] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchClienteProfile = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("cliente_profile")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+        
+        if (data) {
+          setClienteId(data.id);
+        }
+      }
+    };
+    fetchClienteProfile();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement ticket creation logic
-    console.log("Create ticket:", { title, category, description, comuna, files });
-    // Redirigir al home del cliente después de crear el ticket
-    navigate("/cliente/home");
+    
+    if (!clienteId) {
+      toast.error("Error: No se pudo identificar tu perfil de cliente");
+      return;
+    }
+
+    setLoading(true);
+    
+    try {
+      // Insert ticket into database
+      const { data: ticketData, error: ticketError } = await supabase
+        .from("ticket")
+        .insert({
+          cliente_id: clienteId,
+          titulo: title,
+          categoria: category,
+          descripcion: description,
+          comuna: comuna,
+          estado: "abierto"
+        })
+        .select()
+        .single();
+
+      if (ticketError) throw ticketError;
+
+      toast.success("Ticket creado exitosamente");
+      navigate("/cliente/home");
+    } catch (error: any) {
+      console.error("Error creating ticket:", error);
+      toast.error("Error al crear el ticket: " + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -151,8 +202,13 @@ const CreateTicket = () => {
           </div>
 
           {/* Submit Button */}
-          <Button type="submit" className="w-full" size="lg">
-            Publicar Ticket
+          <Button 
+            type="submit" 
+            className="w-full" 
+            size="lg"
+            disabled={loading}
+          >
+            {loading ? "Creando ticket..." : "Publicar Ticket"}
           </Button>
         </form>
       </div>
