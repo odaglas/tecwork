@@ -54,6 +54,19 @@ const AdminLogin = () => {
         return;
       }
 
+      // Set the session using the token from the edge function
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.token,
+        refresh_token: data.token // Using access token as refresh token for admin sessions
+      });
+
+      if (sessionError) {
+        console.error("Session error:", sessionError);
+        toast.error("Error al establecer la sesión");
+        setLoading(false);
+        return;
+      }
+
       // Success - user is authenticated and verified as admin
       toast.success("Bienvenido, Administrador");
       navigate("/admin/dashboard");

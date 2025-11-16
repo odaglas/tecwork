@@ -7,22 +7,49 @@ import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+
+interface Ticket {
+  id: string;
+  titulo: string;
+  categoria: string;
+  descripcion: string;
+  comuna: string;
+  created_at: string;
+}
+
 const TechnicianDashboard = () => {
   const [isValidated, setIsValidated] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [technicianSpecialty, setTechnicianSpecialty] = useState<string>("");
 
   useEffect(() => {
-    const checkValidation = async () => {
+    const checkValidationAndFetchTickets = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data } = await supabase
+          const { data: tecnicoData } = await supabase
             .from("tecnico_profile")
-            .select("is_validated")
+            .select("is_validated, especialidad_principal")
             .eq("user_id", user.id)
             .single();
 
-          setIsValidated(data?.is_validated || false);
+          setIsValidated(tecnicoData?.is_validated || false);
+          setTechnicianSpecialty(tecnicoData?.especialidad_principal || "");
+
+          // Fetch tickets matching technician's specialty
+          if (tecnicoData?.is_validated && tecnicoData?.especialidad_principal) {
+            const { data: ticketsData } = await supabase
+              .from("ticket")
+              .select("*")
+              .eq("categoria", tecnicoData.especialidad_principal)
+              .in("estado", ["abierto", "cotizando"])
+              .order("created_at", { ascending: false });
+
+            if (ticketsData) {
+              setTickets(ticketsData);
+            }
+          }
         }
       } catch (error) {
         console.error("Error checking validation:", error);
@@ -31,42 +58,8 @@ const TechnicianDashboard = () => {
       }
     };
 
-    checkValidation();
+    checkValidationAndFetchTickets();
   }, []);
-  const availableJobs = [
-    {
-      id: 1,
-      title: "Instalación de Lámpara",
-      location: "Providencia",
-      postedTime: "Publicado hace 15 minutos",
-      category: "Electricidad",
-      description: "Necesito instalar una lámpara de techo en el living principal.",
-    },
-    {
-      id: 2,
-      title: "Reparación de Llave de Agua",
-      location: "Las Condes",
-      postedTime: "Publicado hace 1 hora",
-      category: "Gasfitería",
-      description: "Llave de la cocina presenta goteo constante y necesita reparación urgente.",
-    },
-    {
-      id: 3,
-      title: "Instalación de Enchufe Adicional",
-      location: "Ñuñoa",
-      postedTime: "Publicado hace 2 horas",
-      category: "Electricidad",
-      description: "Requiero instalación de dos enchufes adicionales en el dormitorio.",
-    },
-    {
-      id: 4,
-      title: "Cambio de Cañería bajo Lavamanos",
-      location: "Vitacura",
-      postedTime: "Publicado hace 3 horas",
-      category: "Gasfitería",
-      description: "Cañería oxidada bajo lavamanos del baño necesita ser reemplazada.",
-    },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,32 +98,32 @@ const TechnicianDashboard = () => {
 
         {/* Job Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {availableJobs.map((job) => (
-            <Card key={job.id} className="hover:shadow-lg transition-shadow">
+          {tickets.map((ticket) => (
+            <Card key={ticket.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <div className="flex items-start justify-between gap-4">
-                  <CardTitle className="text-xl">{job.title}</CardTitle>
-                  <Badge variant="secondary">{job.category}</Badge>
+                  <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
+                  <Badge variant="secondary">{ticket.categoria}</Badge>
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-muted-foreground text-sm">{job.description}</p>
+                <p className="text-muted-foreground text-sm">{ticket.descripcion}</p>
                 
                 <div className="flex flex-col gap-2 text-sm">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="w-4 h-4" />
-                    <span>{job.location}</span>
+                    <span>{ticket.comuna}</span>
                   </div>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="w-4 h-4" />
-                    <span>{job.postedTime}</span>
+                    <span>Publicado {new Date(ticket.created_at).toLocaleDateString('es-CL')}</span>
                   </div>
                 </div>
               </CardContent>
               <CardFooter>
                 <Button 
                   className="w-full"
-                  onClick={() => window.location.href = `/tecnico/ticket/${job.id}`}
+                  onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
                 >
                   Cotizar
                 </Button>
@@ -139,11 +132,11 @@ const TechnicianDashboard = () => {
           ))}
         </div>
 
-        {/* Empty State (hidden when jobs exist) */}
-        {availableJobs.length === 0 && (
+        {/* Empty State */}
+        {tickets.length === 0 && !loading && (
           <div className="text-center py-16">
             <p className="text-muted-foreground text-lg">
-              No hay trabajos disponibles en este momento.
+              No hay trabajos disponibles en tu especialidad en este momento.
             </p>
             <p className="text-muted-foreground text-sm mt-2">
               Revisa más tarde para ver nuevas oportunidades.
