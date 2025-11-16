@@ -1,13 +1,10 @@
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from "recharts";
 import {
   Sidebar,
   SidebarContent,
@@ -21,11 +18,19 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { LayoutDashboard, Users, Ticket, ShieldCheck } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
   const location = useLocation();
   const currentPath = location.pathname;
+  const [analytics, setAnalytics] = useState({
+    ticketsPerDay: [] as any[],
+    ticketsByComuna: [] as any[],
+    userLogins: [] as any[],
+    ticketsByCategory: [] as any[],
+  });
 
   const menuItems = [
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -36,26 +41,58 @@ const AdminDashboard = () => {
 
   const isActive = (path: string) => currentPath === path;
 
-  const pendingTechnicians = [
-    {
-      id: 1,
-      nombre: "Carlos Méndez",
-      rut: "16.234.567-8",
-      fechaSolicitud: "15/03/2024",
-    },
-    {
-      id: 2,
-      nombre: "María González",
-      rut: "18.456.789-0",
-      fechaSolicitud: "16/03/2024",
-    },
-    {
-      id: 3,
-      nombre: "Juan Pérez",
-      rut: "17.890.123-4",
-      fechaSolicitud: "17/03/2024",
-    },
-  ];
+  useEffect(() => {
+    if (currentPath === "/admin") {
+      fetchAnalytics();
+    }
+  }, [currentPath]);
+
+  const fetchAnalytics = async () => {
+    try {
+      // Tickets per day (last 7 days)
+      const { data: tickets } = await supabase
+        .from("ticket")
+        .select("created_at")
+        .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+      const ticketsByDay: Record<string, number> = {};
+      tickets?.forEach((t) => {
+        const day = new Date(t.created_at).toLocaleDateString();
+        ticketsByDay[day] = (ticketsByDay[day] || 0) + 1;
+      });
+
+      // Tickets by comuna
+      const { data: ticketsByComuna } = await supabase
+        .from("ticket")
+        .select("comuna");
+
+      const comunaCounts: Record<string, number> = {};
+      ticketsByComuna?.forEach((t) => {
+        comunaCounts[t.comuna] = (comunaCounts[t.comuna] || 0) + 1;
+      });
+
+      // Tickets by category
+      const { data: ticketsByCategory } = await supabase
+        .from("ticket")
+        .select("categoria");
+
+      const categoryCounts: Record<string, number> = {};
+      ticketsByCategory?.forEach((t) => {
+        categoryCounts[t.categoria] = (categoryCounts[t.categoria] || 0) + 1;
+      });
+
+      setAnalytics({
+        ticketsPerDay: Object.entries(ticketsByDay).map(([day, count]) => ({ day, count })),
+        ticketsByComuna: Object.entries(comunaCounts).map(([comuna, count]) => ({ comuna, count })).slice(0, 5),
+        userLogins: [],
+        ticketsByCategory: Object.entries(categoryCounts).map(([categoria, count]) => ({ categoria, count })),
+      });
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+    }
+  };
+
+  const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--muted))", "hsl(var(--destructive))"];
 
   return (
     <SidebarProvider>
@@ -98,47 +135,102 @@ const AdminDashboard = () => {
           </header>
 
           <main className="flex-1 p-6 bg-background">
-            <div className="max-w-7xl mx-auto">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-2xl">
-                    Técnicos Pendientes de Validación (3)
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>RUT</TableHead>
-                        <TableHead>Fecha Solicitud</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {pendingTechnicians.map((tech) => (
-                        <TableRow key={tech.id}>
-                          <TableCell className="font-medium">{tech.nombre}</TableCell>
-                          <TableCell>{tech.rut}</TableCell>
-                          <TableCell>{tech.fechaSolicitud}</TableCell>
-                          <TableCell className="text-right">
-                            <Button size="sm">Revisar</Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+            {currentPath === "/admin" ? (
+              <div className="max-w-7xl mx-auto space-y-6">
+                <h2 className="text-2xl font-bold">Estadísticas del Sistema</h2>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tickets Creados (Últimos 7 días)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={analytics.ticketsPerDay}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="day" />
+                            <YAxis />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
 
-                  {pendingTechnicians.length === 0 && (
-                    <div className="text-center py-8">
-                      <p className="text-muted-foreground">
-                        No hay técnicos pendientes de validación.
-                      </p>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tickets por Comuna (Top 5)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={analytics.ticketsByComuna}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="comuna" />
+                            <YAxis />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Bar dataKey="count" fill="hsl(var(--primary))" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tickets por Categoría</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={analytics.ticketsByCategory}
+                              dataKey="count"
+                              nameKey="categoria"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label
+                            >
+                              {analytics.ticketsByCategory.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Resumen General</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">Total de Tickets</span>
+                        <span className="text-2xl font-bold">{analytics.ticketsPerDay.reduce((sum, d) => sum + d.count, 0)}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">Categorías Activas</span>
+                        <span className="text-2xl font-bold">{analytics.ticketsByCategory.length}</span>
+                      </div>
+                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
+                        <span className="text-sm font-medium">Comunas con Tickets</span>
+                        <span className="text-2xl font-bold">{analytics.ticketsByComuna.length}</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <Outlet />
+            )}
           </main>
         </div>
       </div>
