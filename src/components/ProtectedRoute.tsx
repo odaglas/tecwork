@@ -99,6 +99,11 @@ export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) =
   }
 
   if (!hasAccess) {
+    // For admin routes, redirect to admin login if not authenticated
+    if (allowedRole === "admin") {
+      return <Navigate to="/admin/login" replace />;
+    }
+
     // If tecnico is not validated, redirect to a waiting page
     if (!isValidated && allowedRole === "tecnico") {
       return <Navigate to="/tecnico/dashboard" replace />;
@@ -110,7 +115,7 @@ export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) =
     } else if (userRoles.includes("tecnico")) {
       return <Navigate to="/tecnico/dashboard" replace />;
     } else if (userRoles.includes("admin")) {
-      return <Navigate to="/admin" replace />;
+      return <Navigate to="/admin/dashboard" replace />;
     }
     // No role found, redirect to login
     return <Navigate to="/" replace />;
