@@ -1,28 +1,24 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { ClientHeader } from "@/components/ClientHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { TechnicianHeader } from "@/components/TechnicianHeader";
-import { Loader2, Edit2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
-
-const TechnicianProfile = () => {
+const ClientProfile = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState({
     nombre: "",
     email: "",
     rut: "",
     telefono: "",
-    especialidad_principal: "",
-    descripcion_perfil: "",
-    comunas_cobertura: [] as string[],
+    direccion: "",
+    comuna: "",
   });
 
   useEffect(() => {
@@ -42,22 +38,21 @@ const TechnicianProfile = () => {
 
       if (profileError) throw profileError;
 
-      const { data: techData, error: techError } = await supabase
-        .from("tecnico_profile")
+      const { data: clientData, error: clientError } = await supabase
+        .from("cliente_profile")
         .select("*")
         .eq("user_id", user.id)
         .single();
 
-      if (techError) throw techError;
+      if (clientError) throw clientError;
 
       setProfile({
         nombre: profileData.nombre,
         email: profileData.email,
         rut: profileData.rut,
         telefono: profileData.telefono,
-        especialidad_principal: techData.especialidad_principal,
-        descripcion_perfil: techData.descripcion_perfil || "",
-        comunas_cobertura: techData.comunas_cobertura || [],
+        direccion: clientData?.direccion || "",
+        comuna: clientData?.comuna || "",
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -88,22 +83,21 @@ const TechnicianProfile = () => {
 
       if (profileError) throw profileError;
 
-      // Update tecnico_profile table
-      const { error: techError } = await supabase
-        .from("tecnico_profile")
+      // Update cliente_profile table
+      const { error: clientError } = await supabase
+        .from("cliente_profile")
         .update({
-          descripcion_perfil: profile.descripcion_perfil,
-          comunas_cobertura: profile.comunas_cobertura,
+          direccion: profile.direccion,
+          comuna: profile.comuna,
         })
         .eq("user_id", user.id);
 
-      if (techError) throw techError;
+      if (clientError) throw clientError;
 
       toast({
         title: "Perfil actualizado",
         description: "Tus datos han sido actualizados correctamente",
       });
-      setEditing(false);
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast({
@@ -119,9 +113,9 @@ const TechnicianProfile = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary">
-        <TechnicianHeader />
+        <ClientHeader />
         <div className="flex items-center justify-center min-h-[50vh]">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -129,20 +123,11 @@ const TechnicianProfile = () => {
 
   return (
     <div className="min-h-screen bg-secondary">
-      <TechnicianHeader />
-
+      <ClientHeader />
       <main className="container px-4 py-8 max-w-2xl">
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">Mi Perfil</CardTitle>
-              {!editing && (
-                <Button variant="outline" onClick={() => setEditing(true)}>
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
-              )}
-            </div>
+            <CardTitle className="text-2xl">Mi Perfil</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
@@ -151,7 +136,6 @@ const TechnicianProfile = () => {
                 id="nombre"
                 value={profile.nombre}
                 onChange={(e) => setProfile({ ...profile, nombre: e.target.value })}
-                disabled={!editing}
               />
             </div>
 
@@ -181,72 +165,41 @@ const TechnicianProfile = () => {
                 id="telefono"
                 value={profile.telefono}
                 onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
-                disabled={!editing}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="especialidad">Especialidad Principal (No editable)</Label>
+              <Label htmlFor="direccion">Dirección</Label>
               <Input
-                id="especialidad"
-                value={profile.especialidad_principal}
-                disabled
-                className="bg-muted"
+                id="direccion"
+                value={profile.direccion}
+                onChange={(e) => setProfile({ ...profile, direccion: e.target.value })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="descripcion">Descripción del Perfil</Label>
-              <Textarea
-                id="descripcion"
-                value={profile.descripcion_perfil}
-                onChange={(e) => setProfile({ ...profile, descripcion_perfil: e.target.value })}
-                disabled={!editing}
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="comunas">Comunas de Cobertura (separadas por comas)</Label>
+              <Label htmlFor="comuna">Comuna</Label>
               <Input
-                id="comunas"
-                value={profile.comunas_cobertura.join(", ")}
-                onChange={(e) => setProfile({ 
-                  ...profile, 
-                  comunas_cobertura: e.target.value.split(",").map(c => c.trim()) 
-                })}
-                disabled={!editing}
+                id="comuna"
+                value={profile.comuna}
+                onChange={(e) => setProfile({ ...profile, comuna: e.target.value })}
               />
             </div>
 
-            {editing && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Guardando...
-                    </>
-                  ) : (
-                    "Guardar Cambios"
-                  )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditing(false);
-                    fetchProfile();
-                  }}
-                  className="flex-1"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            )}
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full"
+            >
+              {saving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Guardando...
+                </>
+              ) : (
+                "Guardar Cambios"
+              )}
+            </Button>
           </CardContent>
         </Card>
       </main>
@@ -254,4 +207,4 @@ const TechnicianProfile = () => {
   );
 };
 
-export default TechnicianProfile;
+export default ClientProfile;

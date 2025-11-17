@@ -17,13 +17,15 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Ticket, ShieldCheck } from "lucide-react";
-import { Link, useLocation, Outlet } from "react-router-dom";
+import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut } from "lucide-react";
+import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 const AdminDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
   const [analytics, setAnalytics] = useState({
     ticketsPerDay: [] as any[],
@@ -41,11 +43,32 @@ const AdminDashboard = () => {
 
   const isActive = (path: string) => currentPath === path;
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/admin/login");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+  };
+
   useEffect(() => {
     if (currentPath === "/admin") {
       fetchAnalytics();
     }
   }, [currentPath]);
+
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      await supabase.auth.signOut();
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
 
   const fetchAnalytics = async () => {
     try {
@@ -122,11 +145,22 @@ const AdminDashboard = () => {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </SidebarContent>
-        </Sidebar>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+
+          <div className="mt-auto p-4 border-t border-border">
+            <Button
+              variant="outline"
+              className="w-full justify-start text-destructive hover:text-destructive"
+              onClick={handleLogout}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Cerrar Sesión
+            </Button>
+          </div>
+        </SidebarContent>
+      </Sidebar>
 
         <div className="flex-1 flex flex-col">
           <header className="h-16 border-b border-border bg-card flex items-center px-6 gap-4">
