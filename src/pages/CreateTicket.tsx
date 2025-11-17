@@ -27,21 +27,46 @@ const CreateTicket = () => {
   const [clienteId, setClienteId] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchClienteProfile = async () => {
+    const fetchOrCreateClienteProfile = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
+        // Try to get existing cliente_profile
+        const { data, error } = await supabase
           .from("cliente_profile")
           .select("id")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
         
+        if (error) {
+          console.error("Error fetching cliente_profile:", error);
+          return;
+        }
+
         if (data) {
           setClienteId(data.id);
+        } else {
+          // Create cliente_profile if it doesn't exist
+          const { data: newProfile, error: insertError } = await supabase
+            .from("cliente_profile")
+            .insert({
+              user_id: user.id,
+              direccion: "",
+              comuna: "",
+            })
+            .select("id")
+            .single();
+
+          if (insertError) {
+            console.error("Error creating cliente_profile:", insertError);
+            toast.error("Error al crear perfil de cliente");
+          } else if (newProfile) {
+            setClienteId(newProfile.id);
+            toast.success("Perfil de cliente creado");
+          }
         }
       }
     };
-    fetchClienteProfile();
+    fetchOrCreateClienteProfile();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
