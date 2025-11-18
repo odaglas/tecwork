@@ -234,7 +234,7 @@ const AdminValidacion = () => {
                 <div>
                   <h3 className="font-semibold mb-2">Documentación</h3>
                   <div className="space-y-2">
-                    {selectedTech.documents.map((doc) => (
+                    {(selectedTech.documents || []).map((doc) => (
                       <div
                         key={doc.id}
                         className="flex items-center justify-between p-3 border rounded-lg"
