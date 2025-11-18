@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -149,6 +151,12 @@ const AdminUsuarios = () => {
   return (
     <div className="p-6 bg-background min-h-screen">
       <div className="max-w-7xl mx-auto">
+        <Link to="/admin">
+          <Button variant="ghost" className="mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Volver al Dashboard
+          </Button>
+        </Link>
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Gestión de Usuarios</CardTitle>
