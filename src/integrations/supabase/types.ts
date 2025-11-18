@@ -402,6 +402,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      tecnico_can_view_ticket: {
+        Args: { _ticket_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_is_ticket_cliente: {
+        Args: { _cliente_id: string; _user_id: string }
+        Returns: boolean
+      }
+      user_owns_ticket: {
+        Args: { _ticket_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       adjunto_tipo: "imagen" | "video"
