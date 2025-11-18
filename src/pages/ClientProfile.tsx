@@ -34,7 +34,7 @@ const ClientProfile = () => {
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
 
@@ -42,15 +42,30 @@ const ClientProfile = () => {
         .from("cliente_profile")
         .select("*")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (clientError) throw clientError;
 
+      // If cliente_profile doesn't exist, create it
+      if (!clientData) {
+        const { error: insertError } = await supabase
+          .from("cliente_profile")
+          .insert({
+            user_id: user.id,
+            direccion: "",
+            comuna: "",
+          });
+
+        if (insertError) {
+          console.error("Error creating cliente_profile:", insertError);
+        }
+      }
+
       setProfile({
-        nombre: profileData.nombre,
-        email: profileData.email,
-        rut: profileData.rut,
-        telefono: profileData.telefono,
+        nombre: profileData?.nombre || "",
+        email: profileData?.email || "",
+        rut: profileData?.rut || "",
+        telefono: profileData?.telefono || "",
         direccion: clientData?.direccion || "",
         comuna: clientData?.comuna || "",
       });
