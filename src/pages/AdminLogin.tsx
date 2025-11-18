@@ -24,7 +24,7 @@ const AdminLogin = () => {
         });
         
         if (isAdmin) {
-          navigate("/admin/dashboard");
+          navigate("/admin");
         }
       }
     };
@@ -69,7 +69,7 @@ const AdminLogin = () => {
 
       // Success - user is authenticated and verified as admin
       toast.success("Bienvenido, Administrador");
-      navigate("/admin/dashboard");
+      navigate("/admin");
       
     } catch (error: any) {
       console.error("Error:", error);
