@@ -50,31 +50,10 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Get pending technician validations
-    const { data: pendingTechnicians, error: techError } = await supabaseClient
+    // Get pending technician profiles
+    const { data: tecnicoProfiles, error: techError } = await supabaseClient
       .from('tecnico_profile')
-      .select(`
-        id,
-        user_id,
-        especialidad_principal,
-        comunas_cobertura,
-        descripcion_perfil,
-        is_validated,
-        created_at,
-        profiles!inner (
-          nombre,
-          rut,
-          email,
-          telefono
-        ),
-        documentacion_tecnico (
-          id,
-          nombre_documento,
-          archivo_url,
-          estado,
-          created_at
-        )
-      `)
+      .select('*')
       .eq('is_validated', false);
 
     if (techError) {
@@ -85,11 +64,73 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (!tecnicoProfiles || tecnicoProfiles.length === 0) {
+      return new Response(
+        JSON.stringify([]),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get user IDs
+    const userIds = tecnicoProfiles.map(tp => tp.user_id);
+
+    // Get profiles for these users
+    const { data: profiles, error: profileError } = await supabaseClient
+      .from('profiles')
+      .select('id, nombre, rut, email, telefono')
+      .in('id', userIds);
+
+    if (profileError) {
+      console.error('Error fetching profiles:', profileError);
+      return new Response(
+        JSON.stringify({ error: 'Error al obtener perfiles' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Get documents for these technicians
+    const tecnicoIds = tecnicoProfiles.map(tp => tp.id);
+    const { data: documents, error: docError } = await supabaseClient
+      .from('documentacion_tecnico')
+      .select('*')
+      .in('tecnico_id', tecnicoIds);
+
+    if (docError) {
+      console.error('Error fetching documents:', docError);
+      return new Response(
+        JSON.stringify({ error: 'Error al obtener documentos' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Combine the data
+    const pendingTechnicians = tecnicoProfiles.map(tech => {
+      const profile = profiles?.find(p => p.id === tech.user_id);
+      const techDocuments = documents?.filter(d => d.tecnico_id === tech.id) || [];
+      
+      return {
+        id: tech.id,
+        user_id: tech.user_id,
+        especialidad_principal: tech.especialidad_principal,
+        comunas_cobertura: tech.comunas_cobertura,
+        descripcion_perfil: tech.descripcion_perfil,
+        is_validated: tech.is_validated,
+        created_at: tech.created_at,
+        profile: profile ? {
+          nombre: profile.nombre,
+          rut: profile.rut,
+          email: profile.email,
+          telefono: profile.telefono
+        } : null,
+        documentacion_tecnico: techDocuments
+      };
+    });
+
     // Filter to only include technicians with pending documents
-    const techniciansWithPendingDocs = pendingTechnicians?.filter(tech => 
+    const techniciansWithPendingDocs = pendingTechnicians.filter(tech => 
       tech.documentacion_tecnico && 
       tech.documentacion_tecnico.some((doc: any) => doc.estado === 'pendiente')
-    ) || [];
+    );
 
     console.log(`Found ${techniciansWithPendingDocs.length} technicians with pending validations`);
 
