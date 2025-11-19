@@ -106,6 +106,10 @@ const AdminUsuarios = () => {
         if (!comuna && tecnicoProfile?.comunas_cobertura?.length > 0) {
           comuna = tecnicoProfile.comunas_cobertura.join(", ");
         }
+        // Show "No especificado" for empty comunas
+        if (!comuna || comuna === "") {
+          comuna = undefined;
+        }
 
         return {
           id: profile.id,
@@ -236,14 +240,14 @@ const AdminUsuarios = () => {
                       <TableCell>{user.email}</TableCell>
                       <TableCell>{user.rut}</TableCell>
                       <TableCell className="capitalize">{user.role}</TableCell>
-                      <TableCell>{user.comuna || "-"}</TableCell>
+                      <TableCell>{user.comuna || "No especificado"}</TableCell>
                       <TableCell>
                         {user.role === "tecnico" ? (
                           <span className={user.is_validated ? "text-green-600" : "text-yellow-600"}>
                             {user.is_validated ? "Validado" : "Pendiente"}
                           </span>
                         ) : (
-                          "-"
+                          "N/A"
                         )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
