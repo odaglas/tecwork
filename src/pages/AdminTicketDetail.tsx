@@ -44,6 +44,13 @@ interface CotizacionData {
   tecnico_email: string;
 }
 
+interface TicketAdjunto {
+  id: string;
+  archivo_url: string;
+  tipo: string;
+  created_at: string;
+}
+
 const AdminTicketDetail = () => {
   const { ticketId } = useParams();
   const navigate = useNavigate();
@@ -56,6 +63,7 @@ const AdminTicketDetail = () => {
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [cliente, setCliente] = useState<ClienteData | null>(null);
   const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
+  const [adjuntos, setAdjuntos] = useState<TicketAdjunto[]>([]);
   
   const [ticketForm, setTicketForm] = useState({
     titulo: "",
@@ -161,6 +169,16 @@ const AdminTicketDetail = () => {
       );
 
       setCotizaciones(cotizacionesWithTecnico);
+
+      // Get ticket adjuntos (photos/videos)
+      const { data: adjuntosData, error: adjuntosError } = await supabase
+        .from("ticket_adjunto")
+        .select("*")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
+
+      if (adjuntosError) throw adjuntosError;
+      setAdjuntos(adjuntosData || []);
     } catch (error: any) {
       console.error("Error fetching ticket details:", error);
       toast({
@@ -400,6 +418,56 @@ const AdminTicketDetail = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Photos/Attachments */}
+        {adjuntos.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Fotos del Ticket ({adjuntos.length})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {adjuntos.map((adjunto) => (
+                  <div key={adjunto.id} className="relative group">
+                    {adjunto.tipo === "imagen" ? (
+                      <a 
+                        href={adjunto.archivo_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={adjunto.archivo_url}
+                          alt="Foto del ticket"
+                          className="w-full h-48 object-cover rounded-lg border-2 border-border hover:border-primary transition-smooth cursor-pointer"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-smooth rounded-lg flex items-center justify-center">
+                          <span className="text-white opacity-0 group-hover:opacity-100 transition-smooth font-semibold">
+                            Ver imagen
+                          </span>
+                        </div>
+                      </a>
+                    ) : (
+                      <a 
+                        href={adjunto.archivo_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <div className="w-full h-48 bg-muted rounded-lg border-2 border-border hover:border-primary transition-smooth cursor-pointer flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">🎥</div>
+                            <span className="text-sm font-semibold">Ver video</span>
+                          </div>
+                        </div>
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Cliente Info */}
         {cliente && (
