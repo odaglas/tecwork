@@ -32,6 +32,12 @@ const AdminDashboard = () => {
     ticketsByComuna: [] as any[],
     userLogins: [] as any[],
     ticketsByCategory: [] as any[],
+    usersByRole: [] as any[],
+    usersPerDay: [] as any[],
+    techniciansByStatus: [] as any[],
+    totalUsers: 0,
+    totalClientes: 0,
+    totalTecnicos: 0,
   });
 
   const menuItems = [
@@ -104,11 +110,61 @@ const AdminDashboard = () => {
         categoryCounts[t.categoria] = (categoryCounts[t.categoria] || 0) + 1;
       });
 
+      // Users by role
+      const { data: userRoles } = await supabase
+        .from("user_roles")
+        .select("role");
+
+      const roleCounts: Record<string, number> = { cliente: 0, tecnico: 0, admin: 0 };
+      userRoles?.forEach((ur) => {
+        roleCounts[ur.role] = (roleCounts[ur.role] || 0) + 1;
+      });
+
+      // Users per day (last 7 days)
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("created_at")
+        .gte("created_at", new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+
+      const usersByDay: Record<string, number> = {};
+      profiles?.forEach((p) => {
+        const day = new Date(p.created_at).toLocaleDateString();
+        usersByDay[day] = (usersByDay[day] || 0) + 1;
+      });
+
+      // Technicians by validation status
+      const { data: tecnicos } = await supabase
+        .from("tecnico_profile")
+        .select("is_validated");
+
+      const technicianCounts = { validados: 0, pendientes: 0 };
+      tecnicos?.forEach((t) => {
+        if (t.is_validated) {
+          technicianCounts.validados++;
+        } else {
+          technicianCounts.pendientes++;
+        }
+      });
+
+      // Get total users count
+      const { data: allProfiles } = await supabase
+        .from("profiles")
+        .select("id");
+
       setAnalytics({
         ticketsPerDay: Object.entries(ticketsByDay).map(([day, count]) => ({ day, count })),
         ticketsByComuna: Object.entries(comunaCounts).map(([comuna, count]) => ({ comuna, count })).slice(0, 5),
         userLogins: [],
         ticketsByCategory: Object.entries(categoryCounts).map(([categoria, count]) => ({ categoria, count })),
+        usersByRole: Object.entries(roleCounts).map(([role, count]) => ({ role, count })),
+        usersPerDay: Object.entries(usersByDay).map(([day, count]) => ({ day, count })),
+        techniciansByStatus: [
+          { status: "Validados", count: technicianCounts.validados },
+          { status: "Pendientes", count: technicianCounts.pendientes },
+        ],
+        totalUsers: allProfiles?.length || 0,
+        totalClientes: roleCounts.cliente,
+        totalTecnicos: roleCounts.tecnico,
       });
     } catch (error) {
       console.error("Error fetching analytics:", error);
@@ -173,7 +229,118 @@ const AdminDashboard = () => {
               <div className="max-w-7xl mx-auto space-y-6">
                 <h2 className="text-2xl font-bold">Estadísticas del Sistema</h2>
                 
+                {/* User Stats Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Total Usuarios</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{analytics.totalUsers}</div>
+                      <p className="text-xs text-muted-foreground mt-1">Usuarios registrados</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Clientes</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{analytics.totalClientes}</div>
+                      <p className="text-xs text-muted-foreground mt-1">Usuarios clientes</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Técnicos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{analytics.totalTecnicos}</div>
+                      <p className="text-xs text-muted-foreground mt-1">Técnicos registrados</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Total Tickets</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{analytics.ticketsPerDay.reduce((sum, d) => sum + d.count, 0)}</div>
+                      <p className="text-xs text-muted-foreground mt-1">Últimos 7 días</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* User Analytics Charts */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Usuarios por Rol</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={analytics.usersByRole}
+                              dataKey="count"
+                              nameKey="role"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label
+                            >
+                              {analytics.usersByRole.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Registros de Usuarios (Últimos 7 días)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={analytics.usersPerDay}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="day" />
+                            <YAxis />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Line type="monotone" dataKey="count" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Estado de Técnicos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={analytics.techniciansByStatus}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="status" />
+                            <YAxis />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Bar dataKey="count" fill="hsl(var(--chart-3))" />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+                
                   <Card>
                     <CardHeader>
                       <CardTitle>Tickets Creados (Últimos 7 días)</CardTitle>
@@ -188,6 +355,25 @@ const AdminDashboard = () => {
                             <ChartTooltip content={<ChartTooltipContent />} />
                             <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} />
                           </LineChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tickets por Comuna (Top 5)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={analytics.ticketsByComuna}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="comuna" />
+                            <YAxis />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Bar dataKey="count" fill="hsl(var(--primary))" />
+                          </BarChart>
                         </ResponsiveContainer>
                       </ChartContainer>
                     </CardContent>
@@ -238,26 +424,6 @@ const AdminDashboard = () => {
                           </PieChart>
                         </ResponsiveContainer>
                       </ChartContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Resumen General</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <span className="text-sm font-medium">Total de Tickets</span>
-                        <span className="text-2xl font-bold">{analytics.ticketsPerDay.reduce((sum, d) => sum + d.count, 0)}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <span className="text-sm font-medium">Categorías Activas</span>
-                        <span className="text-2xl font-bold">{analytics.ticketsByCategory.length}</span>
-                      </div>
-                      <div className="flex justify-between items-center p-3 bg-muted rounded-lg">
-                        <span className="text-sm font-medium">Comunas con Tickets</span>
-                        <span className="text-2xl font-bold">{analytics.ticketsByComuna.length}</span>
-                      </div>
                     </CardContent>
                   </Card>
                 </div>
