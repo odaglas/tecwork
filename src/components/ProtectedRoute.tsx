@@ -33,11 +33,7 @@ export const ProtectedRoute = ({ children, allowedRole, allowUnvalidated = false
           .select("role")
           .eq("user_id", user.id);
 
-        console.log("ProtectedRoute - User ID:", user.id);
-        console.log("ProtectedRoute - Roles query result:", { rolesData, error });
-
         if (error || !rolesData || rolesData.length === 0) {
-          console.error("ProtectedRoute - No roles found or error:", error);
           setHasAccess(false);
           setIsLoading(false);
           return;

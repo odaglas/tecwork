@@ -55,13 +55,13 @@ const App = () => (
           <Route path="/cliente/ticket/:id" element={<ProtectedRoute allowedRole="cliente"><TicketDetail /></ProtectedRoute>} />
           <Route path="/comparar-cotizaciones" element={<ProtectedRoute allowedRole="cliente"><CompareQuotes /></ProtectedRoute>} />
           <Route path="/chat/:id" element={<ProtectedRoute allowedRole="cliente"><Chat /></ProtectedRoute>} />
-          <Route path="/tecnico/:id" element={<ProtectedRoute allowedRole="cliente"><TechnicianPublicProfile /></ProtectedRoute>} />
           
-          {/* Tecnico routes - protected */}
+          {/* Tecnico routes - protected (specific routes MUST come before :id routes) */}
           <Route path="/tecnico/perfil" element={<ProtectedRoute allowedRole="tecnico" allowUnvalidated={true}><TechnicianProfile /></ProtectedRoute>} />
           <Route path="/tecnico/ticket/:id" element={<ProtectedRoute allowedRole="tecnico"><TechnicianTicketDetail /></ProtectedRoute>} />
           <Route path="/tecnico/cotizar/:ticketId" element={<ProtectedRoute allowedRole="tecnico"><TechnicianQuoteForm /></ProtectedRoute>} />
           <Route path="/tecnico/dashboard" element={<ProtectedRoute allowedRole="tecnico" allowUnvalidated={true}><TechnicianDashboard /></ProtectedRoute>} />
+          <Route path="/tecnico/:id" element={<ProtectedRoute allowedRole="cliente"><TechnicianPublicProfile /></ProtectedRoute>} />
           
           {/* Admin routes - protected */}
           <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
