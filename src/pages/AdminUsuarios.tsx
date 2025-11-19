@@ -69,7 +69,12 @@ const AdminUsuarios = () => {
         .from("user_roles")
         .select("user_id, role");
 
-      if (rolesError) throw rolesError;
+      if (rolesError) {
+        console.error("Roles error:", rolesError);
+        throw rolesError;
+      }
+      
+      console.log("Fetched roles:", roles);
 
       // Get cliente profiles for comuna info
       const { data: clienteProfiles, error: clienteError } = await supabase
@@ -87,9 +92,16 @@ const AdminUsuarios = () => {
 
       // Combine all data
       const usersData: UserData[] = profiles.map((profile) => {
-        const userRoles = roles.filter((r) => r.user_id === profile.id);
-        const clienteProfile = clienteProfiles.find((c) => c.user_id === profile.id);
-        const tecnicoProfile = tecnicoProfiles.find((t) => t.user_id === profile.id);
+        const userRoles = roles?.filter((r) => r.user_id === profile.id) || [];
+        const clienteProfile = clienteProfiles?.find((c) => c.user_id === profile.id);
+        const tecnicoProfile = tecnicoProfiles?.find((t) => t.user_id === profile.id);
+
+        console.log(`Processing ${profile.nombre}:`, {
+          userRoles,
+          hasClienteProfile: !!clienteProfile,
+          hasTecnicoProfile: !!tecnicoProfile,
+          is_validated: tecnicoProfile?.is_validated
+        });
 
         // Determine primary role: tecnico > cliente > admin
         let primaryRole = "unknown";
@@ -100,6 +112,8 @@ const AdminUsuarios = () => {
         } else if (userRoles.some(r => r.role === "admin")) {
           primaryRole = "admin";
         }
+
+        console.log(`${profile.nombre} primary role:`, primaryRole);
 
         // Get comuna
         let comuna = clienteProfile?.comuna;
@@ -122,6 +136,8 @@ const AdminUsuarios = () => {
           is_validated: tecnicoProfile?.is_validated,
         };
       });
+
+      console.log("Final usersData:", usersData);
 
       setUsers(usersData);
     } catch (error: any) {
