@@ -13,13 +13,17 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
+import { formatRut, cleanRut } from "@/lib/utils";
 
 const clientRegisterSchema = z.object({
   email: z.string().email({ message: "Correo electrónico inválido" }),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
   confirmPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
-  rut: z.string().min(8, { message: "RUT inválido" }),
+  rut: z.string().refine((val) => {
+    const { validateRut } = require("@/lib/utils");
+    return validateRut(val);
+  }, { message: "RUT inválido" }),
   telefono: z.string().min(9, { message: "Teléfono inválido" }),
   direccion: z.string().min(5, { message: "Dirección inválida" }),
   comuna: z.string().min(1, { message: "Debe seleccionar una comuna" }),
@@ -59,7 +63,7 @@ const ClientRegister = () => {
           emailRedirectTo: `${window.location.origin}/cliente/home`,
           data: {
             nombre: validatedData.nombre,
-            rut: validatedData.rut,
+            rut: cleanRut(validatedData.rut),
             telefono: validatedData.telefono,
             role: "cliente", // Role assigned securely via database trigger
           },
@@ -84,7 +88,7 @@ const ClientRegister = () => {
           id: authData.user.id,
           email: validatedData.email,
           nombre: validatedData.nombre,
-          rut: validatedData.rut,
+          rut: cleanRut(validatedData.rut),
           telefono: validatedData.telefono,
         });
 
@@ -180,9 +184,12 @@ const ClientRegister = () => {
             <Input
               id="rut"
               type="text"
-              placeholder="12345678-9"
+              placeholder="11.111.111-1"
               value={formData.rut}
-              onChange={(e) => setFormData({ ...formData, rut: e.target.value })}
+              onChange={(e) => {
+                const formatted = formatRut(e.target.value);
+                setFormData({ ...formData, rut: formatted });
+              }}
               required
             />
           </div>

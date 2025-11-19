@@ -22,6 +22,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle, XCircle, Eye, FileText } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatRut } from "@/lib/utils";
 
 interface PendingTechnician {
   id: string;
@@ -138,7 +139,7 @@ const AdminValidacion = () => {
                   {technicians.map((tech) => (
                     <TableRow key={tech.id}>
                       <TableCell className="font-medium">{tech.profile.nombre}</TableCell>
-                      <TableCell>{tech.profile.rut}</TableCell>
+                      <TableCell>{formatRut(tech.profile.rut)}</TableCell>
                       <TableCell>{tech.especialidad_principal}</TableCell>
                       <TableCell>
                         {tech.comunas_cobertura?.join(", ") || "No especificado"}
@@ -196,7 +197,7 @@ const AdminValidacion = () => {
                     </div>
                     <div>
                       <span className="text-muted-foreground">RUT:</span>
-                      <p className="font-medium">{selectedTech.profile.rut}</p>
+                      <p className="font-medium">{formatRut(selectedTech.profile.rut)}</p>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Email:</span>

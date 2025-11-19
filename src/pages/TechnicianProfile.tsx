@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { Loader2, Edit2 } from "lucide-react";
+import { formatRut } from "@/lib/utils";
 
 
 const TechnicianProfile = () => {
@@ -53,7 +54,7 @@ const TechnicianProfile = () => {
       setProfile({
         nombre: profileData.nombre,
         email: profileData.email,
-        rut: profileData.rut,
+        rut: formatRut(profileData.rut),
         telefono: profileData.telefono,
         especialidad_principal: techData.especialidad_principal,
         descripcion_perfil: techData.descripcion_perfil || "",
