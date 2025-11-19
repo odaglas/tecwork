@@ -49,30 +49,53 @@ const AdminTickets = () => {
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      // Get all tickets with cliente info
+      // Get all tickets
       const { data: ticketsData, error: ticketsError } = await supabase
         .from("ticket")
-        .select(`
-          *,
-          cliente_profile!inner(
-            id,
-            profiles!inner(nombre)
-          )
-        `)
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (ticketsError) throw ticketsError;
+      if (ticketsError) {
+        console.error("Tickets error:", ticketsError);
+        throw ticketsError;
+      }
+
+      // Get all cliente profiles with user data
+      const { data: clienteProfiles, error: clienteError } = await supabase
+        .from("cliente_profile")
+        .select("id, user_id");
+
+      if (clienteError) {
+        console.error("Cliente profiles error:", clienteError);
+        throw clienteError;
+      }
+
+      // Get all profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, nombre");
+
+      if (profilesError) {
+        console.error("Profiles error:", profilesError);
+        throw profilesError;
+      }
 
       // Get cotizaciones for each ticket
       const { data: cotizaciones, error: cotizacionesError } = await supabase
         .from("cotizacion")
         .select("ticket_id, estado");
 
-      if (cotizacionesError) throw cotizacionesError;
+      if (cotizacionesError) {
+        console.error("Cotizaciones error:", cotizacionesError);
+        throw cotizacionesError;
+      }
 
       // Combine data
       const ticketsWithInfo: TicketData[] = ticketsData.map((ticket) => {
-        const ticketCotizaciones = cotizaciones.filter((c) => c.ticket_id === ticket.id);
+        const clienteProfile = clienteProfiles?.find((cp) => cp.id === ticket.cliente_id);
+        const profile = profiles?.find((p) => p.id === clienteProfile?.user_id);
+        const ticketCotizaciones = cotizaciones?.filter((c) => c.ticket_id === ticket.id) || [];
+        
         return {
           id: ticket.id,
           titulo: ticket.titulo,
@@ -80,7 +103,7 @@ const AdminTickets = () => {
           comuna: ticket.comuna,
           estado: ticket.estado,
           created_at: ticket.created_at,
-          cliente_nombre: (ticket.cliente_profile as any).profiles.nombre,
+          cliente_nombre: profile?.nombre || "Desconocido",
           cotizaciones_count: ticketCotizaciones.length,
           cotizacion_aceptada: ticketCotizaciones.some((c) => c.estado === "aceptada"),
         };
@@ -88,9 +111,10 @@ const AdminTickets = () => {
 
       setTickets(ticketsWithInfo);
     } catch (error: any) {
+      console.error("Fetch error:", error);
       toast({
         title: "Error",
-        description: "No se pudieron cargar los tickets",
+        description: error.message || "No se pudieron cargar los tickets",
         variant: "destructive",
       });
     } finally {
