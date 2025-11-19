@@ -14,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { formatRut, cleanRut } from "@/lib/utils";
+import tecworkLogo from "@/assets/tecwork-logo.png";
 
 const clientRegisterSchema = z.object({
   email: z.string().email({ message: "Correo electrónico inválido" }),
@@ -150,9 +151,7 @@ const ClientRegister = () => {
       <div className="w-full max-w-md space-y-8">
         <div className="flex flex-col items-center gap-4">
           <Link to="/" className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-primary-foreground font-bold text-3xl">T</span>
-            </div>
+            <img src={tecworkLogo} alt="TecWork Logo" className="w-16 h-16" />
             <h2 className="text-2xl font-bold text-primary">TecWork</h2>
           </Link>
         </div>

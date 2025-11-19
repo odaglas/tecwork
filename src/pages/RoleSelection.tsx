@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import tecworkLogo from "@/assets/tecwork-logo.png";
 
 const RoleSelection = () => {
   const navigate = useNavigate();
@@ -9,9 +10,7 @@ const RoleSelection = () => {
       <div className="w-full max-w-md text-center space-y-8">
         {/* Logo */}
         <div className="flex flex-col items-center gap-4">
-          <div className="w-20 h-20 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-lg">
-            <span className="text-primary-foreground font-bold text-4xl">T</span>
-          </div>
+          <img src={tecworkLogo} alt="TecWork Logo" className="w-20 h-20" />
           <h2 className="text-3xl font-bold text-primary">TecWork</h2>
         </div>
 

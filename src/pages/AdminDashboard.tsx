@@ -22,6 +22,7 @@ import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import tecworkLogo from "@/assets/tecwork-logo.png";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -180,9 +181,7 @@ const AdminDashboard = () => {
           <SidebarContent>
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2">
-                <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                  <span className="text-primary-foreground font-bold text-xl">T</span>
-                </div>
+                <img src={tecworkLogo} alt="TecWork Logo" className="w-10 h-10" />
                 <span className="text-xl font-bold text-primary">TecWork Admin</span>
               </div>
             </div>
