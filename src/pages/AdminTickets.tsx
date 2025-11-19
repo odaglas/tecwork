@@ -248,9 +248,11 @@ const AdminTickets = () => {
                         {new Date(ticket.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button size="sm" variant="outline">
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <Link to={`/admin/tickets/${ticket.id}`}>
+                          <Button size="sm" variant="outline">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Button size="sm" variant="destructive">
                           <Trash2 className="h-4 w-4" />
                         </Button>
