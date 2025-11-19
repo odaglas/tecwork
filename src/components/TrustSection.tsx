@@ -26,7 +26,7 @@ const features = [
 
 export const TrustSection = () => {
   return (
-    <section className="py-20 bg-primary text-primary-foreground">
+    <section id="seguridad" className="py-20 bg-primary text-primary-foreground scroll-mt-16">
       <div className="container px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
