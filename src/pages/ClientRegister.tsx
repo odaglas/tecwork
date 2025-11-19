@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
 import { formatRut, cleanRut } from "@/lib/utils";
 import tecworkLogo from "@/assets/tecwork-logo.png";
+import { ArrowLeft } from "lucide-react";
 
 const clientRegisterSchema = z.object({
   email: z.string().email({ message: "Correo electrónico inválido" }),
@@ -149,6 +150,17 @@ const ClientRegister = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Volver
+        </Button>
+
         <div className="flex flex-col items-center gap-4">
           <Link to="/" className="flex flex-col items-center gap-2">
             <img src={tecworkLogo} alt="TecWork Logo" className="w-16 h-16" />
