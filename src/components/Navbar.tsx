@@ -6,6 +6,15 @@ import { Link } from "react-router-dom";
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const handleSmoothScroll = (e: React.MouseEvent<HTMLAnchorElement>, targetId: string) => {
+    e.preventDefault();
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setIsOpen(false);
+    }
+  };
+
   return (
     <nav className="bg-background border-b border-border sticky top-0 z-50 shadow-sm">
       <div className="container px-4">
@@ -18,13 +27,25 @@ export const Navbar = () => {
           </Link>
           
           <div className="hidden md:flex items-center gap-8">
-            <a href="/#servicios" className="text-foreground hover:text-primary transition-fast font-medium">
+            <a 
+              href="#servicios" 
+              onClick={(e) => handleSmoothScroll(e, 'servicios')}
+              className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+            >
               Servicios
             </a>
-            <a href="/#como-funciona" className="text-foreground hover:text-primary transition-fast font-medium">
+            <a 
+              href="#como-funciona" 
+              onClick={(e) => handleSmoothScroll(e, 'como-funciona')}
+              className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+            >
               Cómo Funciona
             </a>
-            <a href="/#seguridad" className="text-foreground hover:text-primary transition-fast font-medium">
+            <a 
+              href="#seguridad" 
+              onClick={(e) => handleSmoothScroll(e, 'seguridad')}
+              className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+            >
               Seguridad
             </a>
             <Link to="/login">
@@ -45,13 +66,25 @@ export const Navbar = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
-              <a href="/#servicios" className="text-foreground hover:text-primary transition-fast font-medium">
+              <a 
+                href="#servicios" 
+                onClick={(e) => handleSmoothScroll(e, 'servicios')}
+                className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+              >
                 Servicios
               </a>
-              <a href="/#como-funciona" className="text-foreground hover:text-primary transition-fast font-medium">
+              <a 
+                href="#como-funciona" 
+                onClick={(e) => handleSmoothScroll(e, 'como-funciona')}
+                className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+              >
                 Cómo Funciona
               </a>
-              <a href="/#seguridad" className="text-foreground hover:text-primary transition-fast font-medium">
+              <a 
+                href="#seguridad" 
+                onClick={(e) => handleSmoothScroll(e, 'seguridad')}
+                className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+              >
                 Seguridad
               </a>
               <Link to="/login">

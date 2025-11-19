@@ -36,7 +36,7 @@ const services = [
 
 export const Services = () => {
   return (
-    <section className="py-20 bg-secondary">
+    <section id="servicios" className="py-20 bg-secondary scroll-mt-16">
       <div className="container px-4">
         <div className="text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-foreground">
