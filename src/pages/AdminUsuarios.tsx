@@ -87,9 +87,25 @@ const AdminUsuarios = () => {
 
       // Combine all data
       const usersData: UserData[] = profiles.map((profile) => {
-        const userRole = roles.find((r) => r.user_id === profile.id);
+        const userRoles = roles.filter((r) => r.user_id === profile.id);
         const clienteProfile = clienteProfiles.find((c) => c.user_id === profile.id);
         const tecnicoProfile = tecnicoProfiles.find((t) => t.user_id === profile.id);
+
+        // Determine primary role: tecnico > cliente > admin
+        let primaryRole = "unknown";
+        if (userRoles.some(r => r.role === "tecnico")) {
+          primaryRole = "tecnico";
+        } else if (userRoles.some(r => r.role === "cliente")) {
+          primaryRole = "cliente";
+        } else if (userRoles.some(r => r.role === "admin")) {
+          primaryRole = "admin";
+        }
+
+        // Get comuna
+        let comuna = clienteProfile?.comuna;
+        if (!comuna && tecnicoProfile?.comunas_cobertura?.length > 0) {
+          comuna = tecnicoProfile.comunas_cobertura.join(", ");
+        }
 
         return {
           id: profile.id,
@@ -97,8 +113,8 @@ const AdminUsuarios = () => {
           nombre: profile.nombre,
           rut: profile.rut,
           telefono: profile.telefono,
-          role: userRole?.role || "unknown",
-          comuna: clienteProfile?.comuna || tecnicoProfile?.comunas_cobertura?.[0],
+          role: primaryRole,
+          comuna: comuna,
           is_validated: tecnicoProfile?.is_validated,
         };
       });

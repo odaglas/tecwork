@@ -122,14 +122,14 @@ Deno.serve(async (req) => {
           email: profile.email,
           telefono: profile.telefono
         } : null,
-        documentacion_tecnico: techDocuments
+        documents: techDocuments
       };
     });
 
     // Filter to only include technicians with pending documents
     const techniciansWithPendingDocs = pendingTechnicians.filter(tech => 
-      tech.documentacion_tecnico && 
-      tech.documentacion_tecnico.some((doc: any) => doc.estado === 'pendiente')
+      tech.documents && 
+      tech.documents.some((doc: any) => doc.estado === 'pendiente')
     );
 
     console.log(`Found ${techniciansWithPendingDocs.length} technicians with pending validations`);
