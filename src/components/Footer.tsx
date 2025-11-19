@@ -54,13 +54,28 @@ export const Footer = () => {
               </li>
             </ul>
             <div className="flex gap-4 mt-4">
-              <a href="#" className="hover:text-success transition-fast">
+              <a 
+                href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-success transition-fast"
+              >
                 <Facebook className="h-5 w-5" />
               </a>
-              <a href="#" className="hover:text-success transition-fast">
+              <a 
+                href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-success transition-fast"
+              >
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="hover:text-success transition-fast">
+              <a 
+                href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="hover:text-success transition-fast"
+              >
                 <Twitter className="h-5 w-5" />
               </a>
             </div>
