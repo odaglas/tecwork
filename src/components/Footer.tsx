@@ -1,4 +1,5 @@
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import { Link } from "react-router-dom";
 import tecworkLogo from "@/assets/tecwork-logo.png";
 
 export const Footer = () => {
@@ -29,10 +30,10 @@ export const Footer = () => {
           <div>
             <h3 className="font-semibold text-lg mb-4">Empresa</h3>
             <ul className="space-y-2 text-background/70">
-              <li><a href="#" className="hover:text-success transition-fast">Sobre Nosotros</a></li>
+              <li><Link to="/sobre-nosotros" className="hover:text-success transition-fast">Sobre Nosotros</Link></li>
               <li><a href="#" className="hover:text-success transition-fast">Blog</a></li>
               <li><a href="#" className="hover:text-success transition-fast">Trabaja con Nosotros</a></li>
-              <li><a href="#" className="hover:text-success transition-fast">Términos y Condiciones</a></li>
+              <li><Link to="/terminos-condiciones" className="hover:text-success transition-fast">Términos y Condiciones</Link></li>
             </ul>
           </div>
           
