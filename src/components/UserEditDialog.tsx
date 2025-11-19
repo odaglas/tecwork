@@ -64,6 +64,19 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
     
     setLoading(true);
     try {
+      // Check current session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast({
+          title: "Error",
+          description: "Sesión expirada. Por favor, inicia sesión nuevamente",
+          variant: "destructive",
+        });
+        onClose();
+        return;
+      }
+
       // Get profile
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
@@ -71,12 +84,15 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
         .eq("id", userId)
         .maybeSingle();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Profile fetch error:", profileError);
+        throw profileError;
+      }
       
       if (!profile) {
         toast({
           title: "Error",
-          description: "Usuario no encontrado",
+          description: "Usuario no encontrado o sin permisos para verlo",
           variant: "destructive",
         });
         onClose();
@@ -136,9 +152,10 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
         });
       }
     } catch (error: any) {
+      console.error("Error loading user data:", error);
       toast({
         title: "Error",
-        description: "No se pudo cargar la información del usuario",
+        description: error.message || "No se pudo cargar la información del usuario",
         variant: "destructive",
       });
     } finally {
