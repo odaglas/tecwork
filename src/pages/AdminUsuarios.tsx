@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { UserEditDialog } from "@/components/UserEditDialog";
 import {
   Table,
   TableBody,
@@ -53,6 +54,7 @@ const AdminUsuarios = () => {
   const [validationFilter, setValidationFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchUsers = async () => {
@@ -252,7 +254,11 @@ const AdminUsuarios = () => {
                         )}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
-                        <Button size="sm" variant="outline">
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setEditUserId(user.id)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
@@ -277,6 +283,12 @@ const AdminUsuarios = () => {
           </CardContent>
         </Card>
       </div>
+
+      <UserEditDialog
+        userId={editUserId}
+        onClose={() => setEditUserId(null)}
+        onSuccess={fetchUsers}
+      />
 
       <AlertDialog open={!!deleteUserId} onOpenChange={() => setDeleteUserId(null)}>
         <AlertDialogContent>
