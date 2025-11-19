@@ -145,7 +145,7 @@ const AdminValidacion = () => {
                       </TableCell>
                       <TableCell>
                         <span className="text-sm text-muted-foreground">
-                          {tech.documents.length} documento(s)
+                          {(tech.documents || []).length} documento(s)
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
