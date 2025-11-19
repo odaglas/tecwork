@@ -144,12 +144,12 @@ const TechnicianLogin = () => {
           </Button>
 
           <div className="text-center">
-            <button
-              type="button"
+            <Link
+              to="/forgot-password"
               className="text-sm text-primary hover:underline transition-fast"
             >
               Olvidé mi contraseña
-            </button>
+            </Link>
           </div>
         </form>
 
