@@ -27,6 +27,7 @@ import AdminLogin from "./pages/AdminLogin";
 import AdminUsuarios from "./pages/AdminUsuarios";
 import AdminValidacion from "./pages/AdminValidacion";
 import AdminTickets from "./pages/AdminTickets";
+import AdminTicketDetail from "./pages/AdminTicketDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -68,6 +69,7 @@ const App = () => (
           <Route path="/admin/usuarios" element={<ProtectedRoute allowedRole="admin"><AdminUsuarios /></ProtectedRoute>} />
           <Route path="/admin/validacion" element={<ProtectedRoute allowedRole="admin"><AdminValidacion /></ProtectedRoute>} />
           <Route path="/admin/tickets" element={<ProtectedRoute allowedRole="admin"><AdminTickets /></ProtectedRoute>} />
+          <Route path="/admin/tickets/:ticketId" element={<ProtectedRoute allowedRole="admin"><AdminTicketDetail /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
