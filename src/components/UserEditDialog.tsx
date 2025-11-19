@@ -69,9 +69,19 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
       if (profileError) throw profileError;
+      
+      if (!profile) {
+        toast({
+          title: "Error",
+          description: "Usuario no encontrado",
+          variant: "destructive",
+        });
+        onClose();
+        return;
+      }
 
       // Get roles
       const { data: roles, error: rolesError } = await supabase
@@ -98,7 +108,7 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
           .from("cliente_profile")
           .select("comuna, direccion")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
         form.reset({
           ...profile,
@@ -111,7 +121,7 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
           .from("tecnico_profile")
           .select("especialidad_principal, descripcion_perfil")
           .eq("user_id", userId)
-          .single();
+          .maybeSingle();
 
         form.reset({
           ...profile,
