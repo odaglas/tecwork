@@ -58,10 +58,10 @@ const App = () => (
           <Route path="/tecnico/:id" element={<ProtectedRoute allowedRole="cliente"><TechnicianPublicProfile /></ProtectedRoute>} />
           
           {/* Tecnico routes - protected */}
-          <Route path="/tecnico/perfil" element={<ProtectedRoute allowedRole="tecnico"><TechnicianProfile /></ProtectedRoute>} />
+          <Route path="/tecnico/perfil" element={<ProtectedRoute allowedRole="tecnico" allowUnvalidated={true}><TechnicianProfile /></ProtectedRoute>} />
           <Route path="/tecnico/ticket/:id" element={<ProtectedRoute allowedRole="tecnico"><TechnicianTicketDetail /></ProtectedRoute>} />
           <Route path="/tecnico/cotizar/:ticketId" element={<ProtectedRoute allowedRole="tecnico"><TechnicianQuoteForm /></ProtectedRoute>} />
-          <Route path="/tecnico/dashboard" element={<ProtectedRoute allowedRole="tecnico"><TechnicianDashboard /></ProtectedRoute>} />
+          <Route path="/tecnico/dashboard" element={<ProtectedRoute allowedRole="tecnico" allowUnvalidated={true}><TechnicianDashboard /></ProtectedRoute>} />
           
           {/* Admin routes - protected */}
           <Route path="/admin" element={<ProtectedRoute allowedRole="admin"><AdminDashboard /></ProtectedRoute>} />
