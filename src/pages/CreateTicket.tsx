@@ -96,6 +96,47 @@ const CreateTicket = () => {
 
       if (ticketError) throw ticketError;
 
+      // Upload files if any
+      if (files && files.length > 0) {
+        const uploadPromises = Array.from(files).map(async (file) => {
+          const fileExt = file.name.split('.').pop();
+          const fileName = `${ticketData.id}/${Math.random()}.${fileExt}`;
+          
+          // Upload to storage
+          const { error: uploadError, data: uploadData } = await supabase.storage
+            .from('tecnico-documents')
+            .upload(fileName, file);
+
+          if (uploadError) {
+            console.error("Error uploading file:", uploadError);
+            return null;
+          }
+
+          // Get public URL
+          const { data: { publicUrl } } = supabase.storage
+            .from('tecnico-documents')
+            .getPublicUrl(fileName);
+
+          // Determine file type
+          const tipo = file.type.startsWith('video/') ? 'video' : 'imagen';
+
+          // Save to ticket_adjunto table
+          const { error: adjuntoError } = await supabase
+            .from('ticket_adjunto')
+            .insert({
+              ticket_id: ticketData.id,
+              archivo_url: publicUrl,
+              tipo: tipo
+            });
+
+          if (adjuntoError) {
+            console.error("Error saving adjunto:", adjuntoError);
+          }
+        });
+
+        await Promise.all(uploadPromises);
+      }
+
       toast.success("Ticket creado exitosamente");
       navigate("/cliente/home");
     } catch (error: any) {
