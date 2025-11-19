@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import tecworkLogo from "@/assets/tecwork-logo.png";
 
 export const TechnicianHeader = () => {
   const handleLogout = async () => {
@@ -25,9 +26,7 @@ export const TechnicianHeader = () => {
       <div className="container px-4 py-4">
         <div className="flex items-center justify-between">
           <Link to="/tecnico/dashboard" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">T</span>
-            </div>
+            <img src={tecworkLogo} alt="TecWork Logo" className="w-10 h-10" />
             <span className="text-2xl font-bold text-primary">TecWork</span>
           </Link>
           

@@ -1,4 +1,5 @@
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import tecworkLogo from "@/assets/tecwork-logo.png";
 
 export const Footer = () => {
   return (
@@ -7,9 +8,7 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           <div>
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-primary-foreground font-bold text-xl">T</span>
-              </div>
+              <img src={tecworkLogo} alt="TecWork Logo" className="w-10 h-10" />
               <span className="text-2xl font-bold">TecWork</span>
             </div>
             <p className="text-background/70">

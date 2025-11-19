@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import tecworkLogo from "@/assets/tecwork-logo.png";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -20,9 +21,7 @@ export const Navbar = () => {
       <div className="container px-4">
         <div className="flex items-center justify-between h-16">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-xl">T</span>
-            </div>
+            <img src={tecworkLogo} alt="TecWork Logo" className="w-10 h-10" />
             <span className="text-2xl font-bold text-primary">TecWork</span>
           </Link>
           

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Shield } from "lucide-react";
+import tecworkLogo from "@/assets/tecwork-logo.png";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -85,9 +86,7 @@ const AdminLogin = () => {
         {/* Logo */}
         <div className="flex flex-col items-center gap-4">
           <Link to="/" className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
-              <Shield className="w-8 h-8 text-primary-foreground" />
-            </div>
+            <img src={tecworkLogo} alt="TecWork Logo" className="w-16 h-16" />
             <h1 className="text-2xl font-bold text-foreground">TecWork</h1>
           </Link>
           <div className="text-center">
