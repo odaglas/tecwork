@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Save, Edit2, Check, X } from "lucide-react";
+import { Loader2, ArrowLeft, Save, Edit2, Check, X, Trash2 } from "lucide-react";
 import { formatRut } from "@/lib/utils";
 
 interface TicketData {
@@ -64,6 +64,7 @@ const AdminTicketDetail = () => {
   const [cliente, setCliente] = useState<ClienteData | null>(null);
   const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
   const [adjuntos, setAdjuntos] = useState<TicketAdjunto[]>([]);
+  const [uploading, setUploading] = useState(false);
   
   const [ticketForm, setTicketForm] = useState({
     titulo: "",
@@ -268,6 +269,106 @@ const AdminTicketDetail = () => {
     }
   };
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !ticketId) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${ticketId}/${Math.random()}.${fileExt}`;
+        
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('tecnico-documents')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('tecnico-documents')
+          .getPublicUrl(fileName);
+
+        // Determine file type
+        const tipo = file.type.startsWith('video/') ? 'video' : 'imagen';
+
+        // Save to ticket_adjunto table
+        const { error: adjuntoError } = await supabase
+          .from('ticket_adjunto')
+          .insert({
+            ticket_id: ticketId,
+            archivo_url: publicUrl,
+            tipo: tipo
+          });
+
+        if (adjuntoError) throw adjuntoError;
+      });
+
+      await Promise.all(uploadPromises);
+      
+      toast({
+        title: "Éxito",
+        description: "Archivos subidos correctamente",
+      });
+      
+      // Refresh adjuntos
+      fetchTicketDetails();
+    } catch (error: any) {
+      console.error("Error uploading files:", error);
+      toast({
+        title: "Error",
+        description: "Error al subir archivos: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteFile = async (adjuntoId: string, fileUrl: string) => {
+    try {
+      // Extract file path from URL
+      const urlParts = fileUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      const folderName = urlParts[urlParts.length - 2];
+      const filePath = `${folderName}/${fileName}`;
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('tecnico-documents')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('ticket_adjunto')
+        .delete()
+        .eq('id', adjuntoId);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Éxito",
+        description: "Archivo eliminado correctamente",
+      });
+
+      // Refresh adjuntos
+      fetchTicketDetails();
+    } catch (error: any) {
+      console.error("Error deleting file:", error);
+      toast({
+        title: "Error",
+        description: "Error al eliminar archivo: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, any> = {
       abierto: "default",
@@ -420,12 +521,41 @@ const AdminTicketDetail = () => {
         </Card>
 
         {/* Photos/Attachments */}
-        {adjuntos.length > 0 && (
-          <Card>
-            <CardHeader>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
               <CardTitle>Fotos del Ticket ({adjuntos.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
+              <div className="flex gap-2">
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="file-upload"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Subiendo...
+                    </>
+                  ) : (
+                    "Subir Archivos"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {adjuntos.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No hay archivos adjuntos</p>
+            ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {adjuntos.map((adjunto) => (
                   <div key={adjunto.id} className="relative group">
@@ -462,12 +592,20 @@ const AdminTicketDetail = () => {
                         </div>
                       </a>
                     )}
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-smooth h-8 w-8"
+                      onClick={() => handleDeleteFile(adjunto.id, adjunto.archivo_url)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         {/* Cliente Info */}
         {cliente && (

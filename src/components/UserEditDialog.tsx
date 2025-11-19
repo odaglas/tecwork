@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Trash2, FileText } from "lucide-react";
 import { validateRut, formatRut, cleanRut } from "@/lib/utils";
 
 const userEditSchema = z.object({
@@ -34,9 +34,20 @@ interface UserEditDialogProps {
   onSuccess: () => void;
 }
 
+interface TecnicoDocument {
+  id: string;
+  nombre_documento: string;
+  archivo_url: string;
+  estado: string;
+  created_at: string;
+}
+
 export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogProps) => {
   const [loading, setLoading] = useState(false);
   const [userRole, setUserRole] = useState<string>("");
+  const [tecnicoProfileId, setTecnicoProfileId] = useState<string | null>(null);
+  const [documents, setDocuments] = useState<TecnicoDocument[]>([]);
+  const [uploading, setUploading] = useState(false);
   const { toast } = useToast();
 
   const form = useForm<UserEditForm>({
@@ -227,6 +238,103 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
     form.setValue("rut", formatted);
   };
 
+  const handleDocumentUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !tecnicoProfileId) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${tecnicoProfileId}/${Math.random()}.${fileExt}`;
+        
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('tecnico-documents')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('tecnico-documents')
+          .getPublicUrl(fileName);
+
+        // Save to documentacion_tecnico table
+        const { error: docError } = await supabase
+          .from('documentacion_tecnico')
+          .insert({
+            tecnico_id: tecnicoProfileId,
+            archivo_url: publicUrl,
+            nombre_documento: file.name,
+            estado: 'pendiente'
+          });
+
+        if (docError) throw docError;
+      });
+
+      await Promise.all(uploadPromises);
+      
+      toast({
+        title: "Éxito",
+        description: "Documentos subidos correctamente",
+      });
+      
+      // Refresh documents
+      if (userId) fetchUserData();
+    } catch (error: any) {
+      console.error("Error uploading documents:", error);
+      toast({
+        title: "Error",
+        description: "Error al subir documentos: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string, fileUrl: string) => {
+    try {
+      // Extract file path from URL
+      const urlParts = fileUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      const folderName = urlParts[urlParts.length - 2];
+      const filePath = `${folderName}/${fileName}`;
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('tecnico-documents')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('documentacion_tecnico')
+        .delete()
+        .eq('id', docId);
+
+      if (dbError) throw dbError;
+
+      toast({
+        title: "Éxito",
+        description: "Documento eliminado correctamente",
+      });
+
+      // Refresh documents
+      if (userId) fetchUserData();
+    } catch (error: any) {
+      console.error("Error deleting document:", error);
+      toast({
+        title: "Error",
+        description: "Error al eliminar documento: " + error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Dialog open={!!userId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -341,6 +449,74 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
                     placeholder="Descripción del perfil"
                     rows={3}
                   />
+                </div>
+
+                {/* Technician Documents Section */}
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-4">
+                    <Label>Documentos ({documents.length})</Label>
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                        multiple
+                        onChange={handleDocumentUpload}
+                        className="hidden"
+                        id="document-upload"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => document.getElementById('document-upload')?.click()}
+                        disabled={uploading}
+                      >
+                        {uploading ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Subiendo...
+                          </>
+                        ) : (
+                          "Subir Documentos"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  {documents.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">No hay documentos</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {documents.map((doc) => (
+                        <div key={doc.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                          <div className="flex items-center gap-3">
+                            <FileText className="h-5 w-5 text-muted-foreground" />
+                            <div>
+                              <a 
+                                href={doc.archivo_url} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="font-medium hover:underline"
+                              >
+                                {doc.nombre_documento}
+                              </a>
+                              <p className="text-xs text-muted-foreground">
+                                {new Date(doc.created_at).toLocaleDateString()} - {doc.estado}
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDeleteDocument(doc.id, doc.archivo_url)}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </>
             )}
