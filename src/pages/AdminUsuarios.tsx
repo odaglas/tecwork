@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Trash2, Eye } from "lucide-react";
+import { formatRut } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -238,7 +239,7 @@ const AdminUsuarios = () => {
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">{user.nombre}</TableCell>
                       <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.rut}</TableCell>
+                      <TableCell>{formatRut(user.rut)}</TableCell>
                       <TableCell className="capitalize">{user.role}</TableCell>
                       <TableCell>{user.comuna || "No especificado"}</TableCell>
                       <TableCell>

@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+import { formatRut } from "@/lib/utils";
 
 const ClientProfile = () => {
   const { toast } = useToast();
@@ -64,7 +65,7 @@ const ClientProfile = () => {
       setProfile({
         nombre: profileData?.nombre || "",
         email: profileData?.email || "",
-        rut: profileData?.rut || "",
+        rut: formatRut(profileData?.rut || ""),
         telefono: profileData?.telefono || "",
         direccion: clientData?.direccion || "",
         comuna: clientData?.comuna || "",
