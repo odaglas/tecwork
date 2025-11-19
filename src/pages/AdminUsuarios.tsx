@@ -104,14 +104,12 @@ const AdminUsuarios = () => {
           primaryRole = "admin";
         }
 
-        // Get comuna
-        let comuna = clienteProfile?.comuna;
-        if (!comuna && tecnicoProfile?.comunas_cobertura?.length > 0) {
-          comuna = tecnicoProfile.comunas_cobertura.join(", ");
-        }
-        // Show "No especificado" for empty comunas
-        if (!comuna || comuna === "") {
-          comuna = undefined;
+        // Get comuna - prioritize actual values over empty strings
+        let comuna = undefined;
+        if (clienteProfile?.comuna && clienteProfile.comuna.trim() !== "") {
+          comuna = clienteProfile.comuna;
+        } else if (tecnicoProfile?.comunas_cobertura && tecnicoProfile.comunas_cobertura.length > 0) {
+          comuna = tecnicoProfile.comunas_cobertura.filter(c => c && c.trim() !== "").join(", ");
         }
 
         return {
