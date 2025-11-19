@@ -6,9 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 interface ProtectedRouteProps {
   children: React.ReactNode;
   allowedRole: "cliente" | "tecnico" | "admin";
+  allowUnvalidated?: boolean; // Allow non-validated tecnicos for certain pages
 }
 
-export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) => {
+export const ProtectedRoute = ({ children, allowedRole, allowUnvalidated = false }: ProtectedRouteProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
@@ -44,8 +45,8 @@ export const ProtectedRoute = ({ children, allowedRole }: ProtectedRouteProps) =
         // Check if user has the required role
         const hasRequiredRole = roles.includes(allowedRole);
 
-        // For tecnicos, check validation status
-        if (hasRequiredRole && allowedRole === "tecnico") {
+        // For tecnicos, check validation status (unless allowUnvalidated is true)
+        if (hasRequiredRole && allowedRole === "tecnico" && !allowUnvalidated) {
           const { data: tecnicoData } = await supabase
             .from("tecnico_profile")
             .select("is_validated")
