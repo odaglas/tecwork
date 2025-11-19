@@ -30,6 +30,8 @@ import AdminTickets from "./pages/AdminTickets";
 import AdminTicketDetail from "./pages/AdminTicketDetail";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import SobreNosotros from "./pages/SobreNosotros";
+import TerminosCondiciones from "./pages/TerminosCondiciones";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -51,6 +53,8 @@ const App = () => (
           <Route path="/registro-tecnico" element={<TechnicianRegister />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/sobre-nosotros" element={<SobreNosotros />} />
+          <Route path="/terminos-condiciones" element={<TerminosCondiciones />} />
           <Route path="/tecnico/registro-exitoso" element={<TechnicianRegistrationSuccess />} />
           
           {/* Cliente routes - protected */}
