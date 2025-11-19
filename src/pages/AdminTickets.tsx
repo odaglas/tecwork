@@ -4,6 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -44,6 +54,8 @@ const AdminTickets = () => {
   const [estadoFilter, setEstadoFilter] = useState<string>("all");
   const [cotizacionFilter, setCotizacionFilter] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [ticketToDelete, setTicketToDelete] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchTickets = async () => {
@@ -125,6 +137,42 @@ const AdminTickets = () => {
   useEffect(() => {
     fetchTickets();
   }, []);
+
+  const handleDeleteClick = (ticketId: string) => {
+    setTicketToDelete(ticketId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!ticketToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("ticket")
+        .delete()
+        .eq("id", ticketToDelete);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ticket eliminado",
+        description: "El ticket ha sido eliminado exitosamente",
+      });
+
+      // Refresh the tickets list
+      fetchTickets();
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo eliminar el ticket",
+        variant: "destructive",
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setTicketToDelete(null);
+    }
+  };
 
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, any> = {
@@ -253,7 +301,11 @@ const AdminTickets = () => {
                             <Eye className="h-4 w-4" />
                           </Button>
                         </Link>
-                        <Button size="sm" variant="destructive">
+                        <Button 
+                          size="sm" 
+                          variant="destructive"
+                          onClick={() => handleDeleteClick(ticket.id)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </TableCell>
@@ -271,6 +323,26 @@ const AdminTickets = () => {
           </CardContent>
         </Card>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar ticket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El ticket y toda su información relacionada serán eliminados permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
