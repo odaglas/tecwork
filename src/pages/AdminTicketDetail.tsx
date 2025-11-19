@@ -308,13 +308,13 @@ const AdminTicketDetail = () => {
 
       await Promise.all(uploadPromises);
       
+      // Refresh adjuntos
+      await fetchTicketDetails();
+      
       toast({
         title: "Éxito",
         description: "Archivos subidos correctamente",
       });
-      
-      // Refresh adjuntos
-      fetchTicketDetails();
     } catch (error: any) {
       console.error("Error uploading files:", error);
       toast({
@@ -352,13 +352,13 @@ const AdminTicketDetail = () => {
 
       if (dbError) throw dbError;
 
+      // Refresh adjuntos
+      await fetchTicketDetails();
+
       toast({
         title: "Éxito",
         description: "Archivo eliminado correctamente",
       });
-
-      // Refresh adjuntos
-      fetchTicketDetails();
     } catch (error: any) {
       console.error("Error deleting file:", error);
       toast({
