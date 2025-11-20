@@ -105,50 +105,73 @@ const TicketDetail = () => {
         .eq("ticket_id", ticketId)
         .order("created_at", { ascending: false });
 
+      console.log("Cotizaciones data:", cotizacionesData);
       if (cotizacionesError) throw cotizacionesError;
 
-      // Get all unique tecnico_ids
-      const tecnicoIds = [...new Set(cotizacionesData?.map(c => c.tecnico_id) || [])];
-      
-      // Fetch all tecnico profiles in one query
-      const { data: tecnicoProfiles } = await supabase
-        .from("tecnico_profile")
-        .select("id, user_id")
-        .in("id", tecnicoIds);
-
-      // Get all unique user_ids
-      const userIds = tecnicoProfiles?.map(tp => tp.user_id) || [];
-      
-      // Fetch all user profiles in one query
-      const { data: userProfiles } = await supabase
-        .from("profiles")
-        .select("id, nombre, email")
-        .in("id", userIds);
-
-      // Create lookup maps
-      const tecnicoProfileMap = new Map(tecnicoProfiles?.map(tp => [tp.id, tp]) || []);
-      const userProfileMap = new Map(userProfiles?.map(up => [up.id, up]) || []);
-
-      // Combine the data
-      const formattedCotizaciones = cotizacionesData?.map((cot) => {
-        const tecnicoProfile = tecnicoProfileMap.get(cot.tecnico_id);
-        const userProfile = tecnicoProfile ? userProfileMap.get(tecnicoProfile.user_id) : null;
+      if (!cotizacionesData || cotizacionesData.length === 0) {
+        setCotizaciones([]);
+      } else {
+        // Get all unique tecnico_ids
+        const tecnicoIds = [...new Set(cotizacionesData.map(c => c.tecnico_id))];
+        console.log("Tecnico IDs:", tecnicoIds);
         
-        return {
-          id: cot.id,
-          descripcion: cot.descripcion,
-          valor_total: cot.valor_total,
-          tiempo_estimado_dias: cot.tiempo_estimado_dias,
-          estado: cot.estado,
-          created_at: cot.created_at,
-          tecnico_nombre: userProfile?.nombre || "Desconocido",
-          tecnico_email: userProfile?.email || "",
-          tecnico_id: cot.tecnico_id,
-          tecnico_user_id: tecnicoProfile?.user_id || null,
-        };
-      }) || [];
+        // Fetch all tecnico profiles in one query
+        const { data: tecnicoProfiles, error: tecnicoError } = await supabase
+          .from("tecnico_profile")
+          .select("id, user_id")
+          .in("id", tecnicoIds);
 
-      setCotizaciones(formattedCotizaciones);
+        console.log("Tecnico profiles:", tecnicoProfiles);
+        if (tecnicoError) console.error("Error fetching tecnico profiles:", tecnicoError);
+
+        // Get all unique user_ids
+        const userIds = tecnicoProfiles?.map(tp => tp.user_id) || [];
+        console.log("User IDs:", userIds);
+        
+        // Fetch all user profiles in one query
+        const { data: userProfiles, error: userError } = await supabase
+          .from("profiles")
+          .select("id, nombre, email")
+          .in("id", userIds);
+
+        console.log("User profiles:", userProfiles);
+        if (userError) console.error("Error fetching user profiles:", userError);
+
+        // Create lookup maps
+        const tecnicoProfileMap = new Map(tecnicoProfiles?.map(tp => [tp.id, tp]) || []);
+        const userProfileMap = new Map(userProfiles?.map(up => [up.id, up]) || []);
+
+        console.log("Tecnico profile map:", tecnicoProfileMap);
+        console.log("User profile map:", userProfileMap);
+
+        // Combine the data
+        const formattedCotizaciones = cotizacionesData.map((cot) => {
+          const tecnicoProfile = tecnicoProfileMap.get(cot.tecnico_id);
+          const userProfile = tecnicoProfile ? userProfileMap.get(tecnicoProfile.user_id) : null;
+          
+          console.log(`Processing cot ${cot.id}:`, {
+            tecnico_id: cot.tecnico_id,
+            tecnicoProfile,
+            userProfile
+          });
+          
+          return {
+            id: cot.id,
+            descripcion: cot.descripcion,
+            valor_total: cot.valor_total,
+            tiempo_estimado_dias: cot.tiempo_estimado_dias,
+            estado: cot.estado,
+            created_at: cot.created_at,
+            tecnico_nombre: userProfile?.nombre || "Desconocido",
+            tecnico_email: userProfile?.email || "",
+            tecnico_id: cot.tecnico_id,
+            tecnico_user_id: tecnicoProfile?.user_id || null,
+          };
+        });
+
+        console.log("Formatted cotizaciones:", formattedCotizaciones);
+        setCotizaciones(formattedCotizaciones);
+      }
 
 
       // Get ticket adjuntos
