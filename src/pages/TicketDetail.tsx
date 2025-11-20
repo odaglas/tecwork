@@ -98,61 +98,49 @@ const TicketDetail = () => {
         categoria: ticketData.categoria,
       });
 
-      // Get cotizaciones
-      const { data: cotizacionesData, error: cotizacionesError } = await supabase
+      // Get cotizaciones with tecnico data using joins
+      const { data: cotizacionesWithTecnico, error: cotizacionesWithTecnicoError } = await supabase
         .from("cotizacion")
-        .select("*")
+        .select(`
+          id,
+          descripcion,
+          valor_total,
+          tiempo_estimado_dias,
+          estado,
+          created_at,
+          tecnico_id,
+          tecnico_profile!inner (
+            user_id,
+            profiles!inner (
+              nombre,
+              email
+            )
+          )
+        `)
         .eq("ticket_id", ticketId)
         .order("created_at", { ascending: false });
 
-      if (cotizacionesError) throw cotizacionesError;
+      if (cotizacionesWithTecnicoError) {
+        console.error("Error fetching cotizaciones:", cotizacionesWithTecnicoError);
+        throw cotizacionesWithTecnicoError;
+      }
 
-      // Get tecnico data for each cotizacion
-      const cotizacionesWithTecnico = await Promise.all(
-        cotizacionesData.map(async (cot) => {
-          const { data: tecnicoProfile } = await supabase
-            .from("tecnico_profile")
-            .select("user_id")
-            .eq("id", cot.tecnico_id)
-            .maybeSingle();
+      // Transform the data to match our interface
+      const formattedCotizaciones = cotizacionesWithTecnico?.map((cot: any) => ({
+        id: cot.id,
+        descripcion: cot.descripcion,
+        valor_total: cot.valor_total,
+        tiempo_estimado_dias: cot.tiempo_estimado_dias,
+        estado: cot.estado,
+        created_at: cot.created_at,
+        tecnico_nombre: cot.tecnico_profile?.profiles?.nombre || "Desconocido",
+        tecnico_email: cot.tecnico_profile?.profiles?.email || "",
+        tecnico_id: cot.tecnico_id,
+        tecnico_user_id: cot.tecnico_profile?.user_id || null,
+      })) || [];
 
-          if (!tecnicoProfile) {
-            return {
-              id: cot.id,
-              descripcion: cot.descripcion,
-              valor_total: cot.valor_total,
-              tiempo_estimado_dias: cot.tiempo_estimado_dias,
-              estado: cot.estado,
-              created_at: cot.created_at,
-              tecnico_nombre: "Desconocido",
-              tecnico_email: "",
-              tecnico_id: cot.tecnico_id,
-              tecnico_user_id: null,
-            };
-          }
+      setCotizaciones(formattedCotizaciones);
 
-          const { data: tecnicoData } = await supabase
-            .from("profiles")
-            .select("nombre, email")
-            .eq("id", tecnicoProfile.user_id)
-            .maybeSingle();
-
-          return {
-            id: cot.id,
-            descripcion: cot.descripcion,
-            valor_total: cot.valor_total,
-            tiempo_estimado_dias: cot.tiempo_estimado_dias,
-            estado: cot.estado,
-            created_at: cot.created_at,
-            tecnico_nombre: tecnicoData?.nombre || "Desconocido",
-            tecnico_email: tecnicoData?.email || "",
-            tecnico_id: cot.tecnico_id,
-            tecnico_user_id: tecnicoProfile.user_id,
-          };
-        })
-      );
-
-      setCotizaciones(cotizacionesWithTecnico);
 
       // Get ticket adjuntos
       const { data: adjuntosData, error: adjuntosError } = await supabase
