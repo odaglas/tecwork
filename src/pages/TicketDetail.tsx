@@ -98,46 +98,55 @@ const TicketDetail = () => {
         categoria: ticketData.categoria,
       });
 
-      // Get cotizaciones with tecnico data using joins
-      const { data: cotizacionesWithTecnico, error: cotizacionesWithTecnicoError } = await supabase
+      // Get cotizaciones
+      const { data: cotizacionesData, error: cotizacionesError } = await supabase
         .from("cotizacion")
-        .select(`
-          id,
-          descripcion,
-          valor_total,
-          tiempo_estimado_dias,
-          estado,
-          created_at,
-          tecnico_id,
-          tecnico_profile!inner (
-            user_id,
-            profiles!inner (
-              nombre,
-              email
-            )
-          )
-        `)
+        .select("*")
         .eq("ticket_id", ticketId)
         .order("created_at", { ascending: false });
 
-      if (cotizacionesWithTecnicoError) {
-        console.error("Error fetching cotizaciones:", cotizacionesWithTecnicoError);
-        throw cotizacionesWithTecnicoError;
-      }
+      if (cotizacionesError) throw cotizacionesError;
 
-      // Transform the data to match our interface
-      const formattedCotizaciones = cotizacionesWithTecnico?.map((cot: any) => ({
-        id: cot.id,
-        descripcion: cot.descripcion,
-        valor_total: cot.valor_total,
-        tiempo_estimado_dias: cot.tiempo_estimado_dias,
-        estado: cot.estado,
-        created_at: cot.created_at,
-        tecnico_nombre: cot.tecnico_profile?.profiles?.nombre || "Desconocido",
-        tecnico_email: cot.tecnico_profile?.profiles?.email || "",
-        tecnico_id: cot.tecnico_id,
-        tecnico_user_id: cot.tecnico_profile?.user_id || null,
-      })) || [];
+      // Get all unique tecnico_ids
+      const tecnicoIds = [...new Set(cotizacionesData?.map(c => c.tecnico_id) || [])];
+      
+      // Fetch all tecnico profiles in one query
+      const { data: tecnicoProfiles } = await supabase
+        .from("tecnico_profile")
+        .select("id, user_id")
+        .in("id", tecnicoIds);
+
+      // Get all unique user_ids
+      const userIds = tecnicoProfiles?.map(tp => tp.user_id) || [];
+      
+      // Fetch all user profiles in one query
+      const { data: userProfiles } = await supabase
+        .from("profiles")
+        .select("id, nombre, email")
+        .in("id", userIds);
+
+      // Create lookup maps
+      const tecnicoProfileMap = new Map(tecnicoProfiles?.map(tp => [tp.id, tp]) || []);
+      const userProfileMap = new Map(userProfiles?.map(up => [up.id, up]) || []);
+
+      // Combine the data
+      const formattedCotizaciones = cotizacionesData?.map((cot) => {
+        const tecnicoProfile = tecnicoProfileMap.get(cot.tecnico_id);
+        const userProfile = tecnicoProfile ? userProfileMap.get(tecnicoProfile.user_id) : null;
+        
+        return {
+          id: cot.id,
+          descripcion: cot.descripcion,
+          valor_total: cot.valor_total,
+          tiempo_estimado_dias: cot.tiempo_estimado_dias,
+          estado: cot.estado,
+          created_at: cot.created_at,
+          tecnico_nombre: userProfile?.nombre || "Desconocido",
+          tecnico_email: userProfile?.email || "",
+          tecnico_id: cot.tecnico_id,
+          tecnico_user_id: tecnicoProfile?.user_id || null,
+        };
+      }) || [];
 
       setCotizaciones(formattedCotizaciones);
 
