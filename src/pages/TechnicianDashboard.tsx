@@ -146,9 +146,16 @@ const TechnicianDashboard = () => {
                       <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
                       <div className="flex flex-col gap-2">
                         <Badge variant="secondary">{ticket.categoria}</Badge>
-                        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
-                          {ticket.estado === "en_progreso" ? "En Progreso" : "Cotizando"}
-                        </Badge>
+                        {ticket.estado === "en_progreso" && (
+                          <Badge className="bg-green-500/10 text-green-500 border-green-500">
+                            En Progreso
+                          </Badge>
+                        )}
+                        {ticket.estado === "cotizando" && (
+                          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
+                            Cotizando
+                          </Badge>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
