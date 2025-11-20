@@ -29,7 +29,9 @@ const technicianRegisterSchema = z.object({
   telefono: z.string().min(9, { message: "Teléfono inválido" }),
   especialidad_principal: z.string().min(1, { message: "Debe seleccionar una especialidad" }),
   descripcion_perfil: z.string().optional(),
-  documento: z.instanceof(File, { message: "Debe cargar un certificado o licencia" }),
+  cedula: z.instanceof(File, { message: "Debe cargar su cédula de identidad" }),
+  curriculum: z.instanceof(File, { message: "Debe cargar su curriculum vitae" }),
+  certificado: z.instanceof(File).optional(),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -50,18 +52,28 @@ const TechnicianRegister = () => {
     descripcion_perfil: "",
   });
   const [selectedComunas, setSelectedComunas] = useState<string[]>([]);
-  const [documento, setDocumento] = useState<File | null>(null);
+  const [cedula, setCedula] = useState<File | null>(null);
+  const [curriculum, setCurriculum] = useState<File | null>(null);
+  const [certificado, setCertificado] = useState<File | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      if (!documento) {
-        throw new Error("Debe cargar un certificado o licencia");
+      if (!cedula) {
+        throw new Error("Debe cargar su cédula de identidad");
+      }
+      if (!curriculum) {
+        throw new Error("Debe cargar su curriculum vitae");
       }
       
-      const validatedData = technicianRegisterSchema.parse({ ...formData, documento });
+      const validatedData = technicianRegisterSchema.parse({ 
+        ...formData, 
+        cedula,
+        curriculum,
+        certificado: certificado || undefined
+      });
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: validatedData.email,
@@ -122,42 +134,71 @@ const TechnicianRegister = () => {
 
       console.log("Técnico perfil creado exitosamente");
 
-      // Upload document
-      const fileExt = documento.name.split('.').pop();
-      const fileName = `${authData.user.id}/${Date.now()}.${fileExt}`;
-      
-      const { error: uploadError } = await supabase.storage
-        .from('tecnico-documents')
-        .upload(fileName, documento);
+      // Get tecnico_profile id
+      const { data: tecnicoProfileData } = await supabase
+        .from("tecnico_profile")
+        .select("id")
+        .eq("user_id", authData.user.id)
+        .single();
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
+      if (!tecnicoProfileData) {
+        throw new Error("No se pudo obtener el perfil del técnico");
       }
 
-      console.log("Documento subido exitosamente");
+      const tecnicoId = tecnicoProfileData.id;
+      const cleanedRut = cleanRut(validatedData.rut);
 
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from('tecnico-documents')
-        .getPublicUrl(fileName);
+      // Upload documents with proper naming
+      const documentsToUpload = [
+        { file: cedula, name: `${cleanedRut}_cedula`, displayName: "Cédula de Identidad" },
+        { file: curriculum, name: `${cleanedRut}_curriculum`, displayName: "Curriculum Vitae" },
+      ];
 
-      // Save document reference in database
-      const { error: docError } = await supabase
-        .from("documentacion_tecnico")
-        .insert({
-          tecnico_id: (await supabase.from("tecnico_profile").select("id").eq("user_id", authData.user.id).single()).data?.id,
-          nombre_documento: documento.name,
-          archivo_url: urlData.publicUrl,
-          estado: "pendiente",
+      // Add certificado if provided
+      if (certificado) {
+        documentsToUpload.push({ 
+          file: certificado, 
+          name: `${cleanedRut}_certificado`, 
+          displayName: "Certificado SEC u Otro" 
         });
-
-      if (docError) {
-        console.error("Document reference error:", docError);
-        throw docError;
       }
 
-      console.log("Referencia de documento guardada exitosamente");
+      // Upload all documents
+      for (const doc of documentsToUpload) {
+        const fileExt = doc.file.name.split('.').pop();
+        const fileName = `${authData.user.id}/${doc.name}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('tecnico-documents')
+          .upload(fileName, doc.file);
+
+        if (uploadError) {
+          console.error(`Upload error for ${doc.displayName}:`, uploadError);
+          throw new Error(`Error al subir ${doc.displayName}`);
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('tecnico-documents')
+          .getPublicUrl(fileName);
+
+        // Save document reference in database
+        const { error: docError } = await supabase
+          .from("documentacion_tecnico")
+          .insert({
+            tecnico_id: tecnicoId,
+            nombre_documento: doc.displayName,
+            archivo_url: urlData.publicUrl,
+            estado: "pendiente",
+          });
+
+        if (docError) {
+          console.error(`Document reference error for ${doc.displayName}:`, docError);
+          throw new Error(`Error al guardar referencia de ${doc.displayName}`);
+        }
+      }
+
+      console.log("Documentos subidos y guardados exitosamente");
 
       toast({
         title: "¡Registro exitoso!",
@@ -304,13 +345,42 @@ const TechnicianRegister = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="documento">Certificado o Licencia SEC *</Label>
+            <Label htmlFor="cedula">Cédula de Identidad *</Label>
             <Input
-              id="documento"
+              id="cedula"
               type="file"
               accept=".pdf,.jpg,.jpeg,.png"
-              onChange={(e) => setDocumento(e.target.files?.[0] || null)}
+              onChange={(e) => setCedula(e.target.files?.[0] || null)}
               required
+              className="cursor-pointer"
+            />
+            <p className="text-xs text-muted-foreground">
+              Formatos aceptados: PDF, JPG, PNG (máx. 10MB)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="curriculum">Curriculum Vitae *</Label>
+            <Input
+              id="curriculum"
+              type="file"
+              accept=".pdf,.doc,.docx"
+              onChange={(e) => setCurriculum(e.target.files?.[0] || null)}
+              required
+              className="cursor-pointer"
+            />
+            <p className="text-xs text-muted-foreground">
+              Formatos aceptados: PDF, DOC, DOCX (máx. 10MB)
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="certificado">Certificado SEC u Otro (Opcional)</Label>
+            <Input
+              id="certificado"
+              type="file"
+              accept=".pdf,.jpg,.jpeg,.png"
+              onChange={(e) => setCertificado(e.target.files?.[0] || null)}
               className="cursor-pointer"
             />
             <p className="text-xs text-muted-foreground">
