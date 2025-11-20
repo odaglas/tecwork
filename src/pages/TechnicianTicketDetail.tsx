@@ -30,7 +30,7 @@ interface TicketAdjunto {
 }
 
 const TechnicianTicketDetail = () => {
-  const { ticketId } = useParams();
+  const { id: ticketId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   
