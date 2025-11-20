@@ -32,6 +32,7 @@ const ClientHome = () => {
   const { toast } = useToast();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     fetchUserTickets();
@@ -51,6 +52,17 @@ const ClientHome = () => {
         });
         navigate("/login");
         return;
+      }
+
+      // Get user name from profiles
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("nombre")
+        .eq("id", user.id)
+        .single();
+
+      if (profileData) {
+        setUserName(profileData.nombre);
       }
 
       // Get cliente_profile for current user
@@ -110,6 +122,15 @@ const ClientHome = () => {
 
       {/* Main Content */}
       <main className="container px-4 py-8">
+        {/* Welcome Message */}
+        {userName && (
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground">
+              ¡Bienvenido, {userName}!
+            </h1>
+          </div>
+        )}
+
         {/* Title */}
         <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
           ¿Qué servicio necesitas hoy?

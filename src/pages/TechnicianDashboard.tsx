@@ -22,12 +22,24 @@ const TechnicianDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [technicianSpecialty, setTechnicianSpecialty] = useState<string>("");
+  const [userName, setUserName] = useState<string>("");
 
   useEffect(() => {
     const checkValidationAndFetchTickets = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
+          // Get user name from profiles
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("nombre")
+            .eq("id", user.id)
+            .single();
+
+          if (profileData) {
+            setUserName(profileData.nombre);
+          }
+
           const { data: tecnicoData } = await supabase
             .from("tecnico_profile")
             .select("is_validated, especialidad_principal")
@@ -67,6 +79,15 @@ const TechnicianDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {/* Welcome Message */}
+        {userName && (
+          <div className="mb-6">
+            <h1 className="text-3xl font-bold text-foreground">
+              ¡Bienvenido, {userName}!
+            </h1>
+          </div>
+        )}
+
         {/* Validation Warning */}
         {!loading && isValidated === false && (
           <Alert variant="destructive" className="mb-6">
