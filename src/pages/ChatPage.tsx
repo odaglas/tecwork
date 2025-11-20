@@ -177,7 +177,7 @@ const ChatPage = () => {
 
         <Card className="flex flex-col h-[calc(100vh-12rem)]">
           <div className="p-4 border-b">
-            <h2 className="text-xl font-semibold">Chat con el Técnico</h2>
+            <h2 className="text-xl font-semibold">Chat</h2>
           </div>
 
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
