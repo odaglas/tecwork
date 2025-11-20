@@ -47,6 +47,7 @@ const ClientRegister = () => {
     direccion: "",
     comuna: "",
   });
+  const [rutError, setRutError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,9 +200,29 @@ const ClientRegister = () => {
               onChange={(e) => {
                 const formatted = formatRut(e.target.value);
                 setFormData({ ...formData, rut: formatted });
+                if (formatted.length >= 11) {
+                  if (!validateRut(formatted)) {
+                    setRutError("RUT inválido");
+                  } else {
+                    setRutError("");
+                  }
+                } else {
+                  setRutError("");
+                }
+              }}
+              onBlur={() => {
+                if (formData.rut && !validateRut(formData.rut)) {
+                  setRutError("RUT inválido");
+                } else {
+                  setRutError("");
+                }
               }}
               required
+              className={rutError ? "border-destructive" : ""}
             />
+            {rutError && (
+              <p className="text-sm text-destructive">{rutError}</p>
+            )}
           </div>
 
           <div className="space-y-2">

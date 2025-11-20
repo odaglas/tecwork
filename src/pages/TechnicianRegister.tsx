@@ -55,6 +55,7 @@ const TechnicianRegister = () => {
   const [cedula, setCedula] = useState<File | null>(null);
   const [curriculum, setCurriculum] = useState<File | null>(null);
   const [certificado, setCertificado] = useState<File | null>(null);
+  const [rutError, setRutError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -284,9 +285,29 @@ const TechnicianRegister = () => {
               onChange={(e) => {
                 const formatted = formatRut(e.target.value);
                 setFormData({ ...formData, rut: formatted });
+                if (formatted.length >= 11) {
+                  if (!validateRut(formatted)) {
+                    setRutError("RUT inválido");
+                  } else {
+                    setRutError("");
+                  }
+                } else {
+                  setRutError("");
+                }
+              }}
+              onBlur={() => {
+                if (formData.rut && !validateRut(formData.rut)) {
+                  setRutError("RUT inválido");
+                } else {
+                  setRutError("");
+                }
               }}
               required
+              className={rutError ? "border-destructive" : ""}
             />
+            {rutError && (
+              <p className="text-sm text-destructive">{rutError}</p>
+            )}
           </div>
 
           <div className="space-y-2">
