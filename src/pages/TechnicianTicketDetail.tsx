@@ -50,9 +50,26 @@ const TechnicianTicketDetail = () => {
   });
 
   useEffect(() => {
-    if (ticketId) {
-      fetchTicketDetails();
-    }
+    const checkAuthAndFetchTicket = async () => {
+      // Check if user is authenticated
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      
+      if (authError || !user) {
+        toast({
+          title: "Sesión expirada",
+          description: "Por favor, inicia sesión nuevamente",
+          variant: "destructive",
+        });
+        navigate("/tecnico/login");
+        return;
+      }
+      
+      if (ticketId) {
+        fetchTicketDetails();
+      }
+    };
+    
+    checkAuthAndFetchTicket();
   }, [ticketId]);
 
   const fetchTicketDetails = async () => {
