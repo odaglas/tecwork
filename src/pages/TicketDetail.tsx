@@ -43,7 +43,7 @@ interface CotizacionData {
 }
 
 const TicketDetail = () => {
-  const { ticketId } = useParams();
+  const { id: ticketId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -75,9 +75,20 @@ const TicketDetail = () => {
         .from("ticket")
         .select("*")
         .eq("id", ticketId)
-        .single();
+        .maybeSingle();
 
       if (ticketError) throw ticketError;
+
+      if (!ticketData) {
+        toast({
+          title: "Ticket no encontrado",
+          description: "No tienes permiso para ver este ticket o no existe",
+          variant: "destructive",
+        });
+        setLoading(false);
+        navigate("/cliente/home");
+        return;
+      }
 
       setTicket(ticketData);
       setTicketForm({
