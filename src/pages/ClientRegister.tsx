@@ -13,7 +13,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { z } from "zod";
-import { formatRut, cleanRut } from "@/lib/utils";
+import { formatRut, cleanRut, validateRut } from "@/lib/utils";
 import tecworkLogo from "@/assets/tecwork-logo.png";
 import { ArrowLeft } from "lucide-react";
 
@@ -22,10 +22,9 @@ const clientRegisterSchema = z.object({
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
   confirmPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres" }),
   nombre: z.string().min(2, { message: "El nombre debe tener al menos 2 caracteres" }),
-  rut: z.string().refine((val) => {
-    const { validateRut } = require("@/lib/utils");
-    return validateRut(val);
-  }, { message: "RUT inválido" }),
+  rut: z.string().refine((val) => validateRut(val), {
+    message: "RUT inválido"
+  }),
   telefono: z.string().min(9, { message: "Teléfono inválido" }),
   direccion: z.string().min(5, { message: "Dirección inválida" }),
   comuna: z.string().min(1, { message: "Debe seleccionar una comuna" }),
