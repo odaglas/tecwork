@@ -83,11 +83,11 @@ const TechnicianDashboard = () => {
               }
             }
 
-            // Fetch available tickets
+            // Fetch available tickets (case-insensitive category match)
             const { data: ticketsData } = await supabase
               .from("ticket")
               .select("*")
-              .eq("categoria", tecnicoData.especialidad_principal)
+              .ilike("categoria", tecnicoData.especialidad_principal)
               .in("estado", ["abierto", "cotizando"])
               .order("created_at", { ascending: false });
 
