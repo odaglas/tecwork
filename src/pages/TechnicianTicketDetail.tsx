@@ -73,14 +73,18 @@ const TechnicianTicketDetail = () => {
   }, [ticketId]);
 
   const fetchTicketDetails = async () => {
+    console.log("Starting fetchTicketDetails, ticketId:", ticketId);
     setLoading(true);
     try {
       // Get ticket
+      console.log("Fetching ticket data...");
       const { data: ticketData, error: ticketError } = await supabase
         .from("ticket")
         .select("*")
         .eq("id", ticketId)
         .maybeSingle();
+
+      console.log("Ticket query result:", { ticketData, ticketError });
 
       if (ticketError) {
         console.error("Error fetching ticket:", ticketError);
@@ -88,6 +92,7 @@ const TechnicianTicketDetail = () => {
       }
       
       if (!ticketData) {
+        console.log("No ticket data found");
         toast({
           title: "Ticket no encontrado",
           description: "No tienes permiso para ver este ticket o no existe",
@@ -98,24 +103,33 @@ const TechnicianTicketDetail = () => {
       }
       
       setTicket(ticketData);
+      console.log("Ticket data set successfully");
 
       // Get ticket adjuntos
+      console.log("Fetching ticket attachments...");
       const { data: adjuntosData, error: adjuntosError } = await supabase
         .from("ticket_adjunto")
         .select("*")
         .eq("ticket_id", ticketId)
         .order("created_at", { ascending: true });
 
-      if (adjuntosError) throw adjuntosError;
+      console.log("Adjuntos query result:", { adjuntosData, adjuntosError });
+
+      if (adjuntosError) {
+        console.error("Error fetching adjuntos:", adjuntosError);
+        throw adjuntosError;
+      }
       setAdjuntos(adjuntosData || []);
+      console.log("Adjuntos data set successfully");
     } catch (error: any) {
-      console.error("Error fetching ticket details:", error);
+      console.error("Error in fetchTicketDetails:", error);
       toast({
         title: "Error",
         description: "No se pudo cargar la información del ticket",
         variant: "destructive",
       });
     } finally {
+      console.log("Setting loading to false");
       setLoading(false);
     }
   };
