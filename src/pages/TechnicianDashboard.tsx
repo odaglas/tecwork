@@ -15,12 +15,14 @@ interface Ticket {
   descripcion: string;
   comuna: string;
   created_at: string;
+  estado?: string;
 }
 
 const TechnicianDashboard = () => {
   const [isValidated, setIsValidated] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [quotedTickets, setQuotedTickets] = useState<Ticket[]>([]);
   const [technicianSpecialty, setTechnicianSpecialty] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
@@ -51,6 +53,37 @@ const TechnicianDashboard = () => {
 
           // Fetch tickets matching technician's specialty
           if (tecnicoData?.is_validated && tecnicoData?.especialidad_principal) {
+            // Get tecnico_profile id
+            const { data: tecnicoProfileData } = await supabase
+              .from("tecnico_profile")
+              .select("id")
+              .eq("user_id", user.id)
+              .single();
+
+            if (tecnicoProfileData) {
+              // Fetch tickets with technician's quotes
+              const { data: cotizacionesData } = await supabase
+                .from("cotizacion")
+                .select("ticket_id")
+                .eq("tecnico_id", tecnicoProfileData.id);
+
+              if (cotizacionesData && cotizacionesData.length > 0) {
+                const quotedTicketIds = cotizacionesData.map(c => c.ticket_id);
+                
+                const { data: quotedTicketsData } = await supabase
+                  .from("ticket")
+                  .select("*")
+                  .in("id", quotedTicketIds)
+                  .in("estado", ["cotizando", "en_progreso"])
+                  .order("created_at", { ascending: false });
+
+                if (quotedTicketsData) {
+                  setQuotedTickets(quotedTicketsData);
+                }
+              }
+            }
+
+            // Fetch available tickets
             const { data: ticketsData } = await supabase
               .from("ticket")
               .select("*")
@@ -101,18 +134,60 @@ const TechnicianDashboard = () => {
           </Alert>
         )}
 
+        {/* Quoted Tickets Section */}
+        {quotedTickets.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Mis Cotizaciones</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {quotedTickets.map((ticket) => (
+                <Card key={ticket.id} className="hover:shadow-lg transition-shadow border-primary/50">
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
+                      <div className="flex flex-col gap-2">
+                        <Badge variant="secondary">{ticket.categoria}</Badge>
+                        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
+                          {ticket.estado === "en_progreso" ? "En Progreso" : "Cotizando"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-muted-foreground text-sm">{ticket.descripcion}</p>
+                    
+                    <div className="flex flex-col gap-2 text-sm">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span>{ticket.comuna}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Clock className="w-4 h-4" />
+                        <span>Publicado {new Date(ticket.created_at).toLocaleDateString('es-CL')}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter>
+                    <Button 
+                      className="w-full"
+                      onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
+                    >
+                      Ver Detalles
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Title and Filters */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-6">Nuevos Trabajos Disponibles</h1>
+          <h2 className="text-2xl font-bold text-foreground mb-6">Nuevos Trabajos Disponibles</h2>
           
           <div className="flex flex-wrap gap-3">
             <Button variant="outline" className="gap-2">
               <Filter className="w-4 h-4" />
               Filtrar por Comuna
-            </Button>
-            <Button variant="outline" className="gap-2">
-              <Filter className="w-4 h-4" />
-              Filtrar por Categoría
             </Button>
           </div>
         </div>
