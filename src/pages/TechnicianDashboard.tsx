@@ -76,7 +76,6 @@ const TechnicianDashboard = () => {
                   .from("ticket")
                   .select("*")
                   .in("id", quotedTicketIds)
-                  .in("estado", ["cotizando", "en_progreso"])
                   .order("created_at", { ascending: false });
 
                 if (quotedTicketsData) {
