@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload } from "lucide-react";
+import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -40,6 +40,7 @@ interface CotizacionData {
   tecnico_nombre: string;
   tecnico_email: string;
   tecnico_id: string;
+  tecnico_user_id: string | null;
 }
 
 const TicketDetail = () => {
@@ -113,13 +114,28 @@ const TicketDetail = () => {
             .from("tecnico_profile")
             .select("user_id")
             .eq("id", cot.tecnico_id)
-            .single();
+            .maybeSingle();
+
+          if (!tecnicoProfile) {
+            return {
+              id: cot.id,
+              descripcion: cot.descripcion,
+              valor_total: cot.valor_total,
+              tiempo_estimado_dias: cot.tiempo_estimado_dias,
+              estado: cot.estado,
+              created_at: cot.created_at,
+              tecnico_nombre: "Desconocido",
+              tecnico_email: "",
+              tecnico_id: cot.tecnico_id,
+              tecnico_user_id: null,
+            };
+          }
 
           const { data: tecnicoData } = await supabase
             .from("profiles")
             .select("nombre, email")
-            .eq("id", tecnicoProfile?.user_id)
-            .single();
+            .eq("id", tecnicoProfile.user_id)
+            .maybeSingle();
 
           return {
             id: cot.id,
@@ -131,6 +147,7 @@ const TicketDetail = () => {
             tecnico_nombre: tecnicoData?.nombre || "Desconocido",
             tecnico_email: tecnicoData?.email || "",
             tecnico_id: cot.tecnico_id,
+            tecnico_user_id: tecnicoProfile.user_id,
           };
         })
       );
@@ -155,6 +172,72 @@ const TicketDetail = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAcceptCotizacion = async (cotizacionId: string) => {
+    try {
+      // Update the cotizacion status to "aceptada"
+      const { error: cotizacionError } = await supabase
+        .from("cotizacion")
+        .update({ estado: "aceptada" })
+        .eq("id", cotizacionId);
+
+      if (cotizacionError) throw cotizacionError;
+
+      // Reject all other cotizaciones for this ticket
+      const { error: rejectError } = await supabase
+        .from("cotizacion")
+        .update({ estado: "rechazada" })
+        .eq("ticket_id", ticketId)
+        .neq("id", cotizacionId);
+
+      if (rejectError) throw rejectError;
+
+      // Update ticket status to "en_progreso"
+      const { error: ticketError } = await supabase
+        .from("ticket")
+        .update({ estado: "en_progreso" })
+        .eq("id", ticketId);
+
+      if (ticketError) throw ticketError;
+
+      toast({
+        title: "Cotización Aceptada",
+        description: "Has aceptado esta cotización. El trabajo comenzará pronto.",
+      });
+
+      fetchTicketDetails();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo aceptar la cotización",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleRejectCotizacion = async (cotizacionId: string) => {
+    try {
+      const { error } = await supabase
+        .from("cotizacion")
+        .update({ estado: "rechazada" })
+        .eq("id", cotizacionId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cotización Rechazada",
+        description: "Has rechazado esta cotización",
+      });
+
+      fetchTicketDetails();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo rechazar la cotización",
+        variant: "destructive",
+      });
     }
   };
 
@@ -575,7 +658,18 @@ const TicketDetail = () => {
                           {getCotizacionEstadoBadge(cot.estado)}
                         </div>
                         <p className="text-sm text-muted-foreground mb-2">{cot.tecnico_email}</p>
-                        <p className="text-muted-foreground">{cot.descripcion}</p>
+                        {cot.tecnico_user_id && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-primary"
+                            onClick={() => window.open(`/tecnico/${cot.tecnico_user_id}`, '_blank')}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            Ver perfil del técnico
+                          </Button>
+                        )}
+                        <p className="text-muted-foreground mt-2">{cot.descripcion}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-primary">{formatPrice(cot.valor_total)}</p>
@@ -583,13 +677,24 @@ const TicketDetail = () => {
                       </div>
                     </div>
                     {cot.estado === "pendiente" && (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 pt-2">
                         <Button
                           variant="default"
                           size="sm"
-                          onClick={() => navigate(`/cliente/comparar-cotizaciones/${ticketId}`)}
+                          className="flex-1"
+                          onClick={() => handleAcceptCotizacion(cot.id)}
                         >
-                          Ver Todas las Cotizaciones
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Aceptar Cotización
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleRejectCotizacion(cot.id)}
+                        >
+                          <XCircle className="h-4 w-4 mr-2" />
+                          Rechazar
                         </Button>
                       </div>
                     )}
