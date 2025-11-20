@@ -86,11 +86,13 @@ const TechnicianDashboard = () => {
             }
 
             // Fetch available tickets (case-insensitive category match)
+            // Exclude tickets that the technician has already quoted
             const { data: ticketsData } = await supabase
               .from("ticket")
               .select("*")
               .ilike("categoria", tecnicoData.especialidad_principal)
               .in("estado", ["abierto", "cotizando"])
+              .not("id", "in", `(${quotedTicketIds.length > 0 ? quotedTicketIds.join(',') : '00000000-0000-0000-0000-000000000000'})`)
               .order("created_at", { ascending: false });
 
             if (ticketsData) {
