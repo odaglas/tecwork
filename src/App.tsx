@@ -66,6 +66,7 @@ const App = () => (
           <Route path="/chat/:id" element={<ProtectedRoute allowedRole="cliente"><ChatPage /></ProtectedRoute>} />
           
           {/* Tecnico routes - protected (specific routes MUST come before :id routes) */}
+          <Route path="/tecnico/chat/:id" element={<ProtectedRoute allowedRole="tecnico"><ChatPage /></ProtectedRoute>} />
           <Route path="/tecnico/perfil" element={<ProtectedRoute allowedRole="tecnico" allowUnvalidated={true}><TechnicianProfile /></ProtectedRoute>} />
           <Route path="/tecnico/ticket/:id" element={<ProtectedRoute allowedRole="tecnico"><TechnicianTicketDetail /></ProtectedRoute>} />
           <Route path="/tecnico/cotizar/:ticketId" element={<ProtectedRoute allowedRole="tecnico"><TechnicianQuoteForm /></ProtectedRoute>} />

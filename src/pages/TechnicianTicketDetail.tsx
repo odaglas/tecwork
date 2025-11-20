@@ -579,6 +579,40 @@ const TechnicianTicketDetail = () => {
             </CardContent>
           </Card>
         ) : null}
+
+        {/* Show chat button if quote is accepted */}
+        {existingQuote?.estado === "aceptada" && (
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={() => navigate(`/tecnico/chat/${ticketId}`)}
+              size="lg"
+              className="bg-primary hover:bg-primary/90"
+            >
+              Chat con Cliente
+            </Button>
+          </div>
+        )}
+
+        {/* Show accepted/rejected status */}
+        {existingQuote?.estado === "aceptada" && (
+          <Card className="border-green-500 bg-green-50 dark:bg-green-950">
+            <CardContent className="pt-6">
+              <p className="text-green-700 dark:text-green-300 text-center font-semibold">
+                ✓ Tu cotización ha sido aceptada
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {existingQuote?.estado === "rechazada" && (
+          <Card className="border-red-500 bg-red-50 dark:bg-red-950">
+            <CardContent className="pt-6">
+              <p className="text-red-700 dark:text-red-300 text-center font-semibold">
+                ✗ Tu cotización ha sido rechazada
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
