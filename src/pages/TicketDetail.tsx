@@ -724,6 +724,19 @@ const TicketDetail = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Chat button if quote accepted */}
+        {cotizaciones.some(c => c.estado === 'aceptada') && (
+          <div className="flex justify-center mt-6">
+            <Button 
+              onClick={() => navigate(`/chat/${ticketId}`)}
+              size="lg"
+              className="bg-primary hover:bg-primary/90"
+            >
+              Chat con Técnico
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
