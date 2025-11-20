@@ -196,45 +196,8 @@ const TicketDetail = () => {
   };
 
   const handleAcceptCotizacion = async (cotizacionId: string) => {
-    try {
-      // Update the cotizacion status to "aceptada"
-      const { error: cotizacionError } = await supabase
-        .from("cotizacion")
-        .update({ estado: "aceptada" })
-        .eq("id", cotizacionId);
-
-      if (cotizacionError) throw cotizacionError;
-
-      // Reject all other cotizaciones for this ticket
-      const { error: rejectError } = await supabase
-        .from("cotizacion")
-        .update({ estado: "rechazada" })
-        .eq("ticket_id", ticketId)
-        .neq("id", cotizacionId);
-
-      if (rejectError) throw rejectError;
-
-      // Update ticket status to "en_progreso"
-      const { error: ticketError } = await supabase
-        .from("ticket")
-        .update({ estado: "en_progreso" })
-        .eq("id", ticketId);
-
-      if (ticketError) throw ticketError;
-
-      toast({
-        title: "Cotización Aceptada",
-        description: "Has aceptado esta cotización. El trabajo comenzará pronto.",
-      });
-
-      fetchTicketDetails();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: "No se pudo aceptar la cotización",
-        variant: "destructive",
-      });
-    }
+    // Redirect to payment simulator page
+    navigate(`/simular-pago?cotizacion_id=${cotizacionId}&ticket_id=${ticketId}`);
   };
 
   const handleRejectCotizacion = async (cotizacionId: string) => {
