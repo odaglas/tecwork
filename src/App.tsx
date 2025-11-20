@@ -16,6 +16,7 @@ import CompareQuotes from "./pages/CompareQuotes";
 import TicketDetail from "./pages/TicketDetail";
 import TechnicianTicketDetail from "./pages/TechnicianTicketDetail";
 import ChatPage from "./pages/ChatPage";
+import SimularPago from "./pages/SimularPago";
 import TechnicianProfile from "./pages/TechnicianProfile";
 import TechnicianPublicProfile from "./pages/TechnicianPublicProfile";
 import TechnicianDashboard from "./pages/TechnicianDashboard";
@@ -63,6 +64,7 @@ const App = () => (
           <Route path="/cliente/crear-ticket" element={<ProtectedRoute allowedRole="cliente"><CreateTicket /></ProtectedRoute>} />
           <Route path="/cliente/ticket/:id" element={<ProtectedRoute allowedRole="cliente"><TicketDetail /></ProtectedRoute>} />
           <Route path="/comparar-cotizaciones" element={<ProtectedRoute allowedRole="cliente"><CompareQuotes /></ProtectedRoute>} />
+          <Route path="/simular-pago" element={<ProtectedRoute allowedRole="cliente"><SimularPago /></ProtectedRoute>} />
           <Route path="/chat/:id" element={<ProtectedRoute allowedRole="cliente"><ChatPage /></ProtectedRoute>} />
           
           {/* Tecnico routes - protected (specific routes MUST come before :id routes) */}
