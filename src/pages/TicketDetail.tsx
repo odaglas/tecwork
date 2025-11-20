@@ -1,59 +1,305 @@
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Star } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
+import { formatDistanceToNow } from "date-fns";
+import { es } from "date-fns/locale";
+
+interface TicketData {
+  id: string;
+  titulo: string;
+  descripcion: string;
+  categoria: string;
+  comuna: string;
+  estado: string;
+  created_at: string;
+}
+
+interface TicketAdjunto {
+  id: string;
+  archivo_url: string;
+  tipo: string;
+  created_at: string;
+}
+
+interface CotizacionData {
+  id: string;
+  descripcion: string;
+  valor_total: number;
+  tiempo_estimado_dias: number;
+  estado: string;
+  created_at: string;
+  tecnico_nombre: string;
+  tecnico_email: string;
+  tecnico_id: string;
+}
 
 const TicketDetail = () => {
+  const { ticketId } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [editingTicket, setEditingTicket] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  
+  const [ticket, setTicket] = useState<TicketData | null>(null);
+  const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
+  const [adjuntos, setAdjuntos] = useState<TicketAdjunto[]>([]);
+  
+  const [ticketForm, setTicketForm] = useState({
+    titulo: "",
+    descripcion: "",
+    categoria: "",
+  });
 
-  // Mock data - replace with actual data from API/state
-  const ticket = {
-    id: "1",
-    titulo: "Fuga de agua en lavamanos",
-    descripcion: "El grifo del lavamanos del baño principal no para de gotear. He intentado cerrar la llave de paso pero el problema persiste. Necesito una solución urgente ya que está desperdiciando mucha agua.",
-    estado: "listo_revisar",
-    fotos: [
-      "/placeholder.svg",
-      "/placeholder.svg",
-      "/placeholder.svg"
-    ],
-    cotizaciones: [
-      {
-        id: "1",
-        tecnico: {
-          id: "t1",
-          nombre: "Felipe Vidal",
-          rating: 4.9
-        },
-        valor_total: 45000,
-        descripcion: "Reparación de grifo con reemplazo de sello",
-        tiempo_estimado_dias: 1
-      },
-      {
-        id: "2",
-        tecnico: {
-          id: "t2",
-          nombre: "María González",
-          rating: 4.8
-        },
-        valor_total: 38000,
-        descripcion: "Diagnóstico y reparación de fuga",
-        tiempo_estimado_dias: 1
-      },
-      {
-        id: "3",
-        tecnico: {
-          id: "t3",
-          nombre: "Roberto Sánchez",
-          rating: 5.0
-        },
-        valor_total: 52000,
-        descripcion: "Reparación completa con garantía extendida",
-        tiempo_estimado_dias: 2
+  useEffect(() => {
+    if (ticketId) {
+      fetchTicketDetails();
+    }
+  }, [ticketId]);
+
+  const fetchTicketDetails = async () => {
+    setLoading(true);
+    try {
+      // Get ticket
+      const { data: ticketData, error: ticketError } = await supabase
+        .from("ticket")
+        .select("*")
+        .eq("id", ticketId)
+        .single();
+
+      if (ticketError) throw ticketError;
+
+      setTicket(ticketData);
+      setTicketForm({
+        titulo: ticketData.titulo,
+        descripcion: ticketData.descripcion,
+        categoria: ticketData.categoria,
+      });
+
+      // Get cotizaciones
+      const { data: cotizacionesData, error: cotizacionesError } = await supabase
+        .from("cotizacion")
+        .select("*")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: false });
+
+      if (cotizacionesError) throw cotizacionesError;
+
+      // Get tecnico data for each cotizacion
+      const cotizacionesWithTecnico = await Promise.all(
+        cotizacionesData.map(async (cot) => {
+          const { data: tecnicoProfile } = await supabase
+            .from("tecnico_profile")
+            .select("user_id")
+            .eq("id", cot.tecnico_id)
+            .single();
+
+          const { data: tecnicoData } = await supabase
+            .from("profiles")
+            .select("nombre, email")
+            .eq("id", tecnicoProfile?.user_id)
+            .single();
+
+          return {
+            id: cot.id,
+            descripcion: cot.descripcion,
+            valor_total: cot.valor_total,
+            tiempo_estimado_dias: cot.tiempo_estimado_dias,
+            estado: cot.estado,
+            created_at: cot.created_at,
+            tecnico_nombre: tecnicoData?.nombre || "Desconocido",
+            tecnico_email: tecnicoData?.email || "",
+            tecnico_id: cot.tecnico_id,
+          };
+        })
+      );
+
+      setCotizaciones(cotizacionesWithTecnico);
+
+      // Get ticket adjuntos
+      const { data: adjuntosData, error: adjuntosError } = await supabase
+        .from("ticket_adjunto")
+        .select("*")
+        .eq("ticket_id", ticketId)
+        .order("created_at", { ascending: true });
+
+      if (adjuntosError) throw adjuntosError;
+      setAdjuntos(adjuntosData || []);
+    } catch (error: any) {
+      console.error("Error fetching ticket details:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo cargar la información del ticket",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveTicket = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("ticket")
+        .update({
+          titulo: ticketForm.titulo,
+          descripcion: ticketForm.descripcion,
+          categoria: ticketForm.categoria,
+        })
+        .eq("id", ticketId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Éxito",
+        description: "Ticket actualizado correctamente",
+      });
+
+      setEditingTicket(false);
+      fetchTicketDetails();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar el ticket",
+        variant: "destructive",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !ticketId) return;
+
+    setUploading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${ticketId}/${Math.random()}.${fileExt}`;
+        
+        // Upload to storage
+        const { error: uploadError } = await supabase.storage
+          .from('tecnico-documents')
+          .upload(fileName, file);
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('tecnico-documents')
+          .getPublicUrl(fileName);
+
+        // Determine file type
+        const tipo = file.type.startsWith('video/') ? 'video' : 'imagen';
+
+        // Save to ticket_adjunto table
+        const { error: adjuntoError } = await supabase
+          .from('ticket_adjunto')
+          .insert({
+            ticket_id: ticketId,
+            archivo_url: publicUrl,
+            tipo: tipo
+          });
+
+        if (adjuntoError) throw adjuntoError;
+      });
+
+      await Promise.all(uploadPromises);
+      
+      // Refresh adjuntos
+      await fetchTicketDetails();
+      
+      toast({
+        title: "Éxito",
+        description: "Archivos subidos correctamente",
+      });
+    } catch (error: any) {
+      console.error("Error uploading files:", error);
+      toast({
+        title: "Error",
+        description: "Error al subir archivos: " + error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploading(false);
+      // Reset input
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteFile = async (adjuntoId: string, fileUrl: string) => {
+    try {
+      // Extract file path from URL
+      const urlParts = fileUrl.split('/tecnico-documents/');
+      if (urlParts.length !== 2) {
+        throw new Error("Invalid file URL");
       }
-    ]
+      const filePath = urlParts[1];
+
+      // Delete from storage
+      const { error: storageError } = await supabase.storage
+        .from('tecnico-documents')
+        .remove([filePath]);
+
+      if (storageError) throw storageError;
+
+      // Delete from database
+      const { error: dbError } = await supabase
+        .from('ticket_adjunto')
+        .delete()
+        .eq('id', adjuntoId);
+
+      if (dbError) throw dbError;
+
+      // Refresh adjuntos
+      await fetchTicketDetails();
+
+      toast({
+        title: "Éxito",
+        description: "Archivo eliminado correctamente",
+      });
+    } catch (error: any) {
+      console.error("Error deleting file:", error);
+      toast({
+        title: "Error",
+        description: "Error al eliminar archivo",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getEstadoBadge = (estado: string) => {
+    const variants: Record<string, { className: string; label: string }> = {
+      abierto: { className: "bg-success/10 text-success border-success", label: "Abierto" },
+      cotizando: { className: "bg-blue-500/10 text-blue-500 border-blue-500", label: "Cotizando" },
+      en_progreso: { className: "bg-yellow-500/10 text-yellow-500 border-yellow-500", label: "En Progreso" },
+      finalizado: { className: "bg-gray-500/10 text-gray-500 border-gray-500", label: "Finalizado" },
+      cancelado: { className: "bg-red-500/10 text-red-500 border-red-500", label: "Cancelado" },
+    };
+    const variant = variants[estado] || variants.abierto;
+    return <Badge className={variant.className}>{variant.label}</Badge>;
+  };
+
+  const getCotizacionEstadoBadge = (estado: string) => {
+    const variants: Record<string, { className: string; label: string }> = {
+      pendiente: { className: "bg-yellow-500/10 text-yellow-500 border-yellow-500", label: "Pendiente" },
+      aceptada: { className: "bg-success/10 text-success border-success", label: "Aceptada" },
+      rechazada: { className: "bg-red-500/10 text-red-500 border-red-500", label: "Rechazada" },
+    };
+    const variant = variants[estado] || variants.pendiente;
+    return <Badge className={variant.className}>{variant.label}</Badge>;
   };
 
   const formatPrice = (price: number) => {
@@ -64,129 +310,285 @@ const TicketDetail = () => {
     }).format(price);
   };
 
-  const handleAcceptQuote = (quoteId: string) => {
-    console.log("Accepting quote:", quoteId);
-    // Navigate to payment flow
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary">
+        <ClientHeader />
+        <div className="flex justify-center items-center h-[60vh]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      </div>
+    );
+  }
 
-  const handleViewProfile = (tecnicoId: string) => {
-    navigate(`/tecnico/perfil/${tecnicoId}`);
-  };
+  if (!ticket) {
+    return (
+      <div className="min-h-screen bg-secondary">
+        <ClientHeader />
+        <div className="container px-4 py-8">
+          <p className="text-center text-muted-foreground">Ticket no encontrado</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-secondary">
       <ClientHeader />
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto p-6 space-y-6">
-        {/* Title and Status */}
-        <div className="space-y-3">
-          <div className="flex items-start justify-between gap-4">
-            <h1 className="text-3xl font-bold text-foreground">{ticket.titulo}</h1>
-            <Badge 
-              variant="secondary" 
-              className="bg-blue-600 text-white hover:bg-blue-700 whitespace-nowrap"
-            >
-              Listo para revisar
-            </Badge>
+      
+      <div className="container px-4 py-8 space-y-6">
+        {/* Back Button and Title */}
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/cliente/home")}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-foreground">Detalles del Ticket</h1>
+            <p className="text-sm text-muted-foreground">
+              Creado {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: es })}
+            </p>
           </div>
+          {getEstadoBadge(ticket.estado)}
         </div>
 
-        {/* Description Section */}
+        {/* Ticket Info Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Descripción</CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>Información del Ticket</CardTitle>
+              {!editingTicket ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setEditingTicket(true)}
+                >
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
+              ) : (
+                <div className="flex gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={handleSaveTicket}
+                    disabled={saving}
+                  >
+                    {saving ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Guardar
+                      </>
+                    )}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setEditingTicket(false);
+                      setTicketForm({
+                        titulo: ticket.titulo,
+                        descripcion: ticket.descripcion,
+                        categoria: ticket.categoria,
+                      });
+                    }}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Cancelar
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground leading-relaxed">
-              {ticket.descripcion}
-            </p>
+          <CardContent className="space-y-4">
+            {editingTicket ? (
+              <>
+                <div>
+                  <Label>Título</Label>
+                  <Input
+                    value={ticketForm.titulo}
+                    onChange={(e) => setTicketForm({ ...ticketForm, titulo: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Descripción</Label>
+                  <Textarea
+                    value={ticketForm.descripcion}
+                    onChange={(e) => setTicketForm({ ...ticketForm, descripcion: e.target.value })}
+                    rows={4}
+                  />
+                </div>
+                <div>
+                  <Label>Categoría</Label>
+                  <Input
+                    value={ticketForm.categoria}
+                    onChange={(e) => setTicketForm({ ...ticketForm, categoria: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <Label>Comuna</Label>
+                  <Input value={ticket.comuna} disabled className="bg-muted" />
+                  <p className="text-xs text-muted-foreground mt-1">La comuna no se puede editar</p>
+                </div>
+              </>
+            ) : (
+              <div className="grid gap-4">
+                <div>
+                  <span className="font-semibold">Título:</span>
+                  <p className="text-muted-foreground">{ticket.titulo}</p>
+                </div>
+                <div>
+                  <span className="font-semibold">Descripción:</span>
+                  <p className="text-muted-foreground">{ticket.descripcion}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <span className="font-semibold">Categoría:</span>
+                    <p className="text-muted-foreground">{ticket.categoria}</p>
+                  </div>
+                  <div>
+                    <span className="font-semibold">Comuna:</span>
+                    <p className="text-muted-foreground capitalize">{ticket.comuna}</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Photos Section */}
-        {ticket.fotos.length > 0 && (
+        {/* Photos Card */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>Fotos del Ticket</CardTitle>
+              <div>
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden"
+                  accept="image/*,video/*"
+                  multiple
+                  onChange={handleFileUpload}
+                  disabled={uploading}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Upload className="h-4 w-4 mr-2" />
+                  )}
+                  Subir Fotos
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {adjuntos.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">No hay archivos adjuntos</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {adjuntos.map((adjunto) => (
+                  <div key={adjunto.id} className="relative group">
+                    {adjunto.tipo === "imagen" ? (
+                      <a 
+                        href={adjunto.archivo_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <img
+                          src={adjunto.archivo_url}
+                          alt="Foto del ticket"
+                          className="w-full h-48 object-cover rounded-lg border-2 border-border hover:border-primary transition-smooth cursor-pointer"
+                        />
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-smooth rounded-lg flex items-center justify-center">
+                          <span className="text-white opacity-0 group-hover:opacity-100 transition-smooth font-semibold">
+                            Ver imagen
+                          </span>
+                        </div>
+                      </a>
+                    ) : (
+                      <a 
+                        href={adjunto.archivo_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        <div className="w-full h-48 bg-muted rounded-lg border-2 border-border hover:border-primary transition-smooth cursor-pointer flex items-center justify-center">
+                          <div className="text-center">
+                            <div className="text-4xl mb-2">🎥</div>
+                            <span className="text-sm font-semibold">Ver video</span>
+                          </div>
+                        </div>
+                      </a>
+                    )}
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-smooth h-8 w-8"
+                      onClick={() => handleDeleteFile(adjunto.id, adjunto.archivo_url)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Cotizaciones Card */}
+        {cotizaciones.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Fotos Adjuntadas</CardTitle>
+              <CardTitle>Cotizaciones Recibidas ({cotizaciones.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-4">
-                {ticket.fotos.map((foto, index) => (
-                  <div
-                    key={index}
-                    className="aspect-square rounded-lg border-2 border-border overflow-hidden bg-muted hover:border-primary transition-colors cursor-pointer"
-                  >
-                    <img
-                      src={foto}
-                      alt={`Foto ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
+              <div className="space-y-4">
+                {cotizaciones.map((cot) => (
+                  <div key={cot.id} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-lg">{cot.tecnico_nombre}</h4>
+                          {getCotizacionEstadoBadge(cot.estado)}
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-2">{cot.tecnico_email}</p>
+                        <p className="text-muted-foreground">{cot.descripcion}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-primary">{formatPrice(cot.valor_total)}</p>
+                        <p className="text-sm text-muted-foreground">{cot.tiempo_estimado_dias} día(s)</p>
+                      </div>
+                    </div>
+                    {cot.estado === "pendiente" && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => navigate(`/cliente/comparar-cotizaciones/${ticketId}`)}
+                        >
+                          Ver Todas las Cotizaciones
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
         )}
-
-        {/* Quotes Section */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">
-              Cotizaciones Recibidas ({ticket.cotizaciones.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {ticket.cotizaciones.map((cotizacion) => (
-                <Card key={cotizacion.id} className="border-2">
-                  <CardContent className="pt-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      {/* Left side - Technician info */}
-                      <div className="space-y-2 flex-1">
-                        <h3 className="text-xl font-semibold text-foreground">
-                          {cotizacion.tecnico.nombre}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <Star className="h-5 w-5 fill-yellow-400 text-yellow-400" />
-                            <span className="font-medium text-foreground">
-                              {cotizacion.tecnico.rating}
-                            </span>
-                            <span className="text-muted-foreground">estrellas</span>
-                          </div>
-                        </div>
-                        <Button
-                          variant="link"
-                          className="p-0 h-auto text-primary hover:underline"
-                          onClick={() => handleViewProfile(cotizacion.tecnico.id)}
-                        >
-                          Ver Perfil del Técnico
-                        </Button>
-                      </div>
-
-                      {/* Right side - Price and action */}
-                      <div className="flex flex-col items-end gap-3 md:min-w-[200px]">
-                        <div className="text-3xl font-bold text-foreground">
-                          {formatPrice(cotizacion.valor_total)}
-                        </div>
-                        <Button
-                          variant="success"
-                          size="lg"
-                          className="w-full md:w-auto"
-                          onClick={() => handleAcceptQuote(cotizacion.id)}
-                        >
-                          Aceptar y Pagar
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </main>
+      </div>
     </div>
   );
 };
