@@ -146,9 +146,26 @@ export const UserEditDialog = ({ userId, onClose, onSuccess }: UserEditDialogPro
       } else if (primaryRole === "tecnico") {
         const { data: tecnicoProfile } = await supabase
           .from("tecnico_profile")
-          .select("especialidad_principal, descripcion_perfil")
+          .select("id, especialidad_principal, descripcion_perfil")
           .eq("user_id", userId)
           .maybeSingle();
+
+        if (tecnicoProfile) {
+          setTecnicoProfileId(tecnicoProfile.id);
+          
+          // Fetch documents for this technician
+          const { data: docs, error: docsError } = await supabase
+            .from("documentacion_tecnico")
+            .select("*")
+            .eq("tecnico_id", tecnicoProfile.id)
+            .order("created_at", { ascending: false });
+
+          if (docsError) {
+            console.error("Error fetching documents:", docsError);
+          } else {
+            setDocuments(docs || []);
+          }
+        }
 
         form.reset({
           ...profile,
