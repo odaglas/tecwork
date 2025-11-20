@@ -221,7 +221,7 @@ const TechnicianDashboard = () => {
                   className="w-full"
                   onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
                 >
-                  Cotizar
+                  Ver Detalles
                 </Button>
               </CardFooter>
             </Card>
