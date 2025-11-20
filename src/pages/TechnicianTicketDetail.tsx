@@ -45,6 +45,7 @@ const TechnicianTicketDetail = () => {
   const [adjuntos, setAdjuntos] = useState<TicketAdjunto[]>([]);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string>("");
+  const [existingQuote, setExistingQuote] = useState<any>(null);
   
   const [quoteForm, setQuoteForm] = useState({
     descripcion: "",
@@ -132,6 +133,35 @@ const TechnicianTicketDetail = () => {
       }
       setAdjuntos(adjuntosData || []);
       console.log("Adjuntos data set successfully");
+
+      // Check if technician has already submitted a quote
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: tecnicoProfile } = await supabase
+          .from("tecnico_profile")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (tecnicoProfile) {
+          const { data: quoteData } = await supabase
+            .from("cotizacion")
+            .select("*")
+            .eq("ticket_id", ticketId)
+            .eq("tecnico_id", tecnicoProfile.id)
+            .maybeSingle();
+
+          if (quoteData) {
+            setExistingQuote(quoteData);
+            // Pre-fill the form with existing quote data
+            setQuoteForm({
+              descripcion: quoteData.descripcion,
+              valor_total: quoteData.valor_total.toString(),
+              tiempo_estimado_dias: quoteData.tiempo_estimado_dias.toString(),
+            });
+          }
+        }
+      }
     } catch (error: any) {
       console.error("Error in fetchTicketDetails:", error);
       toast({
@@ -219,32 +249,51 @@ const TechnicianTicketDetail = () => {
 
       if (profileError) throw profileError;
 
-      // Create cotizacion
-      const { error: cotizacionError } = await supabase
-        .from("cotizacion")
-        .insert({
-          ticket_id: ticketId,
-          tecnico_id: tecnicoProfile.id,
-          descripcion: quoteForm.descripcion,
-          valor_total: parseInt(quoteForm.valor_total),
-          tiempo_estimado_dias: parseInt(quoteForm.tiempo_estimado_dias),
-          estado: "pendiente"
+      if (existingQuote) {
+        // Update existing quote
+        const { error: updateError } = await supabase
+          .from("cotizacion")
+          .update({
+            descripcion: quoteForm.descripcion,
+            valor_total: parseInt(quoteForm.valor_total),
+            tiempo_estimado_dias: parseInt(quoteForm.tiempo_estimado_dias),
+          })
+          .eq("id", existingQuote.id);
+
+        if (updateError) throw updateError;
+
+        toast({
+          title: "Éxito",
+          description: "Cotización actualizada correctamente",
         });
+      } else {
+        // Create new cotizacion
+        const { error: cotizacionError } = await supabase
+          .from("cotizacion")
+          .insert({
+            ticket_id: ticketId,
+            tecnico_id: tecnicoProfile.id,
+            descripcion: quoteForm.descripcion,
+            valor_total: parseInt(quoteForm.valor_total),
+            tiempo_estimado_dias: parseInt(quoteForm.tiempo_estimado_dias),
+            estado: "pendiente"
+          });
 
-      if (cotizacionError) throw cotizacionError;
+        if (cotizacionError) throw cotizacionError;
 
-      // Update ticket status to cotizando if it was abierto
-      if (ticket?.estado === "abierto") {
-        await supabase
-          .from("ticket")
-          .update({ estado: "cotizando" })
-          .eq("id", ticketId);
+        // Update ticket status to cotizando if it was abierto
+        if (ticket?.estado === "abierto") {
+          await supabase
+            .from("ticket")
+            .update({ estado: "cotizando" })
+            .eq("id", ticketId);
+        }
+
+        toast({
+          title: "Éxito",
+          description: "Cotización enviada correctamente",
+        });
       }
-
-      toast({
-        title: "Éxito",
-        description: "Cotización enviada correctamente",
-      });
 
       // Navigate back to dashboard
       navigate("/tecnico/dashboard");
@@ -380,7 +429,30 @@ const TechnicianTicketDetail = () => {
         )}
 
         {/* Quote Form Card */}
-        {!showQuoteForm ? (
+        {existingQuote?.estado === "aceptada" ? (
+          <Card className="border-green-500/50">
+            <CardHeader>
+              <CardTitle className="text-green-600">Cotización Aceptada</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-muted-foreground">Tu cotización ha sido aceptada por el cliente.</p>
+              <div className="space-y-2">
+                <p><span className="font-semibold">Descripción:</span> {existingQuote.descripcion}</p>
+                <p><span className="font-semibold">Precio:</span> ${existingQuote.valor_total.toLocaleString('es-CL')} CLP</p>
+                <p><span className="font-semibold">Tiempo estimado:</span> {existingQuote.tiempo_estimado_dias} días</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : existingQuote?.estado === "rechazada" ? (
+          <Card className="border-red-500/50">
+            <CardHeader>
+              <CardTitle className="text-red-600">Cotización Rechazada</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Tu cotización fue rechazada por el cliente. No puedes enviar otra cotización para este ticket.</p>
+            </CardContent>
+          </Card>
+        ) : !showQuoteForm && !existingQuote ? (
           <Button
             variant="default"
             size="lg"
@@ -389,10 +461,12 @@ const TechnicianTicketDetail = () => {
           >
             Enviar Cotización
           </Button>
-        ) : (
+        ) : (existingQuote?.estado === "pendiente" || showQuoteForm) ? (
           <Card>
             <CardHeader>
-              <CardTitle>Enviar Cotización</CardTitle>
+              <CardTitle>
+                {existingQuote ? "Editar Cotización (Pendiente)" : "Enviar Cotización"}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -482,23 +556,29 @@ const TechnicianTicketDetail = () => {
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Enviando...
+                      {existingQuote ? "Actualizando..." : "Enviando..."}
                     </>
                   ) : (
-                    "Enviar Cotización"
+                    existingQuote ? "Actualizar Cotización" : "Enviar Cotización"
                   )}
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setShowQuoteForm(false)}
+                  onClick={() => {
+                    if (!existingQuote) {
+                      setShowQuoteForm(false);
+                    } else {
+                      navigate("/tecnico/dashboard");
+                    }
+                  }}
                   disabled={submitting}
                 >
-                  Cancelar
+                  {existingQuote ? "Volver" : "Cancelar"}
                 </Button>
               </div>
             </CardContent>
           </Card>
-        )}
+        ) : null}
       </div>
     </div>
   );
