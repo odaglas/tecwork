@@ -23,6 +23,7 @@ const TechnicianDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [quotedTickets, setQuotedTickets] = useState<Ticket[]>([]);
+  const [quotedTicketIds, setQuotedTicketIds] = useState<string[]>([]);
   const [technicianSpecialty, setTechnicianSpecialty] = useState<string>("");
   const [userName, setUserName] = useState<string>("");
 
@@ -69,6 +70,7 @@ const TechnicianDashboard = () => {
 
               if (cotizacionesData && cotizacionesData.length > 0) {
                 const quotedTicketIds = cotizacionesData.map(c => c.ticket_id);
+                setQuotedTicketIds(quotedTicketIds);
                 
                 const { data: quotedTicketsData } = await supabase
                   .from("ticket")
@@ -134,10 +136,15 @@ const TechnicianDashboard = () => {
           </Alert>
         )}
 
-        {/* Quoted Tickets Section */}
-        {quotedTickets.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-foreground mb-4">Mis Cotizaciones</h2>
+        {/* Quoted Tickets Section - Always visible */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-foreground">Mis Cotizaciones</h2>
+            <Badge variant="secondary" className="text-lg px-3 py-1">
+              {quotedTickets.length}
+            </Badge>
+          </div>
+          {quotedTickets.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {quotedTickets.map((ticket) => (
                 <Card key={ticket.id} className="hover:shadow-lg transition-shadow border-primary/50">
@@ -184,8 +191,16 @@ const TechnicianDashboard = () => {
                 </Card>
               ))}
             </div>
-          </div>
-        )}
+          ) : (
+            <Card className="border-dashed">
+              <CardContent className="py-8">
+                <p className="text-center text-muted-foreground">
+                  Aún no has enviado cotizaciones. Los tickets que cotices aparecerán aquí.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         {/* Title and Filters */}
         <div className="mb-8">
@@ -201,14 +216,23 @@ const TechnicianDashboard = () => {
 
         {/* Job Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {tickets.map((ticket) => (
-            <Card key={ticket.id} className="hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between gap-4">
-                  <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
-                  <Badge variant="secondary">{ticket.categoria}</Badge>
-                </div>
-              </CardHeader>
+          {tickets.map((ticket) => {
+            const isQuoted = quotedTicketIds.includes(ticket.id);
+            return (
+              <Card key={ticket.id} className={`hover:shadow-lg transition-shadow ${isQuoted ? 'border-blue-500/50 bg-blue-50/5' : ''}`}>
+                <CardHeader>
+                  <div className="flex items-start justify-between gap-4">
+                    <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
+                    <div className="flex flex-col gap-2">
+                      <Badge variant="secondary">{ticket.categoria}</Badge>
+                      {isQuoted && (
+                        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
+                          Ya Cotizado
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardHeader>
               <CardContent className="space-y-3">
                 <p className="text-muted-foreground text-sm">{ticket.descripcion}</p>
                 
@@ -228,11 +252,12 @@ const TechnicianDashboard = () => {
                   className="w-full"
                   onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
                 >
-                  Ver Detalles
+                  {isQuoted ? "Ver/Editar Cotización" : "Ver Detalles"}
                 </Button>
               </CardFooter>
             </Card>
-          ))}
+          );
+          })}
         </div>
 
         {/* Empty State */}
