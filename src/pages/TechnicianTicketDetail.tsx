@@ -33,6 +33,9 @@ const TechnicianTicketDetail = () => {
   const { ticketId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
+  console.log("TechnicianTicketDetail component rendered, ticketId:", ticketId);
+  
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
@@ -50,11 +53,16 @@ const TechnicianTicketDetail = () => {
   });
 
   useEffect(() => {
+    console.log("useEffect triggered, ticketId:", ticketId);
     const checkAuthAndFetchTicket = async () => {
+      console.log("checkAuthAndFetchTicket started");
       // Check if user is authenticated
       const { data: { user }, error: authError } = await supabase.auth.getUser();
       
+      console.log("Auth check result:", { user: user?.id, authError });
+      
       if (authError || !user) {
+        console.log("No user or auth error, redirecting to login");
         toast({
           title: "Sesión expirada",
           description: "Por favor, inicia sesión nuevamente",
@@ -65,7 +73,10 @@ const TechnicianTicketDetail = () => {
       }
       
       if (ticketId) {
+        console.log("Calling fetchTicketDetails");
         fetchTicketDetails();
+      } else {
+        console.log("No ticketId found");
       }
     };
     
