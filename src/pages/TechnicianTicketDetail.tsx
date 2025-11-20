@@ -63,9 +63,23 @@ const TechnicianTicketDetail = () => {
         .from("ticket")
         .select("*")
         .eq("id", ticketId)
-        .single();
+        .maybeSingle();
 
-      if (ticketError) throw ticketError;
+      if (ticketError) {
+        console.error("Error fetching ticket:", ticketError);
+        throw ticketError;
+      }
+      
+      if (!ticketData) {
+        toast({
+          title: "Ticket no encontrado",
+          description: "No tienes permiso para ver este ticket o no existe",
+          variant: "destructive",
+        });
+        setLoading(false);
+        return;
+      }
+      
       setTicket(ticketData);
 
       // Get ticket adjuntos
