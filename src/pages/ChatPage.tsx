@@ -22,6 +22,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -46,6 +47,16 @@ const ChatPage = () => {
 
         if (profile) {
           setCurrentUserId(profile.id);
+        }
+
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", user.id)
+          .single();
+
+        if (roleData) {
+          setUserRole(roleData.role);
         }
 
         await loadMessages();
@@ -169,7 +180,15 @@ const ChatPage = () => {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto max-w-4xl p-4">
         <div className="mb-4">
-          <Button variant="ghost" onClick={() => navigate(-1)}>
+          <Button 
+            variant="ghost" 
+            onClick={() => {
+              const route = userRole === "tecnico" 
+                ? `/tecnico/ticket/${id}` 
+                : `/cliente/ticket/${id}`;
+              navigate(route);
+            }}
+          >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Volver
           </Button>
