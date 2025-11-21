@@ -41,3 +41,47 @@ export function validateRut(rut: string): boolean {
   
   return dv === calculatedDv;
 }
+
+// Content filtering utilities
+const BANNED_WORDS = [
+  'puta', 'mierda', 'concha', 'ctm', 'weon', 'weón', 'culiao', 'culiado',
+  'pico', 'conchetumare', 'maricon', 'maricón', 'hijo de puta', 'hdp',
+  'pendejo', 'imbecil', 'imbécil', 'estupido', 'estúpido', 'idiota',
+  'fuck', 'shit', 'bitch', 'asshole', 'damn', 'crap'
+];
+
+export function containsBannedContent(text: string): { isValid: boolean; reason?: string } {
+  const lowerText = text.toLowerCase();
+  
+  // Check for banned words
+  for (const word of BANNED_WORDS) {
+    if (lowerText.includes(word)) {
+      return { isValid: false, reason: 'El mensaje contiene palabras inapropiadas' };
+    }
+  }
+  
+  // Check for phone numbers (Chilean format and general patterns)
+  const phonePatterns = [
+    /\+?\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}/g, // General phone
+    /\b\d{8,11}\b/g, // Long number sequences
+    /\b9\s?\d{4}\s?\d{4}\b/g, // Chilean mobile format
+  ];
+  
+  for (const pattern of phonePatterns) {
+    if (pattern.test(text)) {
+      return { isValid: false, reason: 'No se permite compartir números de teléfono' };
+    }
+  }
+  
+  // Check for email patterns
+  if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g.test(text)) {
+    return { isValid: false, reason: 'No se permite compartir correos electrónicos' };
+  }
+  
+  // Check for social media handles
+  if (/@\w+/g.test(text) || /instagram|facebook|whatsapp|telegram|twitter|discord/gi.test(lowerText)) {
+    return { isValid: false, reason: 'No se permite compartir información de contacto de redes sociales' };
+  }
+  
+  return { isValid: true };
+}

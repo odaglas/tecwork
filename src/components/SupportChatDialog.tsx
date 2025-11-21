@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Paperclip, Send } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { containsBannedContent } from "@/lib/utils";
 
 interface Message {
   id: string;
@@ -184,6 +185,18 @@ export function SupportChatDialog({
   const handleSendMessage = async () => {
     if (!newMessage.trim() && !selectedFile) return;
     if (!supportChatId) return;
+
+    if (newMessage.trim()) {
+      const validation = containsBannedContent(newMessage.trim());
+      if (!validation.isValid) {
+        toast({
+          title: "Mensaje rechazado",
+          description: validation.reason,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     setIsSending(true);
     try {

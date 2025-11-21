@@ -15,6 +15,7 @@ import { Camera, ArrowLeft } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { containsBannedContent } from "@/lib/utils";
 
 const CreateTicket = () => {
   const navigate = useNavigate();
@@ -142,6 +143,18 @@ const CreateTicket = () => {
     
     if (!clienteId) {
       toast.error("Error: No se pudo identificar tu perfil de cliente");
+      return;
+    }
+
+    const titleValidation = containsBannedContent(title);
+    if (!titleValidation.isValid) {
+      toast.error(titleValidation.reason);
+      return;
+    }
+
+    const descriptionValidation = containsBannedContent(description);
+    if (!descriptionValidation.isValid) {
+      toast.error(descriptionValidation.reason);
       return;
     }
 
