@@ -136,6 +136,7 @@ export type Database = {
         Row: {
           created_at: string | null
           descripcion: string
+          documento_url: string | null
           estado: Database["public"]["Enums"]["cotizacion_estado"] | null
           id: string
           tecnico_id: string
@@ -147,6 +148,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           descripcion: string
+          documento_url?: string | null
           estado?: Database["public"]["Enums"]["cotizacion_estado"] | null
           id?: string
           tecnico_id: string
@@ -158,6 +160,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           descripcion?: string
+          documento_url?: string | null
           estado?: Database["public"]["Enums"]["cotizacion_estado"] | null
           id?: string
           tecnico_id?: string

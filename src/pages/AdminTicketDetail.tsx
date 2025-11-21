@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Save, Edit2, Check, X, Trash2 } from "lucide-react";
+import { Loader2, ArrowLeft, Save, Edit2, Check, X, Trash2, FileText, ExternalLink } from "lucide-react";
 import { formatRut } from "@/lib/utils";
 
 interface TicketData {
@@ -42,6 +42,7 @@ interface CotizacionData {
   created_at: string;
   tecnico_nombre: string;
   tecnico_email: string;
+  documento_url: string | null;
 }
 
 interface TicketAdjunto {
@@ -165,6 +166,7 @@ const AdminTicketDetail = () => {
             created_at: cot.created_at,
             tecnico_nombre: tecnicoData?.nombre || "Desconocido",
             tecnico_email: tecnicoData?.email || "",
+            documento_url: cot.documento_url || null,
           };
         })
       );
@@ -662,6 +664,7 @@ const AdminTicketDetail = () => {
                     <TableHead>Días</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Fecha</TableHead>
+                    <TableHead>Documento</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -711,6 +714,20 @@ const AdminTicketDetail = () => {
                             </Select>
                           </TableCell>
                           <TableCell>{new Date(cot.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            {cot.documento_url && (
+                              <a
+                                href={cot.documento_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                              >
+                                <FileText className="h-4 w-4" />
+                                PDF
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex gap-2 justify-end">
                               <Button
@@ -743,6 +760,20 @@ const AdminTicketDetail = () => {
                           <TableCell>{cot.tiempo_estimado_dias}</TableCell>
                           <TableCell>{getEstadoBadge(cot.estado)}</TableCell>
                           <TableCell>{new Date(cot.created_at).toLocaleDateString()}</TableCell>
+                          <TableCell>
+                            {cot.documento_url && (
+                              <a
+                                href={cot.documento_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                              >
+                                <FileText className="h-4 w-4" />
+                                PDF
+                                <ExternalLink className="h-3 w-3" />
+                              </a>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <Button
                               size="sm"
