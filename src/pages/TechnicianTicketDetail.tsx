@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, MapPin, Upload, FileText } from "lucide-react";
+import { Loader2, ArrowLeft, MapPin, Upload, FileText, AlertTriangle } from "lucide-react";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
+import { SupportChatDialog } from "@/components/SupportChatDialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -41,6 +42,9 @@ const TechnicianTicketDetail = () => {
   const [submitting, setSubmitting] = useState(false);
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
+  const [isSupportChatOpen, setIsSupportChatOpen] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [clienteId, setClienteId] = useState<string>("");
   
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [adjuntos, setAdjuntos] = useState<TicketAdjunto[]>([]);
@@ -53,6 +57,10 @@ const TechnicianTicketDetail = () => {
     valor_total: "",
     tiempo_estimado_dias: "",
   });
+
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
 
   useEffect(() => {
     console.log("useEffect triggered, ticketId:", ticketId);
@@ -84,6 +92,19 @@ const TechnicianTicketDetail = () => {
     
     checkAuthAndFetchTicket();
   }, [ticketId]);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+      
+      setCurrentUser(profile);
+    }
+  };
 
   const fetchTicketDetails = async () => {
     console.log("Starting fetchTicketDetails, ticketId:", ticketId);
@@ -142,6 +163,7 @@ const TechnicianTicketDetail = () => {
         ...ticketData,
         cliente_nombre: clientName
       });
+      setClienteId(ticketData.cliente_id);
       console.log("Ticket data set successfully");
 
       // Get ticket adjuntos
@@ -396,7 +418,20 @@ const TechnicianTicketDetail = () => {
               </span>
             </div>
           </div>
-          {getEstadoBadge(ticket.estado)}
+          <div className="flex gap-2">
+            {getEstadoBadge(ticket.estado)}
+            {ticket.estado === "en_progreso" && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setIsSupportChatOpen(true)}
+                className="gap-2"
+              >
+                <AlertTriangle className="w-4 h-4" />
+                Reportar Problema
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Ticket Info Card */}
@@ -646,6 +681,14 @@ const TechnicianTicketDetail = () => {
             </CardContent>
           </Card>
         )}
+        
+        <SupportChatDialog
+          open={isSupportChatOpen}
+          onOpenChange={setIsSupportChatOpen}
+          ticketId={ticketId!}
+          clienteId={clienteId}
+          currentUserId={currentUser?.id || ""}
+        />
       </div>
     </div>
   );
