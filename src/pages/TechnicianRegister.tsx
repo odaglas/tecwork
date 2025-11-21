@@ -16,7 +16,17 @@ import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
 import { formatRut, cleanRut, validateRut } from "@/lib/utils";
 import tecworkLogo from "@/assets/tecwork-logo.png";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Zap, Droplet, Laptop, WashingMachine, Hammer, Wrench } from "lucide-react";
+
+// Service specialties with icons
+const SPECIALTIES = [
+  { value: "Electricidad", label: "Electricidad", icon: Zap },
+  { value: "Gasfitería", label: "Gasfitería", icon: Droplet },
+  { value: "Soporte Informático", label: "Soporte Informático", icon: Laptop },
+  { value: "Línea Blanca", label: "Línea Blanca", icon: WashingMachine },
+  { value: "Carpintería", label: "Carpintería", icon: Hammer },
+  { value: "Mantenimiento General", label: "Mantenimiento General", icon: Wrench },
+];
 
 const technicianRegisterSchema = z.object({
   email: z.string().email({ message: "Correo electrónico inválido" }),
@@ -344,12 +354,18 @@ const TechnicianRegister = () => {
               <SelectTrigger id="especialidad">
                 <SelectValue placeholder="Selecciona tu especialidad" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Gasfitería">Gasfitería</SelectItem>
-                <SelectItem value="Electricidad">Electricidad</SelectItem>
-                <SelectItem value="Reparaciones">Reparaciones</SelectItem>
-                <SelectItem value="Carpintería">Carpintería</SelectItem>
-                <SelectItem value="Pintura">Pintura</SelectItem>
+              <SelectContent className="bg-background z-50">
+                {SPECIALTIES.map((specialty) => {
+                  const Icon = specialty.icon;
+                  return (
+                    <SelectItem key={specialty.value} value={specialty.value}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" />
+                        <span>{specialty.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
