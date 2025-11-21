@@ -770,42 +770,15 @@ const TicketDetail = () => {
                           )}
                         </div>
                         
-                        {/* Technician Profile Collapsible */}
-                        <Collapsible className="mb-3">
-                          <CollapsibleTrigger asChild>
-                            <Button variant="ghost" size="sm" className="p-0 h-auto text-primary hover:bg-transparent">
-                              <Eye className="h-3 w-3 mr-1" />
-                              Ver perfil del técnico
-                              <ChevronDown className="h-3 w-3 ml-1" />
-                            </Button>
-                          </CollapsibleTrigger>
-                          <CollapsibleContent className="mt-3 p-3 bg-muted/50 rounded-md space-y-2">
-                            {cot.tecnico_especialidad && (
-                              <div className="flex items-center gap-2">
-                                <Briefcase className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-sm font-medium">{cot.tecnico_especialidad}</span>
-                              </div>
-                            )}
-                            {cot.tecnico_descripcion && (
-                              <p className="text-sm text-muted-foreground">{cot.tecnico_descripcion}</p>
-                            )}
-                            {cot.tecnico_comunas && cot.tecnico_comunas.length > 0 && (
-                              <div>
-                                <div className="flex items-center gap-2 mb-1">
-                                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                                  <span className="text-sm font-medium">Comunas de cobertura:</span>
-                                </div>
-                                <div className="flex flex-wrap gap-1 ml-6">
-                                  {cot.tecnico_comunas.map((comuna) => (
-                                    <Badge key={comuna} variant="outline" className="text-xs">
-                                      {comuna}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </CollapsibleContent>
-                        </Collapsible>
+                        <Button
+                          variant="link"
+                          size="sm"
+                          className="p-0 h-auto text-primary mb-3"
+                          onClick={() => navigate(`/tecnico/${cot.tecnico_id}`)}
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          Ver perfil del técnico
+                        </Button>
 
                         <p className="text-muted-foreground mt-3">{cot.descripcion}</p>
                         {cot.documento_url && (
