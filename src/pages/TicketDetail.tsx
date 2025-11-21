@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ExternalLink } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -51,6 +51,7 @@ interface CotizacionData {
   tecnico_email: string;
   tecnico_id: string;
   tecnico_user_id: string | null;
+  documento_url: string | null;
 }
 
 const TicketDetail = () => {
@@ -178,6 +179,7 @@ const TicketDetail = () => {
             tecnico_email: userProfile?.email || "",
             tecnico_id: cot.tecnico_id,
             tecnico_user_id: tecnicoProfile?.user_id || null,
+            documento_url: cot.documento_url || null,
           };
         });
 
@@ -739,6 +741,18 @@ const TicketDetail = () => {
                           </Button>
                         )}
                         <p className="text-muted-foreground mt-3">{cot.descripcion}</p>
+                        {cot.documento_url && (
+                          <a
+                            href={cot.documento_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 mt-3 text-sm text-primary hover:underline"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Ver documento PDF
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        )}
                       </div>
                       <div className="text-right ml-4">
                         <p className="text-2xl font-bold text-primary">{formatPrice(cot.valor_total)}</p>

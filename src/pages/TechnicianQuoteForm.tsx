@@ -5,6 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Loader2, Upload, FileText } from "lucide-react";
 
 const TechnicianQuoteForm = () => {
   const navigate = useNavigate();
@@ -12,18 +15,100 @@ const TechnicianQuoteForm = () => {
   const [valorTotal, setValorTotal] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [tiempoEstimadoDias, setTiempoEstimadoDias] = useState("");
+  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.type !== 'application/pdf') {
+        toast.error('Solo se permiten archivos PDF');
+        return;
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error('El archivo no puede superar los 10MB');
+        return;
+      }
+      setPdfFile(file);
+      toast.success('PDF adjuntado correctamente');
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement quote submission logic
-    console.log("Submit quote:", { 
-      ticketId, 
-      valorTotal, 
-      descripcion, 
-      tiempoEstimadoDias 
-    });
-    // Redirigir al dashboard del técnico después de enviar
-    navigate("/tecnico/dashboard");
+    setUploading(true);
+
+    try {
+      // Get current user and tecnico profile
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error('Debes iniciar sesión');
+        return;
+      }
+
+      const { data: tecnicoProfile, error: profileError } = await supabase
+        .from('tecnico_profile')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (profileError || !tecnicoProfile) {
+        toast.error('No se encontró tu perfil de técnico');
+        return;
+      }
+
+      let documentoUrl = null;
+
+      // Upload PDF if provided
+      if (pdfFile) {
+        const fileExt = 'pdf';
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const filePath = `cotizaciones/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('tecnico-documents')
+          .upload(filePath, pdfFile);
+
+        if (uploadError) {
+          toast.error('Error al subir el PDF');
+          console.error(uploadError);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('tecnico-documents')
+          .getPublicUrl(filePath);
+
+        documentoUrl = urlData.publicUrl;
+      }
+
+      // Create cotizacion
+      const { error: cotizacionError } = await supabase
+        .from('cotizacion')
+        .insert({
+          ticket_id: ticketId,
+          tecnico_id: tecnicoProfile.id,
+          valor_total: parseInt(valorTotal),
+          descripcion,
+          tiempo_estimado_dias: parseInt(tiempoEstimadoDias),
+          documento_url: documentoUrl,
+          estado: 'pendiente'
+        });
+
+      if (cotizacionError) {
+        toast.error('Error al crear la cotización');
+        console.error(cotizacionError);
+        return;
+      }
+
+      toast.success('Cotización enviada exitosamente');
+      navigate("/tecnico/dashboard");
+    } catch (error) {
+      console.error('Error:', error);
+      toast.error('Error inesperado al enviar la cotización');
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -99,14 +184,54 @@ const TechnicianQuoteForm = () => {
             </p>
           </div>
 
+          {/* PDF Adjunto (Opcional) */}
+          <div className="space-y-2">
+            <Label htmlFor="pdfFile">Documento PDF (Opcional)</Label>
+            <div className="flex items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById('pdfFile')?.click()}
+                className="flex items-center gap-2"
+              >
+                <Upload className="h-4 w-4" />
+                {pdfFile ? 'Cambiar PDF' : 'Subir PDF'}
+              </Button>
+              {pdfFile && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <FileText className="h-4 w-4" />
+                  <span>{pdfFile.name}</span>
+                </div>
+              )}
+            </div>
+            <Input
+              id="pdfFile"
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <p className="text-xs text-muted-foreground">
+              Adjunta un documento PDF con los detalles de tu cotización (máx. 10MB)
+            </p>
+          </div>
+
           {/* Submit Button */}
           <div className="pt-4">
             <Button 
               type="submit" 
               className="w-full" 
               size="lg"
+              disabled={uploading}
             >
-              Enviar Cotización al Cliente
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando cotización...
+                </>
+              ) : (
+                'Enviar Cotización al Cliente'
+              )}
             </Button>
           </div>
         </form>
