@@ -706,15 +706,20 @@ const TicketDetail = () => {
         </Card>
 
         {/* Cotizaciones Card */}
-        {cotizaciones.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Cotizaciones Recibidas ({cotizaciones.length})</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Cotizaciones Recibidas ({cotizaciones.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {cotizaciones.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground text-lg mb-2">No hay cotizaciones todavía</p>
+                <p className="text-muted-foreground text-sm">Los técnicos interesados enviarán sus cotizaciones pronto</p>
+              </div>
+            ) : (
               <div className="space-y-4">
                 {cotizaciones.map((cot) => (
-                  <div key={cot.id} className="border rounded-lg p-4 space-y-3">
+                  <div key={cot.id} className="border rounded-lg p-4 space-y-3 bg-card hover:bg-accent/5 transition-smooth">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
@@ -733,9 +738,9 @@ const TicketDetail = () => {
                             Ver perfil del técnico
                           </Button>
                         )}
-                        <p className="text-muted-foreground mt-2">{cot.descripcion}</p>
+                        <p className="text-muted-foreground mt-3">{cot.descripcion}</p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right ml-4">
                         <p className="text-2xl font-bold text-primary">{formatPrice(cot.valor_total)}</p>
                         <p className="text-sm text-muted-foreground">{cot.tiempo_estimado_dias} día(s)</p>
                       </div>
@@ -765,9 +770,9 @@ const TicketDetail = () => {
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         {/* Chat button if quote accepted */}
         {cotizaciones.some(c => c.estado === 'aceptada') && (
