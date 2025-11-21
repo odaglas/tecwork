@@ -17,7 +17,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare } from "lucide-react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
@@ -46,6 +46,7 @@ const AdminDashboard = () => {
     { title: "Usuarios", url: "/admin/usuarios", icon: Users },
     { title: "Tickets", url: "/admin/tickets", icon: Ticket },
     { title: "Validación de Técnicos", url: "/admin/validacion", icon: ShieldCheck },
+    { title: "Soporte", url: "/admin/support-chats", icon: MessageSquare },
   ];
 
   const isActive = (path: string) => currentPath === path;
