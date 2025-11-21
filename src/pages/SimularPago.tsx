@@ -69,7 +69,7 @@ const SimularPago = () => {
       const { error: acceptError } = await supabase.functions.invoke(
         "accept-cotizacion",
         {
-          body: { cotizacionId },
+          body: { cotizacion_id: cotizacionId },
         }
       );
 
