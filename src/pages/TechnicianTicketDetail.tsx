@@ -21,6 +21,7 @@ interface TicketData {
   comuna: string;
   estado: string;
   created_at: string;
+  cliente_nombre?: string;
 }
 
 interface TicketAdjunto {
@@ -113,8 +114,34 @@ const TechnicianTicketDetail = () => {
         setLoading(false);
         return;
       }
+
+      // Get client name
+      let clientName = "";
+      if (ticketData.cliente_id) {
+        const { data: clienteProfile } = await supabase
+          .from("cliente_profile")
+          .select("user_id")
+          .eq("id", ticketData.cliente_id)
+          .single();
+
+        if (clienteProfile) {
+          const { data: profileData } = await supabase
+            .from("profiles")
+            .select("nombre")
+            .eq("id", clienteProfile.user_id)
+            .single();
+          
+          if (profileData) {
+            clientName = profileData.nombre;
+          }
+        }
+      }
       
-      setTicket(ticketData);
+      // Set ticket with client name
+      setTicket({
+        ...ticketData,
+        cliente_nombre: clientName
+      });
       console.log("Ticket data set successfully");
 
       // Get ticket adjuntos
@@ -379,6 +406,12 @@ const TechnicianTicketDetail = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
+              {ticket.cliente_nombre && (
+                <div>
+                  <span className="font-semibold">Cliente:</span>
+                  <p className="text-muted-foreground">{ticket.cliente_nombre}</p>
+                </div>
+              )}
               <div>
                 <span className="font-semibold">Categoría:</span>
                 <p className="text-muted-foreground">{ticket.categoria}</p>
