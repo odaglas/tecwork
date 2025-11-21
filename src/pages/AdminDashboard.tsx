@@ -17,7 +17,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare, DollarSign } from "lucide-react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +44,7 @@ const AdminDashboard = () => {
   const [notifications, setNotifications] = useState({
     supportChats: 0,
     pendingValidations: 0,
+    pendingPayments: 0,
   });
 
   const menuItems = [
@@ -52,6 +53,7 @@ const AdminDashboard = () => {
     { title: "Tickets", url: "/admin/tickets", icon: Ticket },
     { title: "Validación de Técnicos", url: "/admin/validacion", icon: ShieldCheck },
     { title: "Soporte", url: "/admin/support-chats", icon: MessageSquare },
+    { title: "Pagos Pendientes", url: "/admin/pagos", icon: DollarSign },
   ];
 
   const isActive = (path: string) => currentPath === path;
@@ -107,9 +109,23 @@ const AdminDashboard = () => {
       )
       .subscribe();
 
+    const paymentsChannel = supabase
+      .channel('payments-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pago',
+        },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(supportChannel);
       supabase.removeChannel(validationChannel);
+      supabase.removeChannel(paymentsChannel);
     };
   }, [currentPath]);
 
@@ -139,9 +155,16 @@ const AdminDashboard = () => {
         .select("*", { count: 'exact', head: true })
         .eq('is_validated', false);
 
+      // Count pending payments (pagado_retenido)
+      const { count: pendingPayments } = await supabase
+        .from("pago")
+        .select("*", { count: 'exact', head: true })
+        .eq('estado_pago', 'pagado_retenido');
+
       setNotifications({
         supportChats: openChats || 0,
         pendingValidations: pendingValidations || 0,
+        pendingPayments: pendingPayments || 0,
       });
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -277,6 +300,11 @@ const AdminDashboard = () => {
                           {item.url === "/admin/validacion" && notifications.pendingValidations > 0 && (
                             <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-xs">
                               {notifications.pendingValidations}
+                            </Badge>
+                          )}
+                          {item.url === "/admin/pagos" && notifications.pendingPayments > 0 && (
+                            <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-xs">
+                              {notifications.pendingPayments}
                             </Badge>
                           )}
                         </Link>
