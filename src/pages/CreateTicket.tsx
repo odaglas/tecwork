@@ -11,11 +11,21 @@ import {
 } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Camera, ArrowLeft } from "lucide-react";
+import { Camera, ArrowLeft, Zap, Droplet, Laptop, WashingMachine, Hammer, Wrench } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { containsBannedContent } from "@/lib/utils";
+
+// Service categories with icons
+const CATEGORIES = [
+  { value: "Electricidad", label: "Electricidad", icon: Zap },
+  { value: "Gasfitería", label: "Gasfitería", icon: Droplet },
+  { value: "Soporte Informático", label: "Soporte Informático", icon: Laptop },
+  { value: "Línea Blanca", label: "Línea Blanca", icon: WashingMachine },
+  { value: "Carpintería", label: "Carpintería", icon: Hammer },
+  { value: "Mantenimiento General", label: "Mantenimiento General", icon: Wrench },
+];
 
 const CreateTicket = () => {
   const navigate = useNavigate();
@@ -264,10 +274,18 @@ const CreateTicket = () => {
               <SelectTrigger id="category">
                 <SelectValue placeholder="Selecciona una categoría" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="gasfiteria">Gasfitería</SelectItem>
-                <SelectItem value="electricidad">Electricidad</SelectItem>
-                <SelectItem value="reparaciones">Reparaciones</SelectItem>
+              <SelectContent className="bg-background z-50">
+                {CATEGORIES.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <SelectItem key={cat.value} value={cat.value}>
+                      <div className="flex items-center gap-2">
+                        <Icon className="h-4 w-4" />
+                        <span>{cat.label}</span>
+                      </div>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
