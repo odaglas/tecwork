@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
 import { Loader2 } from "lucide-react";
 import { formatRut } from "@/lib/utils";
 
@@ -14,12 +15,14 @@ const ClientProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState({
+    id: "",
     nombre: "",
     email: "",
     rut: "",
     telefono: "",
     direccion: "",
     comuna: "",
+    profile_picture_url: null as string | null,
   });
 
   useEffect(() => {
@@ -63,12 +66,14 @@ const ClientProfile = () => {
       }
 
       setProfile({
+        id: user.id,
         nombre: profileData?.nombre || "",
         email: profileData?.email || "",
         rut: formatRut(profileData?.rut || ""),
         telefono: profileData?.telefono || "",
         direccion: clientData?.direccion || "",
         comuna: clientData?.comuna || "",
+        profile_picture_url: profileData?.profile_picture_url || null,
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -145,7 +150,15 @@ const ClientProfile = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Mi Perfil</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            <ProfilePictureUpload
+              userId={profile.id}
+              currentPictureUrl={profile.profile_picture_url}
+              userName={profile.nombre}
+              onUploadComplete={(url) => setProfile({ ...profile, profile_picture_url: url })}
+            />
+            
+            <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="nombre">Nombre</Label>
               <Input
@@ -216,6 +229,7 @@ const ClientProfile = () => {
                 "Guardar Cambios"
               )}
             </Button>
+            </div>
           </CardContent>
         </Card>
       </main>

@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -13,6 +14,7 @@ interface Message {
   message: string;
   created_at: string;
   sender_name?: string;
+  sender_picture?: string | null;
 }
 
 const ChatPage = () => {
@@ -84,7 +86,8 @@ const ChatPage = () => {
         message,
         created_at,
         profiles!chat_messages_sender_id_fkey (
-          nombre
+          nombre,
+          profile_picture_url
         )
       `)
       .eq("ticket_id", id)
@@ -101,6 +104,7 @@ const ChatPage = () => {
       message: msg.message,
       created_at: msg.created_at,
       sender_name: msg.profiles?.nombre || "Usuario",
+      sender_picture: msg.profiles?.profile_picture_url || null,
     }));
 
     setMessages(formattedMessages);
@@ -123,7 +127,7 @@ const ChatPage = () => {
         async (payload) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("nombre")
+            .select("nombre, profile_picture_url")
             .eq("id", payload.new.sender_id)
             .single();
 
@@ -133,6 +137,7 @@ const ChatPage = () => {
             message: payload.new.message,
             created_at: payload.new.created_at,
             sender_name: profile?.nombre || "Usuario",
+            sender_picture: profile?.profile_picture_url || null,
           };
 
           setMessages((prev) => [...prev, newMsg]);
@@ -203,10 +208,16 @@ const ChatPage = () => {
             {messages.map((msg) => (
               <div
                 key={msg.id}
-                className={`flex ${
+                className={`flex gap-2 ${
                   msg.sender_id === currentUserId ? "justify-end" : "justify-start"
                 }`}
               >
+                {msg.sender_id !== currentUserId && (
+                  <Avatar className="h-8 w-8 mt-1">
+                    <AvatarImage src={msg.sender_picture || undefined} />
+                    <AvatarFallback>{msg.sender_name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                )}
                 <div
                   className={`max-w-[70%] rounded-lg p-3 ${
                     msg.sender_id === currentUserId
@@ -223,6 +234,12 @@ const ChatPage = () => {
                     })}
                   </div>
                 </div>
+                {msg.sender_id === currentUserId && (
+                  <Avatar className="h-8 w-8 mt-1">
+                    <AvatarImage src={msg.sender_picture || undefined} />
+                    <AvatarFallback>{msg.sender_name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />

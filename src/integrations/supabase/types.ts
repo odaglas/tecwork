@@ -278,6 +278,7 @@ export type Database = {
           email: string
           id: string
           nombre: string
+          profile_picture_url: string | null
           rut: string
           telefono: string
           updated_at: string | null
@@ -287,6 +288,7 @@ export type Database = {
           email: string
           id: string
           nombre: string
+          profile_picture_url?: string | null
           rut: string
           telefono: string
           updated_at?: string | null
@@ -296,6 +298,7 @@ export type Database = {
           email?: string
           id?: string
           nombre?: string
+          profile_picture_url?: string | null
           rut?: string
           telefono?: string
           updated_at?: string | null
