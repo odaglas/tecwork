@@ -48,12 +48,23 @@ const TechnicianPublicProfile = () => {
 
         if (tecnicoError) throw tecnicoError;
 
+        if (!tecnicoData) {
+          toast({
+            title: "Técnico no encontrado",
+            description: "No se pudo encontrar el perfil del técnico",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         if (!tecnicoData.is_validated) {
           toast({
             title: "Técnico no disponible",
             description: "Este técnico aún no ha sido validado",
             variant: "destructive",
           });
+          setLoading(false);
           return;
         }
 
