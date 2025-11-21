@@ -27,6 +27,8 @@ import AdminDashboard from "./pages/AdminDashboard";
 import AdminLogin from "./pages/AdminLogin";
 import AdminUsuarios from "./pages/AdminUsuarios";
 import AdminValidacion from "./pages/AdminValidacion";
+import AdminSupportChats from "./pages/AdminSupportChats";
+import AdminSupportChatDetail from "./pages/AdminSupportChatDetail";
 import AdminTickets from "./pages/AdminTickets";
 import AdminTicketDetail from "./pages/AdminTicketDetail";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -81,6 +83,8 @@ const App = () => (
           <Route path="/admin/validacion" element={<ProtectedRoute allowedRole="admin"><AdminValidacion /></ProtectedRoute>} />
           <Route path="/admin/tickets" element={<ProtectedRoute allowedRole="admin"><AdminTickets /></ProtectedRoute>} />
           <Route path="/admin/tickets/:ticketId" element={<ProtectedRoute allowedRole="admin"><AdminTicketDetail /></ProtectedRoute>} />
+          <Route path="/admin/support-chats" element={<ProtectedRoute allowedRole="admin"><AdminSupportChats /></ProtectedRoute>} />
+          <Route path="/admin/support-chat/:chatId" element={<ProtectedRoute allowedRole="admin"><AdminSupportChatDetail /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
