@@ -305,6 +305,119 @@ export type Database = {
         }
         Relationships: []
       }
+      support_attachments: {
+        Row: {
+          created_at: string
+          file_type: string
+          file_url: string
+          id: string
+          support_message_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_type: string
+          file_url: string
+          id?: string
+          support_message_id: string
+        }
+        Update: {
+          created_at?: string
+          file_type?: string
+          file_url?: string
+          id?: string
+          support_message_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_attachments_support_message_id_fkey"
+            columns: ["support_message_id"]
+            isOneToOne: false
+            referencedRelation: "support_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_chat: {
+        Row: {
+          cliente_id: string
+          created_at: string
+          id: string
+          status: string
+          ticket_id: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          created_at?: string
+          id?: string
+          status?: string
+          ticket_id: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          created_at?: string
+          id?: string
+          status?: string
+          ticket_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_chat_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "cliente_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_chat_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "ticket"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          sender_id: string
+          support_chat_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          sender_id: string
+          support_chat_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          sender_id?: string
+          support_chat_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "support_messages_support_chat_id_fkey"
+            columns: ["support_chat_id"]
+            isOneToOne: false
+            referencedRelation: "support_chat"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tecnico_profile: {
         Row: {
           comunas_cobertura: string[] | null
