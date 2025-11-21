@@ -20,6 +20,7 @@ import {
 import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare } from "lucide-react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import tecworkLogo from "@/assets/tecwork-logo.png";
@@ -39,6 +40,10 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalClientes: 0,
     totalTecnicos: 0,
+  });
+  const [notifications, setNotifications] = useState({
+    supportChats: 0,
+    pendingValidations: 0,
   });
 
   const menuItems = [
@@ -64,6 +69,48 @@ const AdminDashboard = () => {
     if (currentPath === "/admin") {
       fetchAnalytics();
     }
+    fetchNotifications();
+    
+    // Subscribe to realtime updates
+    const supportChannel = supabase
+      .channel('support-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_chat',
+        },
+        () => fetchNotifications()
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'support_messages',
+        },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    const validationChannel = supabase
+      .channel('validation-notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tecnico_profile',
+        },
+        () => fetchNotifications()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(supportChannel);
+      supabase.removeChannel(validationChannel);
+    };
   }, [currentPath]);
 
   useEffect(() => {
@@ -77,6 +124,29 @@ const AdminDashboard = () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      // Count support chats with status 'abierto' or 'en_revision'
+      const { count: openChats } = await supabase
+        .from("support_chat")
+        .select("*", { count: 'exact', head: true })
+        .in('status', ['abierto', 'en_revision']);
+
+      // Count pending technician validations
+      const { count: pendingValidations } = await supabase
+        .from("tecnico_profile")
+        .select("*", { count: 'exact', head: true })
+        .eq('is_validated', false);
+
+      setNotifications({
+        supportChats: openChats || 0,
+        pendingValidations: pendingValidations || 0,
+      });
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+    }
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -194,9 +264,21 @@ const AdminDashboard = () => {
                   {menuItems.map((item) => (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton asChild isActive={isActive(item.url)}>
-                        <Link to={item.url} className="flex items-center gap-3">
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.title}</span>
+                        <Link to={item.url} className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-3">
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.title}</span>
+                          </div>
+                          {item.url === "/admin/support-chats" && notifications.supportChats > 0 && (
+                            <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-xs">
+                              {notifications.supportChats}
+                            </Badge>
+                          )}
+                          {item.url === "/admin/validacion" && notifications.pendingValidations > 0 && (
+                            <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-xs">
+                              {notifications.pendingValidations}
+                            </Badge>
+                          )}
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
