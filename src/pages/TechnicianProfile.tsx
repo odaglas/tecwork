@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
+import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
 import { Loader2, Edit2 } from "lucide-react";
 import { formatRut } from "@/lib/utils";
 
@@ -17,6 +18,7 @@ const TechnicianProfile = () => {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [profile, setProfile] = useState({
+    id: "",
     nombre: "",
     email: "",
     rut: "",
@@ -24,6 +26,7 @@ const TechnicianProfile = () => {
     especialidad_principal: "",
     descripcion_perfil: "",
     comunas_cobertura: [] as string[],
+    profile_picture_url: null as string | null,
   });
 
   useEffect(() => {
@@ -52,6 +55,7 @@ const TechnicianProfile = () => {
       if (techError) throw techError;
 
       setProfile({
+        id: user.id,
         nombre: profileData.nombre,
         email: profileData.email,
         rut: formatRut(profileData.rut),
@@ -59,6 +63,7 @@ const TechnicianProfile = () => {
         especialidad_principal: techData.especialidad_principal,
         descripcion_perfil: techData.descripcion_perfil || "",
         comunas_cobertura: techData.comunas_cobertura || [],
+        profile_picture_url: profileData.profile_picture_url || null,
       });
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -145,7 +150,15 @@ const TechnicianProfile = () => {
               )}
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            <ProfilePictureUpload
+              userId={profile.id}
+              currentPictureUrl={profile.profile_picture_url}
+              userName={profile.nombre}
+              onUploadComplete={(url) => setProfile({ ...profile, profile_picture_url: url })}
+            />
+            
+            <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="nombre">Nombre</Label>
               <Input
@@ -248,6 +261,7 @@ const TechnicianProfile = () => {
                 </Button>
               </div>
             )}
+            </div>
           </CardContent>
         </Card>
       </main>

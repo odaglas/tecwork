@@ -21,6 +21,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ChevronDown, MapPin, Star, Briefcase } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
@@ -59,6 +60,7 @@ interface CotizacionData {
   tecnico_comunas?: string[] | null;
   tecnico_calificacion_promedio?: number;
   tecnico_calificaciones_count?: number;
+  tecnico_picture_url?: string | null;
 }
 
 const TicketDetail = () => {
@@ -153,7 +155,7 @@ const TicketDetail = () => {
         // Fetch all user profiles in one query
         const { data: userProfiles, error: userError } = await supabase
           .from("profiles")
-          .select("id, nombre, email")
+          .select("id, nombre, email, profile_picture_url")
           .in("id", userIds);
 
         console.log("User profiles:", userProfiles);
@@ -211,6 +213,7 @@ const TicketDetail = () => {
             tecnico_comunas: tecnicoProfile?.comunas_cobertura,
             tecnico_calificacion_promedio: ratings?.avg,
             tecnico_calificaciones_count: ratings?.count,
+            tecnico_picture_url: userProfile?.profile_picture_url || null,
           };
         });
 
@@ -753,22 +756,27 @@ const TicketDetail = () => {
               <div className="space-y-4">
                 {cotizaciones.map((cot) => (
                   <div key={cot.id} className="border rounded-lg p-4 space-y-3 bg-card hover:bg-accent/5 transition-smooth">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold text-lg">{cot.tecnico_nombre}</h4>
-                          {getCotizacionEstadoBadge(cot.estado)}
-                        </div>
-                        <div className="flex items-center gap-3 mb-2">
-                          <p className="text-sm text-muted-foreground">{cot.tecnico_email}</p>
-                          {cot.tecnico_calificacion_promedio && (
-                            <div className="flex items-center gap-1">
-                              <Star className="h-4 w-4 fill-primary text-primary" />
-                              <span className="text-sm font-medium">{cot.tecnico_calificacion_promedio.toFixed(1)}</span>
-                              <span className="text-xs text-muted-foreground">({cot.tecnico_calificaciones_count})</span>
-                            </div>
-                          )}
-                        </div>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex gap-3 flex-1">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage src={cot.tecnico_picture_url || undefined} />
+                          <AvatarFallback>{cot.tecnico_nombre.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-lg">{cot.tecnico_nombre}</h4>
+                            {getCotizacionEstadoBadge(cot.estado)}
+                          </div>
+                          <div className="flex items-center gap-3 mb-2">
+                            <p className="text-sm text-muted-foreground">{cot.tecnico_email}</p>
+                            {cot.tecnico_calificacion_promedio && (
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 fill-primary text-primary" />
+                                <span className="text-sm font-medium">{cot.tecnico_calificacion_promedio.toFixed(1)}</span>
+                                <span className="text-xs text-muted-foreground">({cot.tecnico_calificaciones_count})</span>
+                              </div>
+                            )}
+                          </div>
                         
                         <Button
                           variant="link"
@@ -795,6 +803,7 @@ const TicketDetail = () => {
                             Ver documento PDF
                           </Button>
                         )}
+                        </div>
                       </div>
                       <div className="text-right ml-4">
                         <p className="text-2xl font-bold text-primary">{formatPrice(cot.valor_total)}</p>

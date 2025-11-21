@@ -22,6 +22,7 @@ interface TechnicianProfile {
 interface Profile {
   nombre: string;
   email: string;
+  profile_picture_url: string | null;
 }
 
 interface Rating {
@@ -91,7 +92,7 @@ const TechnicianPublicProfile = () => {
         // Fetch basic profile info
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("nombre, email")
+          .select("nombre, email, profile_picture_url")
           .eq("id", tecnicoData.user_id)
           .single();
 
@@ -224,7 +225,7 @@ const TechnicianPublicProfile = () => {
               {/* Profile Picture and Basic Info */}
               <div className="flex flex-col items-center md:items-start gap-4">
                 <Avatar className="h-32 w-32">
-                  <AvatarImage src={`https://api.dicebear.com/7.x/initials/svg?seed=${profile.nombre}`} />
+                  <AvatarImage src={profile.profile_picture_url || `https://api.dicebear.com/7.x/initials/svg?seed=${profile.nombre}`} />
                   <AvatarFallback className="text-3xl">{profile.nombre.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="text-center md:text-left">
