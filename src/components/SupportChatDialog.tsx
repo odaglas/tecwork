@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Paperclip, Send } from "lucide-react";
+import { Paperclip, Send, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { containsBannedContent } from "@/lib/utils";
@@ -257,10 +257,22 @@ export function SupportChatDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl h-[600px] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Chat de Soporte</DialogTitle>
-          <DialogDescription>
-            Reporta tu problema al equipo de administración
-          </DialogDescription>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => onOpenChange(false)}
+              className="h-8 w-8"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <DialogTitle>Chat de Soporte</DialogTitle>
+              <DialogDescription>
+                Reporta tu problema al equipo de administración
+              </DialogDescription>
+            </div>
+          </div>
         </DialogHeader>
 
         {isLoading ? (
