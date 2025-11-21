@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Shield, CheckCircle2 } from "lucide-react";
+import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-image.jpg";
 
 export const Hero = () => {
   return (
-    <section className="relative bg-gradient-hero text-primary-foreground overflow-hidden">
+    <section className="relative bg-primary text-white overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-primary/95 to-primary/80 z-10" />
       <div 
         className="absolute inset-0 bg-cover bg-center opacity-30"
@@ -22,18 +23,18 @@ export const Hero = () => {
             Conectamos tu Hogar con los Mejores Técnicos de Chile
           </h1>
           
-          <p className="text-xl md:text-2xl mb-8 text-primary-foreground/90">
+          <p className="text-xl md:text-2xl mb-8 text-white/90">
             Encuentra profesionales certificados y confiables para cualquier trabajo en tu hogar. 
             Rápido, seguro y garantizado.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-          <Button size="lg" variant="success" className="text-lg px-8 py-6" asChild>
-            <a href="/login">Buscar Técnico Ahora</a>
-          </Button>
-          <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10" asChild>
-            <a href="/registro-tecnico">Registrarse como Técnico</a>
-          </Button>
+            <Button size="lg" variant="success" className="text-lg px-8 py-6" asChild>
+              <Link to="/login">Buscar Técnico Ahora</Link>
+            </Button>
+            <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-white/30 text-white hover:bg-white/10" asChild>
+              <Link to="/registro-tecnico">Registrarse como Técnico</Link>
+            </Button>
           </div>
           
           <div className="flex flex-wrap gap-6 text-sm">
