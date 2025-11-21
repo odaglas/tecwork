@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Save, Edit2, Check, X, Trash2, FileText, ExternalLink } from "lucide-react";
+import { Loader2, ArrowLeft, Save, Edit2, Check, X, Trash2, FileText } from "lucide-react";
+import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { formatRut } from "@/lib/utils";
 
 interface TicketData {
@@ -66,6 +67,8 @@ const AdminTicketDetail = () => {
   const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
   const [adjuntos, setAdjuntos] = useState<TicketAdjunto[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [selectedPdfUrl, setSelectedPdfUrl] = useState("");
   
   const [ticketForm, setTicketForm] = useState({
     titulo: "",
@@ -716,16 +719,18 @@ const AdminTicketDetail = () => {
                           <TableCell>{new Date(cot.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>
                             {cot.documento_url && (
-                              <a
-                                href={cot.documento_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="p-0 h-auto"
+                                onClick={() => {
+                                  setSelectedPdfUrl(cot.documento_url!);
+                                  setPdfViewerOpen(true);
+                                }}
                               >
                                 <FileText className="h-4 w-4" />
                                 PDF
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
+                              </Button>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
@@ -762,16 +767,18 @@ const AdminTicketDetail = () => {
                           <TableCell>{new Date(cot.created_at).toLocaleDateString()}</TableCell>
                           <TableCell>
                             {cot.documento_url && (
-                              <a
-                                href={cot.documento_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                              <Button
+                                variant="link"
+                                size="sm"
+                                className="p-0 h-auto"
+                                onClick={() => {
+                                  setSelectedPdfUrl(cot.documento_url!);
+                                  setPdfViewerOpen(true);
+                                }}
                               >
                                 <FileText className="h-4 w-4" />
                                 PDF
-                                <ExternalLink className="h-3 w-3" />
-                              </a>
+                              </Button>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
@@ -793,6 +800,13 @@ const AdminTicketDetail = () => {
           </CardContent>
         </Card>
       </div>
+
+      <PdfViewerDialog
+        open={pdfViewerOpen}
+        onOpenChange={setPdfViewerOpen}
+        pdfUrl={selectedPdfUrl}
+        title="Documento de Cotización"
+      />
     </div>
   );
 };

@@ -18,8 +18,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ExternalLink } from "lucide-react";
+import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
+import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -64,6 +65,8 @@ const TicketDetail = () => {
   const [uploading, setUploading] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
+  const [selectedPdfUrl, setSelectedPdfUrl] = useState("");
   
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
@@ -742,16 +745,18 @@ const TicketDetail = () => {
                         )}
                         <p className="text-muted-foreground mt-3">{cot.descripcion}</p>
                         {cot.documento_url && (
-                          <a
-                            href={cot.documento_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 mt-3 text-sm text-primary hover:underline"
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto text-primary mt-3"
+                            onClick={() => {
+                              setSelectedPdfUrl(cot.documento_url!);
+                              setPdfViewerOpen(true);
+                            }}
                           >
-                            <FileText className="h-4 w-4" />
+                            <FileText className="h-4 w-4 mr-1" />
                             Ver documento PDF
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
+                          </Button>
                         )}
                       </div>
                       <div className="text-right ml-4">
@@ -801,6 +806,13 @@ const TicketDetail = () => {
           </div>
         )}
       </div>
+
+      <PdfViewerDialog
+        open={pdfViewerOpen}
+        onOpenChange={setPdfViewerOpen}
+        pdfUrl={selectedPdfUrl}
+        title="Documento de Cotización"
+      />
     </div>
   );
 };
