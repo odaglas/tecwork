@@ -17,7 +17,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare, DollarSign } from "lucide-react";
+import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare, DollarSign, Settings } from "lucide-react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +54,7 @@ const AdminDashboard = () => {
     { title: "Validación de Técnicos", url: "/admin/validacion", icon: ShieldCheck },
     { title: "Soporte", url: "/admin/support-chats", icon: MessageSquare },
     { title: "Pagos Pendientes", url: "/admin/pagos", icon: DollarSign },
+    { title: "Configuración", url: "/admin/settings", icon: Settings },
   ];
 
   const isActive = (path: string) => currentPath === path;
