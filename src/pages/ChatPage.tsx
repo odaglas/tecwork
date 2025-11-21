@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Send } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { containsBannedContent } from "@/lib/utils";
 
 interface Message {
   id: string;
@@ -154,6 +155,16 @@ const ChatPage = () => {
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !currentUserId) return;
+
+    const validation = containsBannedContent(newMessage.trim());
+    if (!validation.isValid) {
+      toast({
+        title: "Mensaje rechazado",
+        description: validation.reason,
+        variant: "destructive",
+      });
+      return;
+    }
 
     const { error } = await supabase.from("chat_messages").insert({
       ticket_id: id,
