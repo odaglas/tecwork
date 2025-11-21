@@ -381,25 +381,6 @@ const AdminDashboard = () => {
 
                   <Card>
                     <CardHeader>
-                      <CardTitle>Tickets por Comuna (Top 5)</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ChartContainer config={{}} className="h-[300px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <BarChart data={analytics.ticketsByComuna}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="comuna" />
-                            <YAxis />
-                            <ChartTooltip content={<ChartTooltipContent />} />
-                            <Bar dataKey="count" fill="hsl(var(--primary))" />
-                          </BarChart>
-                        </ResponsiveContainer>
-                      </ChartContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
                       <CardTitle>Tickets por Categoría</CardTitle>
                     </CardHeader>
                     <CardContent>
