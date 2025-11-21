@@ -22,7 +22,7 @@ const CreateTicket = () => {
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
   const [comuna, setComuna] = useState("");
-  const [files, setFiles] = useState<FileList | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [clienteId, setClienteId] = useState<string | null>(null);
 
@@ -69,6 +69,74 @@ const CreateTicket = () => {
     fetchOrCreateClienteProfile();
   }, []);
 
+  const convertImageToJPEG = async (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx?.drawImage(img, 0, 0);
+        
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const newFile = new File([blob], file.name.replace(/\.\w+$/, '.jpg'), {
+                type: 'image/jpeg',
+              });
+              resolve(newFile);
+            } else {
+              reject(new Error('Failed to convert image'));
+            }
+          },
+          'image/jpeg',
+          0.9
+        );
+      };
+
+      img.onerror = () => reject(new Error('Failed to load image'));
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = e.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) return;
+
+    const convertedFiles: File[] = [];
+    
+    for (let i = 0; i < selectedFiles.length; i++) {
+      const file = selectedFiles[i];
+      
+      // Check if it's a video
+      if (file.type.startsWith('video/')) {
+        convertedFiles.push(file);
+        continue;
+      }
+      
+      // Check if it's an image
+      if (file.type.startsWith('image/')) {
+        // Convert to JPEG if not already JPEG or PNG
+        if (file.type === 'image/jpeg' || file.type === 'image/png') {
+          convertedFiles.push(file);
+        } else {
+          try {
+            const convertedFile = await convertImageToJPEG(file);
+            convertedFiles.push(convertedFile);
+            toast.success(`Imagen convertida: ${file.name}`);
+          } catch (error) {
+            console.error('Error converting image:', error);
+            toast.error(`No se pudo convertir: ${file.name}`);
+          }
+        }
+      }
+    }
+    
+    setFiles(convertedFiles);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -97,8 +165,8 @@ const CreateTicket = () => {
       if (ticketError) throw ticketError;
 
       // Upload files if any
-      if (files && files.length > 0) {
-        const uploadPromises = Array.from(files).map(async (file) => {
+      if (files.length > 0) {
+        const uploadPromises = files.map(async (file) => {
           const fileExt = file.name.split('.').pop();
           const fileName = `${ticketData.id}/${Math.random()}.${fileExt}`;
           
@@ -213,7 +281,7 @@ const CreateTicket = () => {
                 type="file"
                 accept="image/*,video/*"
                 multiple
-                onChange={(e) => setFiles(e.target.files)}
+                onChange={handleFileChange}
                 className="hidden"
               />
               <label
@@ -223,12 +291,12 @@ const CreateTicket = () => {
                 <Camera className="w-8 h-8 text-muted-foreground" />
                 <div className="text-center">
                   <p className="text-sm font-medium text-foreground">
-                    {files && files.length > 0
+                    {files.length > 0
                       ? `${files.length} archivo(s) seleccionado(s)`
                       : "Haz clic para adjuntar fotos o video"}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Formatos: JPG, PNG, MP4
+                    Formatos: JPG, PNG, WEBP, MP4 (convertidos automáticamente)
                   </p>
                 </div>
               </label>
