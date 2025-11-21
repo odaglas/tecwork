@@ -1,4 +1,4 @@
-import { Bell, User } from "lucide-react";
+import { User } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import tecworkLogo from "@/assets/tecwork-logo.png";
+import { NotificationBell } from "@/components/NotificationBell";
 
 export const ClientHeader = () => {
   const handleLogout = async () => {
@@ -32,10 +33,7 @@ export const ClientHeader = () => {
           
           <div className="flex items-center gap-2">
             {/* Notification Bell */}
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-6 w-6 text-foreground" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-success rounded-full"></span>
-            </Button>
+            <NotificationBell />
 
             {/* User Profile Menu */}
             <DropdownMenu>
