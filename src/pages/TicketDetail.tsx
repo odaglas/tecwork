@@ -19,10 +19,12 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ChevronDown, MapPin, Star, Briefcase } from "lucide-react";
+import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ChevronDown, MapPin, Star, Briefcase, AlertTriangle, MessageCircle } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
+import { CalificacionDialog } from "@/components/CalificacionDialog";
+import { SupportChatDialog } from "@/components/SupportChatDialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -34,6 +36,7 @@ interface TicketData {
   comuna: string;
   estado: string;
   created_at: string;
+  cliente_id: string;
 }
 
 interface TicketAdjunto {
@@ -75,6 +78,10 @@ const TicketDetail = () => {
   const [cancelling, setCancelling] = useState(false);
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [selectedPdfUrl, setSelectedPdfUrl] = useState("");
+  const [isCalificacionDialogOpen, setIsCalificacionDialogOpen] = useState(false);
+  const [isSupportChatOpen, setIsSupportChatOpen] = useState(false);
+  const [acceptedCotizacion, setAcceptedCotizacion] = useState<CotizacionData | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
@@ -87,10 +94,27 @@ const TicketDetail = () => {
   });
 
   useEffect(() => {
+    getCurrentUser();
+  }, []);
+
+  useEffect(() => {
     if (ticketId) {
       fetchTicketDetails();
     }
   }, [ticketId]);
+
+  const getCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", user.id)
+        .single();
+      
+      setCurrentUser(profile);
+    }
+  };
 
   const fetchTicketDetails = async () => {
     setLoading(true);
@@ -219,6 +243,10 @@ const TicketDetail = () => {
 
         console.log("Formatted cotizaciones:", formattedCotizaciones);
         setCotizaciones(formattedCotizaciones);
+        
+        // Find accepted cotizacion
+        const accepted = formattedCotizaciones.find(c => c.estado === "aceptada");
+        setAcceptedCotizacion(accepted || null);
       }
 
 
@@ -507,7 +535,29 @@ const TicketDetail = () => {
           </div>
           <div className="flex items-center gap-2">
             {getEstadoBadge(ticket.estado)}
-            {ticket.estado !== "cancelado" && ticket.estado !== "finalizado" && (
+            {ticket.estado === "en_progreso" && (
+              <>
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setIsCalificacionDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Finalizar
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setIsSupportChatOpen(true)}
+                  className="gap-2"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  Reportar
+                </Button>
+              </>
+            )}
+            {ticket.estado !== "cancelado" && ticket.estado !== "finalizado" && ticket.estado !== "en_progreso" && (
               <Button
                 variant="destructive"
                 size="sm"
@@ -858,6 +908,29 @@ const TicketDetail = () => {
         onOpenChange={setPdfViewerOpen}
         pdfUrl={selectedPdfUrl}
         title="Documento de Cotización"
+      />
+      
+      <CalificacionDialog
+        open={isCalificacionDialogOpen}
+        onOpenChange={setIsCalificacionDialogOpen}
+        ticketId={ticketId!}
+        tecnicoId={acceptedCotizacion?.tecnico_id || ""}
+        clienteId={ticket.cliente_id}
+        onSuccess={() => {
+          fetchTicketDetails();
+          toast({
+            title: "¡Trabajo finalizado!",
+            description: "El ticket ha sido marcado como finalizado",
+          });
+        }}
+      />
+      
+      <SupportChatDialog
+        open={isSupportChatOpen}
+        onOpenChange={setIsSupportChatOpen}
+        ticketId={ticketId!}
+        clienteId={ticket.cliente_id}
+        currentUserId={currentUser?.id || ""}
       />
     </div>
   );
