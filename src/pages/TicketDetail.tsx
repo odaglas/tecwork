@@ -16,9 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText } from "lucide-react";
+import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ChevronDown, MapPin, Star, Briefcase } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { formatDistanceToNow } from "date-fns";
@@ -53,6 +54,11 @@ interface CotizacionData {
   tecnico_id: string;
   tecnico_user_id: string | null;
   documento_url: string | null;
+  tecnico_especialidad?: string;
+  tecnico_descripcion?: string | null;
+  tecnico_comunas?: string[] | null;
+  tecnico_calificacion_promedio?: number;
+  tecnico_calificaciones_count?: number;
 }
 
 const TicketDetail = () => {
@@ -134,7 +140,7 @@ const TicketDetail = () => {
         // Fetch all tecnico profiles in one query
         const { data: tecnicoProfiles, error: tecnicoError } = await supabase
           .from("tecnico_profile")
-          .select("id, user_id")
+          .select("id, user_id, especialidad_principal, descripcion_perfil, comunas_cobertura")
           .in("id", tecnicoIds);
 
         console.log("Tecnico profiles:", tecnicoProfiles);
@@ -153,6 +159,22 @@ const TicketDetail = () => {
         console.log("User profiles:", userProfiles);
         if (userError) console.error("Error fetching user profiles:", userError);
 
+        // Fetch ratings for all technicians
+        const { data: ratingsData } = await supabase
+          .from("calificacion")
+          .select("tecnico_id, puntaje")
+          .in("tecnico_id", tecnicoIds);
+
+        // Calculate average ratings
+        const ratingsMap = new Map<string, { avg: number; count: number }>();
+        tecnicoIds.forEach(id => {
+          const techRatings = ratingsData?.filter(r => r.tecnico_id === id) || [];
+          if (techRatings.length > 0) {
+            const avg = techRatings.reduce((sum, r) => sum + r.puntaje, 0) / techRatings.length;
+            ratingsMap.set(id, { avg, count: techRatings.length });
+          }
+        });
+
         // Create lookup maps
         const tecnicoProfileMap = new Map(tecnicoProfiles?.map(tp => [tp.id, tp]) || []);
         const userProfileMap = new Map(userProfiles?.map(up => [up.id, up]) || []);
@@ -164,6 +186,7 @@ const TicketDetail = () => {
         const formattedCotizaciones = cotizacionesData.map((cot) => {
           const tecnicoProfile = tecnicoProfileMap.get(cot.tecnico_id);
           const userProfile = tecnicoProfile ? userProfileMap.get(tecnicoProfile.user_id) : null;
+          const ratings = ratingsMap.get(cot.tecnico_id);
           
           console.log(`Processing cot ${cot.id}:`, {
             tecnico_id: cot.tecnico_id,
@@ -183,6 +206,11 @@ const TicketDetail = () => {
             tecnico_id: cot.tecnico_id,
             tecnico_user_id: tecnicoProfile?.user_id || null,
             documento_url: cot.documento_url || null,
+            tecnico_especialidad: tecnicoProfile?.especialidad_principal,
+            tecnico_descripcion: tecnicoProfile?.descripcion_perfil,
+            tecnico_comunas: tecnicoProfile?.comunas_cobertura,
+            tecnico_calificacion_promedio: ratings?.avg,
+            tecnico_calificaciones_count: ratings?.count,
           };
         });
 
@@ -731,18 +759,54 @@ const TicketDetail = () => {
                           <h4 className="font-semibold text-lg">{cot.tecnico_nombre}</h4>
                           {getCotizacionEstadoBadge(cot.estado)}
                         </div>
-                        <p className="text-sm text-muted-foreground mb-2">{cot.tecnico_email}</p>
-                        {cot.tecnico_user_id && (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="p-0 h-auto text-primary"
-                            onClick={() => window.open(`/tecnico/${cot.tecnico_user_id}`, '_blank')}
-                          >
-                            <Eye className="h-3 w-3 mr-1" />
-                            Ver perfil del técnico
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-3 mb-2">
+                          <p className="text-sm text-muted-foreground">{cot.tecnico_email}</p>
+                          {cot.tecnico_calificacion_promedio && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 fill-primary text-primary" />
+                              <span className="text-sm font-medium">{cot.tecnico_calificacion_promedio.toFixed(1)}</span>
+                              <span className="text-xs text-muted-foreground">({cot.tecnico_calificaciones_count})</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Technician Profile Collapsible */}
+                        <Collapsible className="mb-3">
+                          <CollapsibleTrigger asChild>
+                            <Button variant="ghost" size="sm" className="p-0 h-auto text-primary hover:bg-transparent">
+                              <Eye className="h-3 w-3 mr-1" />
+                              Ver perfil del técnico
+                              <ChevronDown className="h-3 w-3 ml-1" />
+                            </Button>
+                          </CollapsibleTrigger>
+                          <CollapsibleContent className="mt-3 p-3 bg-muted/50 rounded-md space-y-2">
+                            {cot.tecnico_especialidad && (
+                              <div className="flex items-center gap-2">
+                                <Briefcase className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm font-medium">{cot.tecnico_especialidad}</span>
+                              </div>
+                            )}
+                            {cot.tecnico_descripcion && (
+                              <p className="text-sm text-muted-foreground">{cot.tecnico_descripcion}</p>
+                            )}
+                            {cot.tecnico_comunas && cot.tecnico_comunas.length > 0 && (
+                              <div>
+                                <div className="flex items-center gap-2 mb-1">
+                                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm font-medium">Comunas de cobertura:</span>
+                                </div>
+                                <div className="flex flex-wrap gap-1 ml-6">
+                                  {cot.tecnico_comunas.map((comuna) => (
+                                    <Badge key={comuna} variant="outline" className="text-xs">
+                                      {comuna}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </CollapsibleContent>
+                        </Collapsible>
+
                         <p className="text-muted-foreground mt-3">{cot.descripcion}</p>
                         {cot.documento_url && (
                           <Button
