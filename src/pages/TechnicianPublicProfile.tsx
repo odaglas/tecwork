@@ -44,7 +44,7 @@ const TechnicianPublicProfile = () => {
           .from("tecnico_profile")
           .select("*")
           .eq("id", id)
-          .single();
+          .maybeSingle();
 
         if (tecnicoError) throw tecnicoError;
 
