@@ -62,8 +62,8 @@ const TechnicianQuoteForm = () => {
       // Upload PDF if provided
       if (pdfFile) {
         const fileExt = 'pdf';
-        const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        const filePath = `cotizaciones/${fileName}`;
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `cotizaciones/${ticketId}/${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from('tecnico-documents')
