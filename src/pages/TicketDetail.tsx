@@ -6,6 +6,16 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle } from "lucide-react";
@@ -51,6 +61,8 @@ const TicketDetail = () => {
   const [saving, setSaving] = useState(false);
   const [editingTicket, setEditingTicket] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
@@ -316,6 +328,34 @@ const TicketDetail = () => {
     }
   };
 
+  const handleCancelTicket = async () => {
+    setCancelling(true);
+    try {
+      const { error } = await supabase
+        .from("ticket")
+        .update({ estado: "cancelado" })
+        .eq("id", ticketId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Ticket Cancelado",
+        description: "El ticket ha sido cancelado exitosamente",
+      });
+
+      setShowCancelDialog(false);
+      fetchTicketDetails();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "No se pudo cancelar el ticket",
+        variant: "destructive",
+      });
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleDeleteFile = async (adjuntoId: string, fileUrl: string) => {
     try {
       // Extract file path from URL
@@ -429,8 +469,49 @@ const TicketDetail = () => {
               Creado {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: es })}
             </p>
           </div>
-          {getEstadoBadge(ticket.estado)}
+          <div className="flex items-center gap-2">
+            {getEstadoBadge(ticket.estado)}
+            {ticket.estado !== "cancelado" && ticket.estado !== "finalizado" && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setShowCancelDialog(true)}
+              >
+                <X className="h-4 w-4 mr-2" />
+                Cancelar Ticket
+              </Button>
+            )}
+          </div>
         </div>
+
+        {/* Cancel Confirmation Dialog */}
+        <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción cancelará el ticket permanentemente. No podrás recibir más cotizaciones y los técnicos serán notificados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={cancelling}>No, mantener ticket</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleCancelTicket}
+                disabled={cancelling}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {cancelling ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Cancelando...
+                  </>
+                ) : (
+                  "Sí, cancelar ticket"
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Ticket Info Card */}
         <Card>
