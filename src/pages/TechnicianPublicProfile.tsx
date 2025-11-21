@@ -99,29 +99,46 @@ const TechnicianPublicProfile = () => {
         if (profileError) throw profileError;
         setProfile(profileData);
 
-        // Fetch ratings with client names
+        // Fetch ratings
         const { data: ratingsData } = await supabase
           .from("calificacion")
           .select(`
             puntaje, 
             comentario, 
             created_at,
-            cliente_id,
-            cliente_profile!inner(user_id),
-            profiles:cliente_profile(profiles(nombre))
+            cliente_id
           `)
           .eq("tecnico_id", id)
           .order("created_at", { ascending: false });
 
-        if (ratingsData) {
-          const formattedRatings = ratingsData.map((r: any) => ({
-            puntaje: r.puntaje,
-            comentario: r.comentario,
-            created_at: r.created_at,
-            cliente_id: r.cliente_id,
-            profiles: r.profiles?.[0] || null
-          }));
-          setRatings(formattedRatings);
+        if (ratingsData && ratingsData.length > 0) {
+          // Fetch client names separately
+          const ratingsWithNames = await Promise.all(
+            ratingsData.map(async (rating) => {
+              const { data: clienteProfile } = await supabase
+                .from("cliente_profile")
+                .select("user_id")
+                .eq("id", rating.cliente_id)
+                .single();
+
+              if (clienteProfile) {
+                const { data: profileData } = await supabase
+                  .from("profiles")
+                  .select("nombre")
+                  .eq("id", clienteProfile.user_id)
+                  .single();
+
+                return {
+                  ...rating,
+                  profiles: profileData ? { nombre: profileData.nombre } : null
+                };
+              }
+
+              return { ...rating, profiles: null };
+            })
+          );
+
+          setRatings(ratingsWithNames);
           const avg = ratingsData.reduce((sum, r) => sum + r.puntaje, 0) / ratingsData.length;
           setAverageRating(avg || 0);
         }
