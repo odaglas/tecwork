@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => ({
     mode === "development" && componentTagger(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['tecwork-logo.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: ['tecwork-logo.png', 'tecwork-pwa-icon.png'],
       manifest: {
         name: 'TecWork - Técnicos Certificados',
         short_name: 'TecWork',
@@ -28,19 +28,19 @@ export default defineConfig(({ mode }) => ({
         start_url: '/',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/tecwork-pwa-icon.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/tecwork-pwa-icon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/tecwork-pwa-icon.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable'
