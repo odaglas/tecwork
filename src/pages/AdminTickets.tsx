@@ -225,8 +225,10 @@ const AdminTickets = () => {
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="Electricidad">Electricidad</SelectItem>
                   <SelectItem value="Gasfitería">Gasfitería</SelectItem>
+                  <SelectItem value="Soporte Informático">Soporte Informático</SelectItem>
+                  <SelectItem value="Línea Blanca">Línea Blanca</SelectItem>
                   <SelectItem value="Carpintería">Carpintería</SelectItem>
-                  <SelectItem value="Pintura">Pintura</SelectItem>
+                  <SelectItem value="Mantenimiento General">Mantenimiento General</SelectItem>
                 </SelectContent>
               </Select>
               <Input

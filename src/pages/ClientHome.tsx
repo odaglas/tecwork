@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Droplet, Zap, Wrench, Monitor, Clock, Loader2 } from "lucide-react";
+import { Search, Droplet, Zap, Monitor, Wind, Hammer, PaintBucket, Clock, Loader2 } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -12,10 +12,12 @@ import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
 const categories = [
-  { icon: Droplet, label: "Gasfitería", color: "text-primary" },
   { icon: Zap, label: "Electricidad", color: "text-primary" },
-  { icon: Wrench, label: "Reparaciones", color: "text-primary" },
-  { icon: Monitor, label: "Soporte TI", color: "text-primary" },
+  { icon: Droplet, label: "Gasfitería", color: "text-primary" },
+  { icon: Monitor, label: "Soporte Informático", color: "text-primary" },
+  { icon: Wind, label: "Línea Blanca", color: "text-primary" },
+  { icon: Hammer, label: "Carpintería", color: "text-primary" },
+  { icon: PaintBucket, label: "Mantenimiento General", color: "text-primary" },
 ];
 
 interface Ticket {
