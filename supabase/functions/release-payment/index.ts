@@ -79,10 +79,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Update pago estado to 'liberado_tecnico'
+    // Calculate commission (15%)
+    const comisionPorcentaje = 15;
+    const comisionMonto = Math.floor(pago.monto_total * (comisionPorcentaje / 100));
+    const montoNeto = pago.monto_total - comisionMonto;
+
+    console.log(`Payment breakdown - Total: ${pago.monto_total}, Commission (${comisionPorcentaje}%): ${comisionMonto}, Net: ${montoNeto}`);
+
+    // Update pago with commission and change estado to 'liberado_tecnico'
     const { error: pagoUpdateError } = await supabase
       .from('pago')
-      .update({ estado_pago: 'liberado_tecnico' })
+      .update({ 
+        estado_pago: 'liberado_tecnico',
+        comision_porcentaje: comisionPorcentaje,
+        comision_monto: comisionMonto,
+        monto_neto: montoNeto
+      })
       .eq('id', pago_id);
 
     if (pagoUpdateError) {

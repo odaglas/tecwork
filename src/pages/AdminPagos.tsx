@@ -28,6 +28,9 @@ import {
 interface PendingPayment {
   id: string;
   monto_total: number;
+  comision_porcentaje?: number;
+  comision_monto?: number;
+  monto_neto?: number;
   estado_pago: string;
   created_at: string;
   ticket: {
@@ -306,10 +309,23 @@ export default function AdminPagos() {
                 Estás a punto de liberar el siguiente pago al técnico:
               </p>
               {selectedPayment && (
-                <div className="bg-muted p-4 rounded-lg space-y-2 text-foreground">
+                <div className="bg-muted p-4 rounded-lg space-y-3 text-foreground">
                   <p><strong>Técnico:</strong> {selectedPayment.tecnico_nombre}</p>
-                  <p><strong>Monto:</strong> ${selectedPayment.monto_total.toLocaleString()}</p>
                   <p><strong>Ticket:</strong> {selectedPayment.ticket?.titulo}</p>
+                  <div className="border-t border-border pt-3 mt-3 space-y-1">
+                    <p className="flex justify-between">
+                      <span>Monto Total:</span>
+                      <span className="font-semibold">${selectedPayment.monto_total.toLocaleString()}</span>
+                    </p>
+                    <p className="flex justify-between text-sm text-muted-foreground">
+                      <span>Comisión (15%):</span>
+                      <span>-${Math.floor(selectedPayment.monto_total * 0.15).toLocaleString()}</span>
+                    </p>
+                    <p className="flex justify-between text-lg font-bold border-t border-border pt-2 text-primary">
+                      <span>Pago al Técnico:</span>
+                      <span>${Math.floor(selectedPayment.monto_total * 0.85).toLocaleString()}</span>
+                    </p>
+                  </div>
                 </div>
               )}
               <p className="text-destructive font-medium flex items-center gap-2 mt-4">
