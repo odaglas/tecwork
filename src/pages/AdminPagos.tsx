@@ -148,7 +148,7 @@ export default function AdminPagos() {
     setReleasing(true);
     try {
       const { data, error } = await supabase.functions.invoke("release-payment", {
-        body: { paymentId: selectedPayment.id },
+        body: { pago_id: selectedPayment.id },
       });
 
       if (error) throw error;
