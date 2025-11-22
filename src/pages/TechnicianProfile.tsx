@@ -265,7 +265,7 @@ const TechnicianProfile = () => {
 
       <main className="container px-4 py-8 max-w-2xl">
         <Tabs defaultValue="perfil" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="perfil">Perfil</TabsTrigger>
             <TabsTrigger value="pagos">Pagos</TabsTrigger>
           </TabsList>
