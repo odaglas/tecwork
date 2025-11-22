@@ -262,30 +262,39 @@ export type Database = {
       }
       pago: {
         Row: {
+          comision_monto: number | null
+          comision_porcentaje: number | null
           cotizacion_id: string
           created_at: string | null
           estado_pago: Database["public"]["Enums"]["pago_estado"] | null
           id: string
+          monto_neto: number | null
           monto_total: number
           ticket_id: string
           transbank_token: string | null
           updated_at: string | null
         }
         Insert: {
+          comision_monto?: number | null
+          comision_porcentaje?: number | null
           cotizacion_id: string
           created_at?: string | null
           estado_pago?: Database["public"]["Enums"]["pago_estado"] | null
           id?: string
+          monto_neto?: number | null
           monto_total: number
           ticket_id: string
           transbank_token?: string | null
           updated_at?: string | null
         }
         Update: {
+          comision_monto?: number | null
+          comision_porcentaje?: number | null
           cotizacion_id?: string
           created_at?: string | null
           estado_pago?: Database["public"]["Enums"]["pago_estado"] | null
           id?: string
+          monto_neto?: number | null
           monto_total?: number
           ticket_id?: string
           transbank_token?: string | null
