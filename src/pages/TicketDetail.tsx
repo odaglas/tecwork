@@ -19,12 +19,13 @@ import {
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ChevronDown, MapPin, Star, Briefcase, AlertTriangle, MessageCircle } from "lucide-react";
+import { Loader2, ArrowLeft, Edit2, Check, X, Trash2, Upload, Eye, CheckCircle, XCircle, FileText, ChevronDown, MapPin, Star, Briefcase, AlertTriangle, MessageCircle, AlertCircle } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { CalificacionDialog } from "@/components/CalificacionDialog";
 import { SupportChatDialog } from "@/components/SupportChatDialog";
+import DisputaDialog from "@/components/DisputaDialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -82,6 +83,8 @@ const TicketDetail = () => {
   const [isSupportChatOpen, setIsSupportChatOpen] = useState(false);
   const [acceptedCotizacion, setAcceptedCotizacion] = useState<CotizacionData | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [isDisputaDialogOpen, setIsDisputaDialogOpen] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
   
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [cotizaciones, setCotizaciones] = useState<CotizacionData[]>([]);
@@ -259,6 +262,19 @@ const TicketDetail = () => {
 
       if (adjuntosError) throw adjuntosError;
       setAdjuntos(adjuntosData || []);
+
+      // Fetch payment data if ticket is in progress or finalized
+      if (ticketData.estado === "en_progreso" || ticketData.estado === "finalizado") {
+        const { data: paymentInfo } = await supabase
+          .from("pago")
+          .select("id, monto_total, estado_pago")
+          .eq("ticket_id", ticketId)
+          .maybeSingle();
+        
+        if (paymentInfo) {
+          setPaymentData(paymentInfo);
+        }
+      }
     } catch (error: any) {
       console.error("Error fetching ticket details:", error);
       toast({
@@ -558,6 +574,17 @@ const TicketDetail = () => {
                   <AlertTriangle className="w-4 h-4" />
                   <span className="hidden sm:inline">Reportar</span>
                 </Button>
+                {paymentData && (paymentData.estado_pago === "pagado_retenido" || paymentData.estado_pago === "liberado_tecnico") && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsDisputaDialogOpen(true)}
+                    className="gap-2 text-xs md:text-sm border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    <span className="hidden sm:inline">Disputa</span>
+                  </Button>
+                )}
               </>
             )}
             {ticket.estado !== "cancelado" && ticket.estado !== "finalizado" && ticket.estado !== "en_progreso" && (
@@ -938,6 +965,18 @@ const TicketDetail = () => {
         clienteId={ticket.cliente_id}
         currentUserId={currentUser?.id || ""}
       />
+
+      {paymentData && (
+        <DisputaDialog
+          open={isDisputaDialogOpen}
+          onOpenChange={setIsDisputaDialogOpen}
+          pagoId={paymentData.id}
+          montoTotal={paymentData.monto_total}
+          onSuccess={() => {
+            fetchTicketDetails();
+          }}
+        />
+      )}
     </div>
   );
 };
