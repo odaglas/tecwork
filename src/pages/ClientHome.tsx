@@ -121,18 +121,18 @@ const ClientHome = () => {
       <ClientHeader />
 
       {/* Main Content */}
-      <main className="container px-4 py-8">
+      <main className="container px-4 py-6 md:py-8 max-w-6xl mx-auto">
         {/* Welcome Message */}
         {userName && (
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-foreground">
+          <div className="mb-4 md:mb-6">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground break-words">
               ¡Bienvenido, {userName}!
             </h1>
           </div>
         )}
 
         {/* Title */}
-        <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6">
+        <h1 className="text-2xl md:text-4xl font-bold text-foreground mb-4 md:mb-6 break-words">
           ¿Qué servicio necesitas hoy?
         </h1>
 
@@ -149,17 +149,17 @@ const ClientHome = () => {
         {/* Categories */}
         <div className="mb-8">
           <h2 className="text-xl font-semibold text-foreground mb-4">Categorías</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
             {categories.map((category) => (
               <Card
                 key={category.label}
                 className="hover:shadow-lg transition-smooth cursor-pointer border-2 hover:border-primary group"
               >
-                <CardContent className="p-6 flex flex-col items-center text-center gap-3">
-                  <div className="p-4 rounded-full bg-primary/10 group-hover:bg-primary transition-smooth">
-                    <category.icon className={`h-8 w-8 ${category.color} group-hover:text-primary-foreground transition-smooth`} />
+                <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-2 md:gap-3">
+                  <div className="p-3 md:p-4 rounded-full bg-primary/10 group-hover:bg-primary transition-smooth">
+                    <category.icon className={`h-6 w-6 md:h-8 md:w-8 ${category.color} group-hover:text-primary-foreground transition-smooth`} />
                   </div>
-                  <span className="font-semibold text-foreground">{category.label}</span>
+                  <span className="font-semibold text-sm md:text-base text-foreground">{category.label}</span>
                 </CardContent>
               </Card>
             ))}
@@ -167,11 +167,11 @@ const ClientHome = () => {
         </div>
 
         {/* CTA Button */}
-        <div className="mb-8">
+        <div className="mb-6 md:mb-8">
           <Button
             variant="success"
             size="lg"
-            className="w-full md:w-auto text-lg px-8 py-6"
+            className="w-full md:w-auto text-base md:text-lg px-6 md:px-8 py-5 md:py-6"
             onClick={() => window.location.href = "/cliente/crear-ticket"}
           >
             Crear un Ticket de Servicio
@@ -204,26 +204,26 @@ const ClientHome = () => {
             <div className="space-y-4">
               {tickets.map((ticket) => (
                 <Card key={ticket.id} className="border-2 hover:shadow-lg transition-smooth">
-                  <CardContent className="p-6">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  <CardContent className="p-4 md:p-6">
+                    <div className="flex flex-col gap-4">
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold text-foreground mb-2">
+                        <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2 break-words">
                           {ticket.titulo}
                         </h3>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 break-words">
                           {ticket.descripcion}
                         </p>
-                        <div className="flex items-center gap-4 mb-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
                           <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4" />
-                            <span className="text-sm">
+                            <Clock className="h-4 w-4 shrink-0" />
+                            <span className="text-xs md:text-sm">
                               {formatDistanceToNow(new Date(ticket.created_at), { 
                                 addSuffix: true, 
                                 locale: es 
                               })}
                             </span>
                           </div>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs w-fit">
                             {ticket.categoria}
                           </Badge>
                         </div>
@@ -234,6 +234,7 @@ const ClientHome = () => {
                         <Button 
                           variant="outline" 
                           size="sm" 
+                          className="w-full text-xs md:text-sm"
                           onClick={() => navigate(`/cliente/ticket/${ticket.id}`)}
                         >
                           Ver Detalles
