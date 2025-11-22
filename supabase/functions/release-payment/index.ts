@@ -63,8 +63,16 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify user is the pago owner
-    if (pago.ticket.cliente_profile.user_id !== user.id) {
+    // Check if user is admin
+    const { data: userRoles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+    
+    const isAdmin = userRoles?.some(r => r.role === 'admin');
+
+    // Verify user is either the pago owner or an admin
+    if (pago.ticket.cliente_profile.user_id !== user.id && !isAdmin) {
       return new Response(
         JSON.stringify({ error: 'No tienes permiso para liberar este pago' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
