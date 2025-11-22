@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, MapPin, Upload, FileText, AlertTriangle } from "lucide-react";
+import { Loader2, ArrowLeft, MapPin, Upload, FileText, AlertTriangle, CheckCircle } from "lucide-react";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { SupportChatDialog } from "@/components/SupportChatDialog";
 import { formatDistanceToNow } from "date-fns";
@@ -43,6 +43,7 @@ const TechnicianTicketDetail = () => {
   const [showQuoteForm, setShowQuoteForm] = useState(false);
   const [uploadingPdf, setUploadingPdf] = useState(false);
   const [isSupportChatOpen, setIsSupportChatOpen] = useState(false);
+  const [requestingCompletion, setRequestingCompletion] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [clienteId, setClienteId] = useState<string>("");
   
@@ -358,6 +359,31 @@ const TechnicianTicketDetail = () => {
     }
   };
 
+  const handleRequestCompletion = async () => {
+    setRequestingCompletion(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("request-ticket-completion", {
+        body: { ticketId },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Solicitud Enviada",
+        description: "Se ha notificado al cliente y administradores sobre la finalización del trabajo",
+      });
+    } catch (error: any) {
+      console.error("Error requesting completion:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo enviar la solicitud de finalización",
+        variant: "destructive",
+      });
+    } finally {
+      setRequestingCompletion(false);
+    }
+  };
+
   const getEstadoBadge = (estado: string) => {
     const variants: Record<string, { className: string; label: string }> = {
       abierto: { className: "bg-success/10 text-success border-success", label: "Abierto" },
@@ -502,13 +528,33 @@ const TechnicianTicketDetail = () => {
             <CardHeader>
               <CardTitle className="text-green-600">Cotización Aceptada</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-4">
               <p className="text-muted-foreground">Tu cotización ha sido aceptada por el cliente.</p>
               <div className="space-y-2">
                 <p><span className="font-semibold">Descripción:</span> {existingQuote.descripcion}</p>
                 <p><span className="font-semibold">Precio:</span> ${existingQuote.valor_total.toLocaleString('es-CL')} CLP</p>
                 <p><span className="font-semibold">Tiempo estimado:</span> {existingQuote.tiempo_estimado_dias} días</p>
               </div>
+              {ticket.estado === "en_progreso" && (
+                <Button
+                  onClick={handleRequestCompletion}
+                  disabled={requestingCompletion}
+                  className="w-full gap-2"
+                  variant="default"
+                >
+                  {requestingCompletion ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Enviando solicitud...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4" />
+                      Solicitar Finalización del Ticket
+                    </>
+                  )}
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : existingQuote?.estado === "rechazada" ? (
