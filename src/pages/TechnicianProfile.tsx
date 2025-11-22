@@ -491,13 +491,18 @@ const TechnicianProfile = () => {
                     <p className="text-2xl font-bold text-green-600">
                       ${balanceData.available.toLocaleString("es-CL")}
                     </p>
-                    {balanceData.available > 0 && (
+                      {balanceData.available > 0 && (
                       <Button 
                         className="w-full mt-3"
                         onClick={() => {
+                          const amount = balanceData.available;
+                          setBalanceData(prev => ({
+                            ...prev,
+                            available: 0
+                          }));
                           toast({
                             title: "Retiro simulado exitoso",
-                            description: `Se ha procesado el retiro de $${balanceData.available.toLocaleString("es-CL")} a tu cuenta personal.`,
+                            description: `Se ha procesado el retiro de $${amount.toLocaleString("es-CL")} a tu cuenta personal.`,
                           });
                         }}
                       >
