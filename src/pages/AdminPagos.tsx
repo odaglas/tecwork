@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DollarSign, CheckCircle, AlertCircle, ArrowLeft, TrendingUp } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -33,6 +34,7 @@ interface PendingPayment {
   monto_neto?: number;
   estado_pago: string;
   created_at: string;
+  updated_at: string;
   ticket: {
     id: string;
     titulo: string;
@@ -48,6 +50,7 @@ interface PendingPayment {
 export default function AdminPagos() {
   const navigate = useNavigate();
   const [payments, setPayments] = useState<PendingPayment[]>([]);
+  const [commissionHistory, setCommissionHistory] = useState<PendingPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState<PendingPayment | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -56,6 +59,7 @@ export default function AdminPagos() {
 
   useEffect(() => {
     fetchPendingPayments();
+    fetchCommissionHistory();
   }, []);
 
   const fetchPendingPayments = async () => {
@@ -80,13 +84,11 @@ export default function AdminPagos() {
 
       if (error) throw error;
 
-      // Fetch technician and client names
       const paymentsWithNames = await Promise.all(
         (paymentsData || []).map(async (payment) => {
           let tecnicoNombre = "N/A";
           let clienteNombre = "N/A";
 
-          // Get technician name
           if (payment.cotizacion?.tecnico_id) {
             const { data: tecnicoProfile } = await supabase
               .from("tecnico_profile")
@@ -105,7 +107,6 @@ export default function AdminPagos() {
             }
           }
 
-          // Get client name
           if (payment.ticket?.cliente_id) {
             const { data: clienteProfile } = await supabase
               .from("cliente_profile")
@@ -145,6 +146,82 @@ export default function AdminPagos() {
     }
   };
 
+  const fetchCommissionHistory = async () => {
+    try {
+      const { data: historyData, error } = await supabase
+        .from("pago")
+        .select(`
+          *,
+          ticket:ticket_id (
+            id,
+            titulo,
+            cliente_id,
+            estado
+          ),
+          cotizacion:cotizacion_id (
+            tecnico_id
+          )
+        `)
+        .eq("estado_pago", "liberado_tecnico")
+        .order("updated_at", { ascending: false });
+
+      if (error) throw error;
+
+      const historyWithNames = await Promise.all(
+        (historyData || []).map(async (payment) => {
+          let tecnicoNombre = "N/A";
+          let clienteNombre = "N/A";
+
+          if (payment.cotizacion?.tecnico_id) {
+            const { data: tecnicoProfile } = await supabase
+              .from("tecnico_profile")
+              .select("user_id")
+              .eq("id", payment.cotizacion.tecnico_id)
+              .single();
+
+            if (tecnicoProfile) {
+              const { data: tecnicoUser } = await supabase
+                .from("profiles")
+                .select("nombre")
+                .eq("id", tecnicoProfile.user_id)
+                .single();
+
+              tecnicoNombre = tecnicoUser?.nombre || "N/A";
+            }
+          }
+
+          if (payment.ticket?.cliente_id) {
+            const { data: clienteProfile } = await supabase
+              .from("cliente_profile")
+              .select("user_id")
+              .eq("id", payment.ticket.cliente_id)
+              .single();
+
+            if (clienteProfile) {
+              const { data: clienteUser } = await supabase
+                .from("profiles")
+                .select("nombre")
+                .eq("id", clienteProfile.user_id)
+                .single();
+
+              clienteNombre = clienteUser?.nombre || "N/A";
+            }
+          }
+
+          return {
+            ...payment,
+            tecnico_nombre: tecnicoNombre,
+            cliente_nombre: clienteNombre,
+          };
+        })
+      );
+
+      setCommissionHistory(historyWithNames as PendingPayment[]);
+    } catch (error) {
+      console.error("Error fetching commission history:", error);
+    }
+  };
+
   const handleReleasePayment = async () => {
     if (!selectedPayment) return;
 
@@ -161,8 +238,9 @@ export default function AdminPagos() {
         description: `El pago de $${selectedPayment.monto_total.toLocaleString()} ha sido liberado al técnico`,
       });
 
-      // Refresh the list
+      // Refresh both lists
       await fetchPendingPayments();
+      await fetchCommissionHistory();
       setShowConfirmDialog(false);
       setSelectedPayment(null);
     } catch (error: any) {
@@ -207,6 +285,10 @@ export default function AdminPagos() {
     );
   }
 
+  const totalCommission = commissionHistory.reduce((sum, payment) => 
+    sum + (payment.comision_monto || 0), 0
+  );
+
   return (
     <div className="container mx-auto py-8 space-y-6">
       <div className="flex items-center gap-4 mb-6">
@@ -218,87 +300,207 @@ export default function AdminPagos() {
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold">Pagos Pendientes de Liberación</h1>
+          <h1 className="text-3xl font-bold">Gestión de Pagos</h1>
           <p className="text-muted-foreground">
-            Gestiona los pagos retenidos que están listos para ser liberados a los técnicos
+            Gestiona pagos pendientes y revisa el historial de comisiones
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <DollarSign className="w-8 h-8 text-primary" />
-          <div className="text-right">
-            <p className="text-2xl font-bold">{payments.length}</p>
-            <p className="text-xs text-muted-foreground">Pagos pendientes</p>
-          </div>
         </div>
       </div>
 
-      {payments.length === 0 ? (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <CheckCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <p className="text-muted-foreground text-lg">
-              No hay pagos pendientes de liberación
-            </p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Todos los pagos han sido procesados
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Pagos</CardTitle>
-            <CardDescription>
-              Pagos que han sido confirmados por el cliente y están esperando aprobación
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ticket</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Técnico</TableHead>
-                  <TableHead>Monto</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell className="font-medium">
-                      {payment.ticket?.titulo || "N/A"}
-                    </TableCell>
-                    <TableCell>{payment.cliente_nombre}</TableCell>
-                    <TableCell>{payment.tecnico_nombre}</TableCell>
-                    <TableCell className="font-semibold">
-                      ${payment.monto_total.toLocaleString()}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(payment.estado_pago)}</TableCell>
-                    <TableCell>
-                      {new Date(payment.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button
-                        size="sm"
-                        onClick={() => {
-                          setSelectedPayment(payment);
-                          setShowConfirmDialog(true);
-                        }}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Liberar Pago
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
+      <Tabs defaultValue="pending" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="pending" className="gap-2">
+            <DollarSign className="w-4 h-4" />
+            Pagos Pendientes
+            {payments.length > 0 && (
+              <Badge variant="destructive" className="ml-1">
+                {payments.length}
+              </Badge>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <TrendingUp className="w-4 h-4" />
+            Historial de Comisiones
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="pending" className="space-y-4">
+          {payments.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <CheckCircle className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground text-lg">
+                  No hay pagos pendientes de liberación
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Todos los pagos han sido procesados
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Pagos Pendientes de Liberación</CardTitle>
+                <CardDescription>
+                  Pagos confirmados por clientes esperando aprobación
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ticket</TableHead>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Técnico</TableHead>
+                      <TableHead>Monto</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Fecha</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {payments.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell className="font-medium">
+                          {payment.ticket?.titulo || "N/A"}
+                        </TableCell>
+                        <TableCell>{payment.cliente_nombre}</TableCell>
+                        <TableCell>{payment.tecnico_nombre}</TableCell>
+                        <TableCell className="font-semibold">
+                          ${payment.monto_total.toLocaleString()}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(payment.estado_pago)}</TableCell>
+                        <TableCell>
+                          {new Date(payment.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPayment(payment);
+                              setShowConfirmDialog(true);
+                            }}
+                          >
+                            <CheckCircle className="w-4 h-4 mr-2" />
+                            Liberar Pago
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="history" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Total Comisiones
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  ${totalCommission.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Comisiones totales generadas
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Pagos Liberados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">
+                  {commissionHistory.length}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pagos procesados exitosamente
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Tasa de Comisión
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">15%</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Comisión estándar por servicio
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {commissionHistory.length === 0 ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <TrendingUp className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <p className="text-muted-foreground text-lg">
+                  No hay historial de comisiones aún
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Las comisiones aparecerán aquí cuando se liberen pagos
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>Historial de Comisiones</CardTitle>
+                <CardDescription>
+                  Registro completo de todas las comisiones generadas
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ticket</TableHead>
+                      <TableHead>Técnico</TableHead>
+                      <TableHead>Monto Total</TableHead>
+                      <TableHead>Comisión (15%)</TableHead>
+                      <TableHead>Pago al Técnico</TableHead>
+                      <TableHead>Fecha Liberación</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {commissionHistory.map((payment) => (
+                      <TableRow key={payment.id}>
+                        <TableCell className="font-medium">
+                          {payment.ticket?.titulo || "N/A"}
+                        </TableCell>
+                        <TableCell>{payment.tecnico_nombre}</TableCell>
+                        <TableCell className="font-semibold">
+                          ${payment.monto_total.toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-primary font-semibold">
+                          ${(payment.comision_monto || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="font-semibold">
+                          ${(payment.monto_neto || 0).toLocaleString()}
+                        </TableCell>
+                        <TableCell>
+                          {new Date(payment.updated_at).toLocaleDateString()}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
 
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
