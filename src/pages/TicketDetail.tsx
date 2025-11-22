@@ -517,23 +517,26 @@ const TicketDetail = () => {
     <div className="min-h-screen bg-secondary">
       <ClientHeader />
       
-      <div className="container px-4 py-8 space-y-6">
+      <div className="container px-4 py-4 md:py-8 space-y-4 md:space-y-6 max-w-6xl mx-auto">
         {/* Back Button and Title */}
-        <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/cliente/home")}
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-foreground">Detalles del Ticket</h1>
-            <p className="text-sm text-muted-foreground">
-              Creado {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: es })}
-            </p>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 md:gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate("/cliente/home")}
+              className="shrink-0"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-xl md:text-3xl font-bold text-foreground truncate">Detalles del Ticket</h1>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                Creado {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: es })}
+              </p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             {getEstadoBadge(ticket.estado)}
             {ticket.estado === "en_progreso" && (
               <>
@@ -541,19 +544,19 @@ const TicketDetail = () => {
                   variant="default"
                   size="sm"
                   onClick={() => setIsCalificacionDialogOpen(true)}
-                  className="gap-2"
+                  className="gap-2 text-xs md:text-sm"
                 >
                   <CheckCircle className="w-4 h-4" />
-                  Finalizar
+                  <span className="hidden sm:inline">Finalizar</span>
                 </Button>
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setIsSupportChatOpen(true)}
-                  className="gap-2"
+                  className="gap-2 text-xs md:text-sm"
                 >
                   <AlertTriangle className="w-4 h-4" />
-                  Reportar
+                  <span className="hidden sm:inline">Reportar</span>
                 </Button>
               </>
             )}
@@ -562,9 +565,10 @@ const TicketDetail = () => {
                 variant="destructive"
                 size="sm"
                 onClick={() => setShowCancelDialog(true)}
+                className="text-xs md:text-sm"
               >
-                <X className="h-4 w-4 mr-2" />
-                Cancelar Ticket
+                <X className="h-4 w-4 mr-1 md:mr-2" />
+                Cancelar
               </Button>
             )}
           </div>
@@ -690,14 +694,14 @@ const TicketDetail = () => {
                   <span className="font-semibold">Descripción:</span>
                   <p className="text-muted-foreground">{ticket.descripcion}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <span className="font-semibold">Categoría:</span>
-                    <p className="text-muted-foreground">{ticket.categoria}</p>
+                    <p className="text-muted-foreground break-words">{ticket.categoria}</p>
                   </div>
                   <div>
                     <span className="font-semibold">Comuna:</span>
-                    <p className="text-muted-foreground capitalize">{ticket.comuna}</p>
+                    <p className="text-muted-foreground capitalize break-words">{ticket.comuna}</p>
                   </div>
                 </div>
               </div>
@@ -805,20 +809,20 @@ const TicketDetail = () => {
             ) : (
               <div className="space-y-4">
                 {cotizaciones.map((cot) => (
-                  <div key={cot.id} className="border rounded-lg p-4 space-y-3 bg-card hover:bg-accent/5 transition-smooth">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex gap-3 flex-1">
-                        <Avatar className="h-12 w-12">
+                  <div key={cot.id} className="border rounded-lg p-3 md:p-4 space-y-3 bg-card hover:bg-accent/5 transition-smooth">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-3">
+                        <Avatar className="h-10 w-10 md:h-12 md:w-12 shrink-0">
                           <AvatarImage src={cot.tecnico_picture_url || undefined} />
                           <AvatarFallback>{cot.tecnico_nombre.charAt(0)}</AvatarFallback>
                         </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h4 className="font-semibold text-lg">{cot.tecnico_nombre}</h4>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                            <h4 className="font-semibold text-base md:text-lg truncate">{cot.tecnico_nombre}</h4>
                             {getCotizacionEstadoBadge(cot.estado)}
                           </div>
-                          <div className="flex items-center gap-3 mb-2">
-                            <p className="text-sm text-muted-foreground">{cot.tecnico_email}</p>
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
+                            <p className="text-xs md:text-sm text-muted-foreground truncate">{cot.tecnico_email}</p>
                             {cot.tecnico_calificacion_promedio && (
                               <div className="flex items-center gap-1">
                                 <Star className="h-4 w-4 fill-primary text-primary" />
@@ -831,19 +835,19 @@ const TicketDetail = () => {
                         <Button
                           variant="link"
                           size="sm"
-                          className="p-0 h-auto text-primary mb-3"
+                          className="p-0 h-auto text-primary text-xs md:text-sm justify-start"
                           onClick={() => navigate(`/tecnico/${cot.tecnico_id}`)}
                         >
                           <Eye className="h-3 w-3 mr-1" />
                           Ver perfil del técnico
                         </Button>
 
-                        <p className="text-muted-foreground mt-3">{cot.descripcion}</p>
+                        <p className="text-sm md:text-base text-muted-foreground mt-3 break-words">{cot.descripcion}</p>
                         {cot.documento_url && (
                           <Button
                             variant="link"
                             size="sm"
-                            className="p-0 h-auto text-primary mt-3"
+                            className="p-0 h-auto text-primary mt-3 text-xs md:text-sm justify-start"
                             onClick={() => {
                               setSelectedPdfUrl(cot.documento_url!);
                               setPdfViewerOpen(true);
@@ -855,33 +859,35 @@ const TicketDetail = () => {
                         )}
                         </div>
                       </div>
-                      <div className="text-right ml-4">
-                        <p className="text-2xl font-bold text-primary">{formatPrice(cot.valor_total)}</p>
-                        <p className="text-sm text-muted-foreground">{cot.tiempo_estimado_dias} día(s)</p>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t">
+                        <div>
+                          <p className="text-xl md:text-2xl font-bold text-primary">{formatPrice(cot.valor_total)}</p>
+                          <p className="text-xs md:text-sm text-muted-foreground">{cot.tiempo_estimado_dias} día(s)</p>
+                        </div>
+                        {cot.estado === "pendiente" && (
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="flex-1 sm:flex-none text-xs md:text-sm"
+                              onClick={() => handleAcceptCotizacion(cot.id)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1 md:mr-2" />
+                              Aceptar
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 sm:flex-none text-xs md:text-sm"
+                              onClick={() => handleRejectCotizacion(cot.id)}
+                            >
+                              <XCircle className="h-4 w-4 mr-1 md:mr-2" />
+                              Rechazar
+                            </Button>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    {cot.estado === "pendiente" && (
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleAcceptCotizacion(cot.id)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Aceptar Cotización
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleRejectCotizacion(cot.id)}
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Rechazar
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
