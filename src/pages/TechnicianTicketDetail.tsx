@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, ArrowLeft, MapPin, Upload, FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { Loader2, ArrowLeft, MapPin, Upload, FileText, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { SupportChatDialog } from "@/components/SupportChatDialog";
+import DisputaDialog from "@/components/DisputaDialog";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -46,6 +47,8 @@ const TechnicianTicketDetail = () => {
   const [requestingCompletion, setRequestingCompletion] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [clienteId, setClienteId] = useState<string>("");
+  const [isDisputaDialogOpen, setIsDisputaDialogOpen] = useState(false);
+  const [paymentData, setPaymentData] = useState<any>(null);
   
   const [ticket, setTicket] = useState<TicketData | null>(null);
   const [adjuntos, setAdjuntos] = useState<TicketAdjunto[]>([]);
@@ -210,6 +213,19 @@ const TechnicianTicketDetail = () => {
               tiempo_estimado_dias: quoteData.tiempo_estimado_dias.toString(),
             });
           }
+        }
+      }
+
+      // Fetch payment data if quote is accepted
+      if (ticketData.estado === "en_progreso" || ticketData.estado === "finalizado") {
+        const { data: paymentInfo } = await supabase
+          .from("pago")
+          .select("id, monto_total, estado_pago")
+          .eq("ticket_id", ticketId)
+          .maybeSingle();
+        
+        if (paymentInfo) {
+          setPaymentData(paymentInfo);
         }
       }
     } catch (error: any) {
@@ -555,6 +571,16 @@ const TechnicianTicketDetail = () => {
                   )}
                 </Button>
               )}
+              {paymentData && (paymentData.estado_pago === "pagado_retenido" || paymentData.estado_pago === "liberado_tecnico") && (
+                <Button
+                  onClick={() => setIsDisputaDialogOpen(true)}
+                  variant="destructive"
+                  className="w-full gap-2 mt-3"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  Crear Disputa de Pago
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : existingQuote?.estado === "rechazada" ? (
@@ -735,6 +761,18 @@ const TechnicianTicketDetail = () => {
           clienteId={clienteId}
           currentUserId={currentUser?.id || ""}
         />
+
+        {paymentData && (
+          <DisputaDialog
+            open={isDisputaDialogOpen}
+            onOpenChange={setIsDisputaDialogOpen}
+            pagoId={paymentData.id}
+            montoTotal={paymentData.monto_total}
+            onSuccess={() => {
+              fetchTicketDetails();
+            }}
+          />
+        )}
       </div>
     </div>
   );
