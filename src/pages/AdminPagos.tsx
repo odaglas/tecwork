@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DollarSign, CheckCircle, AlertCircle } from "lucide-react";
+import { DollarSign, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Table,
@@ -42,6 +43,7 @@ interface PendingPayment {
 }
 
 export default function AdminPagos() {
+  const navigate = useNavigate();
   const [payments, setPayments] = useState<PendingPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState<PendingPayment | null>(null);
@@ -204,8 +206,15 @@ export default function AdminPagos() {
 
   return (
     <div className="container mx-auto py-8 space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-4 mb-6">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin")}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold">Pagos Pendientes de Liberación</h1>
           <p className="text-muted-foreground">
             Gestiona los pagos retenidos que están listos para ser liberados a los técnicos
