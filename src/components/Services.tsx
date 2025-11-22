@@ -1,35 +1,35 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Wrench, Zap, Droplet, Hammer, PaintBucket, Wind } from "lucide-react";
+import { Wrench, Zap, Droplet, Hammer, PaintBucket, Wind, Monitor } from "lucide-react";
 
 const services = [
-  {
-    icon: Droplet,
-    title: "Plomería",
-    description: "Instalaciones, reparaciones y mantención de sistemas de agua",
-  },
   {
     icon: Zap,
     title: "Electricidad",
     description: "Trabajos eléctricos certificados y seguros para tu hogar",
   },
   {
-    icon: Wind,
-    title: "Climatización",
-    description: "Instalación y mantención de aires acondicionados",
+    icon: Droplet,
+    title: "Gasfitería",
+    description: "Instalaciones, reparaciones y mantención de sistemas de agua",
   },
   {
-    icon: PaintBucket,
-    title: "Pintura",
-    description: "Pintores profesionales para interior y exterior",
+    icon: Monitor,
+    title: "Soporte Informático",
+    description: "Asistencia técnica en computadores y sistemas",
+  },
+  {
+    icon: Wind,
+    title: "Línea Blanca",
+    description: "Reparación de electrodomésticos y lavadoras",
   },
   {
     icon: Hammer,
-    title: "Construcción",
-    description: "Maestros y contratistas para remodelaciones",
+    title: "Carpintería",
+    description: "Trabajos en madera y muebles a medida",
   },
   {
-    icon: Wrench,
-    title: "Mantenimiento",
+    icon: PaintBucket,
+    title: "Mantenimiento General",
     description: "Técnicos generales para reparaciones del hogar",
   },
 ];
