@@ -12,6 +12,7 @@ import { Loader2, Edit2, Lock, DollarSign } from "lucide-react";
 import { formatRut } from "@/lib/utils";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 const TechnicianProfile = () => {
@@ -263,252 +264,263 @@ const TechnicianProfile = () => {
       <TechnicianHeader />
 
       <main className="container px-4 py-8 max-w-2xl">
-        <Card className="mb-6">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <DollarSign className="w-5 h-5 text-primary" />
-              <CardTitle>Balance de Pagos</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                <p className="text-sm text-muted-foreground mb-1">Dinero Disponible</p>
-                <p className="text-2xl font-bold text-green-600">
-                  ${balanceData.available.toLocaleString("es-CL")}
-                </p>
-              </div>
-              <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-                <p className="text-sm text-muted-foreground mb-1">Dinero Pendiente</p>
-                <p className="text-2xl font-bold text-yellow-600">
-                  ${balanceData.pending.toLocaleString("es-CL")}
-                </p>
-              </div>
-            </div>
+        <Tabs defaultValue="perfil" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="perfil">Perfil</TabsTrigger>
+            <TabsTrigger value="pagos">Pagos</TabsTrigger>
+          </TabsList>
 
-            <ChartContainer
-              config={{
-                amount: {
-                  label: "Monto",
-                  color: "hsl(var(--primary))",
-                },
-              }}
-              className="h-[200px]"
-            >
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    { name: "Disponible", amount: balanceData.available },
-                    { name: "Pendiente", amount: balanceData.pending },
-                  ]}
-                >
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="name" className="text-xs" />
-                  <YAxis className="text-xs" />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value) => `$${Number(value).toLocaleString("es-CL")}`}
-                      />
-                    }
-                  />
-                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-2xl">Mi Perfil</CardTitle>
-              {!editing && (
-                <Button variant="outline" onClick={() => setEditing(true)}>
-                  <Edit2 className="h-4 w-4 mr-2" />
-                  Editar
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <ProfilePictureUpload
-              userId={profile.id}
-              currentPictureUrl={profile.profile_picture_url}
-              userName={profile.nombre}
-              onUploadComplete={(url) => setProfile({ ...profile, profile_picture_url: url })}
-            />
-            
-            <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="nombre">Nombre</Label>
-              <Input
-                id="nombre"
-                value={profile.nombre}
-                onChange={(e) => setProfile({ ...profile, nombre: e.target.value })}
-                disabled={!editing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email (No editable)</Label>
-              <Input
-                id="email"
-                value={profile.email}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="rut">RUT (No editable)</Label>
-              <Input
-                id="rut"
-                value={profile.rut}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="telefono">Teléfono</Label>
-              <Input
-                id="telefono"
-                value={profile.telefono}
-                onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
-                disabled={!editing}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="especialidad">Especialidad Principal (No editable)</Label>
-              <Input
-                id="especialidad"
-                value={profile.especialidad_principal}
-                disabled
-                className="bg-muted"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="descripcion">Descripción del Perfil</Label>
-              <Textarea
-                id="descripcion"
-                value={profile.descripcion_perfil}
-                onChange={(e) => setProfile({ ...profile, descripcion_perfil: e.target.value })}
-                disabled={!editing}
-                rows={4}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="comunas">Comunas de Cobertura (separadas por comas)</Label>
-              <Input
-                id="comunas"
-                value={profile.comunas_cobertura.join(", ")}
-                onChange={(e) => setProfile({ 
-                  ...profile, 
-                  comunas_cobertura: e.target.value.split(",").map(c => c.trim()) 
-                })}
-                disabled={!editing}
-              />
-            </div>
-
-            {editing && (
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="flex-1"
-                >
-                  {saving ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Guardando...
-                    </>
-                  ) : (
-                    "Guardar Cambios"
+          <TabsContent value="perfil" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-2xl">Mi Perfil</CardTitle>
+                  {!editing && (
+                    <Button variant="outline" onClick={() => setEditing(true)}>
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Editar
+                    </Button>
                   )}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setEditing(false);
-                    fetchProfile();
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <ProfilePictureUpload
+                  userId={profile.id}
+                  currentPictureUrl={profile.profile_picture_url}
+                  userName={profile.nombre}
+                  onUploadComplete={(url) => setProfile({ ...profile, profile_picture_url: url })}
+                />
+                
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="nombre">Nombre</Label>
+                    <Input
+                      id="nombre"
+                      value={profile.nombre}
+                      onChange={(e) => setProfile({ ...profile, nombre: e.target.value })}
+                      disabled={!editing}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email (No editable)</Label>
+                    <Input
+                      id="email"
+                      value={profile.email}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="rut">RUT (No editable)</Label>
+                    <Input
+                      id="rut"
+                      value={profile.rut}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="telefono">Teléfono</Label>
+                    <Input
+                      id="telefono"
+                      value={profile.telefono}
+                      onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
+                      disabled={!editing}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="especialidad">Especialidad Principal (No editable)</Label>
+                    <Input
+                      id="especialidad"
+                      value={profile.especialidad_principal}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="descripcion">Descripción del Perfil</Label>
+                    <Textarea
+                      id="descripcion"
+                      value={profile.descripcion_perfil}
+                      onChange={(e) => setProfile({ ...profile, descripcion_perfil: e.target.value })}
+                      disabled={!editing}
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="comunas">Comunas de Cobertura (separadas por comas)</Label>
+                    <Input
+                      id="comunas"
+                      value={profile.comunas_cobertura.join(", ")}
+                      onChange={(e) => setProfile({ 
+                        ...profile, 
+                        comunas_cobertura: e.target.value.split(",").map(c => c.trim()) 
+                      })}
+                      disabled={!editing}
+                    />
+                  </div>
+
+                  {editing && (
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="flex-1"
+                      >
+                        {saving ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Guardando...
+                          </>
+                        ) : (
+                          "Guardar Cambios"
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setEditing(false);
+                          fetchProfile();
+                        }}
+                        className="flex-1"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Lock className="w-5 h-5 text-primary" />
+                  <CardTitle>Cambiar Contraseña</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleChangePassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="current-password">Contraseña Actual</Label>
+                    <Input
+                      id="current-password"
+                      type="password"
+                      value={passwordData.currentPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                      placeholder="Ingresa tu contraseña actual"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">Nueva Contraseña</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={passwordData.newPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                      placeholder="Ingresa tu nueva contraseña"
+                      required
+                      minLength={6}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      La contraseña debe tener al menos 6 caracteres
+                    </p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-password">Confirmar Nueva Contraseña</Label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={passwordData.confirmPassword}
+                      onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                      placeholder="Confirma tu nueva contraseña"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+
+                  <Button type="submit" disabled={changingPassword} className="w-full">
+                    {changingPassword ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Cambiando...
+                      </>
+                    ) : (
+                      "Cambiar Contraseña"
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="pagos">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <DollarSign className="w-5 h-5 text-primary" />
+                  <CardTitle>Balance de Pagos</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <p className="text-sm text-muted-foreground mb-1">Dinero Disponible</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ${balanceData.available.toLocaleString("es-CL")}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                    <p className="text-sm text-muted-foreground mb-1">Dinero Pendiente</p>
+                    <p className="text-2xl font-bold text-yellow-600">
+                      ${balanceData.pending.toLocaleString("es-CL")}
+                    </p>
+                  </div>
+                </div>
+
+                <ChartContainer
+                  config={{
+                    amount: {
+                      label: "Monto",
+                      color: "hsl(var(--primary))",
+                    },
                   }}
-                  className="flex-1"
+                  className="h-[200px]"
                 >
-                  Cancelar
-                </Button>
-              </div>
-            )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="mt-6">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Lock className="w-5 h-5 text-primary" />
-              <CardTitle>Cambiar Contraseña</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Contraseña Actual</Label>
-                <Input
-                  id="current-password"
-                  type="password"
-                  value={passwordData.currentPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  placeholder="Ingresa tu contraseña actual"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="new-password">Nueva Contraseña</Label>
-                <Input
-                  id="new-password"
-                  type="password"
-                  value={passwordData.newPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  placeholder="Ingresa tu nueva contraseña"
-                  required
-                  minLength={6}
-                />
-                <p className="text-xs text-muted-foreground">
-                  La contraseña debe tener al menos 6 caracteres
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmar Nueva Contraseña</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={passwordData.confirmPassword}
-                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  placeholder="Confirma tu nueva contraseña"
-                  required
-                  minLength={6}
-                />
-              </div>
-
-              <Button type="submit" disabled={changingPassword} className="w-full">
-                {changingPassword ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Cambiando Contraseña...
-                  </>
-                ) : (
-                  "Cambiar Contraseña"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={[
+                        { name: "Disponible", amount: balanceData.available },
+                        { name: "Pendiente", amount: balanceData.pending },
+                      ]}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent
+                            formatter={(value) => `$${Number(value).toLocaleString("es-CL")}`}
+                          />
+                        }
+                      />
+                      <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
