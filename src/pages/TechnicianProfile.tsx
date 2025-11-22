@@ -8,8 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
-import { Loader2, Edit2, Lock } from "lucide-react";
+import { Loader2, Edit2, Lock, DollarSign } from "lucide-react";
 import { formatRut } from "@/lib/utils";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
 
 
 const TechnicianProfile = () => {
@@ -34,9 +36,14 @@ const TechnicianProfile = () => {
     comunas_cobertura: [] as string[],
     profile_picture_url: null as string | null,
   });
+  const [balanceData, setBalanceData] = useState({
+    available: 0,
+    pending: 0,
+  });
 
   useEffect(() => {
     fetchProfile();
+    fetchBalanceData();
   }, []);
 
   const fetchProfile = async () => {
@@ -80,6 +87,49 @@ const TechnicianProfile = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchBalanceData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Get tecnico_id
+      const { data: techData } = await supabase
+        .from("tecnico_profile")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!techData) return;
+
+      // Get payments for this technician
+      const { data: payments, error } = await supabase
+        .from("pago")
+        .select(`
+          monto_total,
+          estado_pago,
+          cotizacion!inner(
+            tecnico_id
+          )
+        `)
+        .eq("cotizacion.tecnico_id", techData.id);
+
+      if (error) throw error;
+
+      // Calculate available and pending balances
+      const available = payments
+        ?.filter(p => p.estado_pago === "liberado_tecnico")
+        .reduce((sum, p) => sum + p.monto_total, 0) || 0;
+
+      const pending = payments
+        ?.filter(p => p.estado_pago === "pagado_retenido")
+        .reduce((sum, p) => sum + p.monto_total, 0) || 0;
+
+      setBalanceData({ available, pending });
+    } catch (error) {
+      console.error("Error fetching balance data:", error);
     }
   };
 
@@ -213,6 +263,62 @@ const TechnicianProfile = () => {
       <TechnicianHeader />
 
       <main className="container px-4 py-8 max-w-2xl">
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <DollarSign className="w-5 h-5 text-primary" />
+              <CardTitle>Balance de Pagos</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                <p className="text-sm text-muted-foreground mb-1">Dinero Disponible</p>
+                <p className="text-2xl font-bold text-green-600">
+                  ${balanceData.available.toLocaleString("es-CL")}
+                </p>
+              </div>
+              <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                <p className="text-sm text-muted-foreground mb-1">Dinero Pendiente</p>
+                <p className="text-2xl font-bold text-yellow-600">
+                  ${balanceData.pending.toLocaleString("es-CL")}
+                </p>
+              </div>
+            </div>
+
+            <ChartContainer
+              config={{
+                amount: {
+                  label: "Monto",
+                  color: "hsl(var(--primary))",
+                },
+              }}
+              className="h-[200px]"
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={[
+                    { name: "Disponible", amount: balanceData.available },
+                    { name: "Pendiente", amount: balanceData.pending },
+                  ]}
+                >
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis dataKey="name" className="text-xs" />
+                  <YAxis className="text-xs" />
+                  <ChartTooltip
+                    content={
+                      <ChartTooltipContent
+                        formatter={(value) => `$${Number(value).toLocaleString("es-CL")}`}
+                      />
+                    }
+                  />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
