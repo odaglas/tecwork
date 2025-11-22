@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
@@ -114,11 +114,20 @@ export default function AdminSupportChats() {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Chats de Soporte</h1>
-        <p className="text-muted-foreground">
-          Administra las solicitudes de soporte de los clientes
-        </p>
+      <div className="mb-6 flex items-center gap-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate("/admin")}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Button>
+        <div>
+          <h1 className="text-3xl font-bold">Chats de Soporte</h1>
+          <p className="text-muted-foreground">
+            Administra las solicitudes de soporte de los clientes
+          </p>
+        </div>
       </div>
 
       <div className="grid gap-4">
