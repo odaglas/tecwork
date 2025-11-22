@@ -186,6 +186,56 @@ export type Database = {
           },
         ]
       }
+      disputas: {
+        Row: {
+          created_at: string | null
+          descripcion: string
+          estado: string
+          id: string
+          iniciado_por: string
+          motivo: string
+          pago_id: string
+          resolucion_admin: string | null
+          resuelto_por: string | null
+          tipo_iniciador: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          descripcion: string
+          estado?: string
+          id?: string
+          iniciado_por: string
+          motivo: string
+          pago_id: string
+          resolucion_admin?: string | null
+          resuelto_por?: string | null
+          tipo_iniciador: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          descripcion?: string
+          estado?: string
+          id?: string
+          iniciado_por?: string
+          motivo?: string
+          pago_id?: string
+          resolucion_admin?: string | null
+          resuelto_por?: string | null
+          tipo_iniciador?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "disputas_pago_id_fkey"
+            columns: ["pago_id"]
+            isOneToOne: false
+            referencedRelation: "pago"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documentacion_tecnico: {
         Row: {
           archivo_url: string

@@ -32,6 +32,7 @@ import AdminSupportChatDetail from "./pages/AdminSupportChatDetail";
 import AdminTickets from "./pages/AdminTickets";
 import AdminTicketDetail from "./pages/AdminTicketDetail";
 import AdminPagos from "./pages/AdminPagos";
+import AdminDisputas from "./pages/AdminDisputas";
 import AdminSettings from "./pages/AdminSettings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -88,6 +89,7 @@ const App = () => (
           <Route path="/admin/support-chats" element={<ProtectedRoute allowedRole="admin"><AdminSupportChats /></ProtectedRoute>} />
           <Route path="/admin/support-chat/:chatId" element={<ProtectedRoute allowedRole="admin"><AdminSupportChatDetail /></ProtectedRoute>} />
           <Route path="/admin/pagos" element={<ProtectedRoute allowedRole="admin"><AdminPagos /></ProtectedRoute>} />
+          <Route path="/admin/disputas" element={<ProtectedRoute allowedRole="admin"><AdminDisputas /></ProtectedRoute>} />
           <Route path="/admin/settings" element={<ProtectedRoute allowedRole="admin"><AdminSettings /></ProtectedRoute>} />
           
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

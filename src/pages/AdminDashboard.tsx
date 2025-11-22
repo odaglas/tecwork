@@ -17,7 +17,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare, DollarSign, Settings } from "lucide-react";
+import { LayoutDashboard, Users, Ticket, ShieldCheck, LogOut, MessageSquare, DollarSign, Settings, AlertTriangle } from "lucide-react";
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -45,6 +45,7 @@ const AdminDashboard = () => {
     supportChats: 0,
     pendingValidations: 0,
     pendingPayments: 0,
+    pendingDisputas: 0,
   });
 
   const menuItems = [
@@ -54,6 +55,7 @@ const AdminDashboard = () => {
     { title: "Validación de Técnicos", url: "/admin/validacion", icon: ShieldCheck },
     { title: "Soporte", url: "/admin/support-chats", icon: MessageSquare },
     { title: "Pagos Pendientes", url: "/admin/pagos", icon: DollarSign },
+    { title: "Disputas", url: "/admin/disputas", icon: AlertTriangle },
     { title: "Configuración", url: "/admin/settings", icon: Settings },
   ];
 
@@ -162,10 +164,17 @@ const AdminDashboard = () => {
         .select("*", { count: 'exact', head: true })
         .eq('estado_pago', 'pagado_retenido');
 
+      // Count pending disputas
+      const { count: pendingDisputas } = await supabase
+        .from("disputas")
+        .select("*", { count: 'exact', head: true })
+        .in('estado', ['pendiente', 'en_revision']);
+
       setNotifications({
         supportChats: openChats || 0,
         pendingValidations: pendingValidations || 0,
         pendingPayments: pendingPayments || 0,
+        pendingDisputas: pendingDisputas || 0,
       });
     } catch (error) {
       console.error("Error fetching notifications:", error);
@@ -306,6 +315,11 @@ const AdminDashboard = () => {
                           {item.url === "/admin/pagos" && notifications.pendingPayments > 0 && (
                             <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-xs">
                               {notifications.pendingPayments}
+                            </Badge>
+                          )}
+                          {item.url === "/admin/disputas" && notifications.pendingDisputas > 0 && (
+                            <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1 text-xs">
+                              {notifications.pendingDisputas}
                             </Badge>
                           )}
                         </Link>
