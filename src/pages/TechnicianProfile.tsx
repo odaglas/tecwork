@@ -40,6 +40,7 @@ const TechnicianProfile = () => {
   const [balanceData, setBalanceData] = useState({
     available: 0,
     pending: 0,
+    payments: [] as any[],
   });
 
   useEffect(() => {
@@ -105,30 +106,39 @@ const TechnicianProfile = () => {
 
       if (!techData) return;
 
-      // Get payments for this technician
+      // Get payments for this technician with commission details
       const { data: payments, error } = await supabase
         .from("pago")
         .select(`
+          id,
           monto_total,
+          monto_neto,
+          comision_monto,
+          comision_porcentaje,
           estado_pago,
+          created_at,
           cotizacion!inner(
-            tecnico_id
+            tecnico_id,
+            ticket!inner(
+              titulo
+            )
           )
         `)
-        .eq("cotizacion.tecnico_id", techData.id);
+        .eq("cotizacion.tecnico_id", techData.id)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      // Calculate available and pending balances
+      // Calculate available and pending balances using net amounts
       const available = payments
         ?.filter(p => p.estado_pago === "liberado_tecnico")
-        .reduce((sum, p) => sum + p.monto_total, 0) || 0;
+        .reduce((sum, p) => sum + (p.monto_neto || 0), 0) || 0;
 
       const pending = payments
         ?.filter(p => p.estado_pago === "pagado_retenido")
-        .reduce((sum, p) => sum + p.monto_total, 0) || 0;
+        .reduce((sum, p) => sum + (p.monto_neto || 0), 0) || 0;
 
-      setBalanceData({ available, pending });
+      setBalanceData({ available, pending, payments: payments || [] });
     } catch (error) {
       console.error("Error fetching balance data:", error);
     }
@@ -463,24 +473,40 @@ const TechnicianProfile = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="pagos">
+          <TabsContent value="pagos" className="space-y-6">
             <Card>
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-primary" />
                   <CardTitle>Balance de Pagos</CardTitle>
                 </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Montos netos después de la comisión del 15%
+                </p>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 gap-4 mb-6">
                   <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                    <p className="text-sm text-muted-foreground mb-1">Dinero Disponible</p>
+                    <p className="text-sm text-muted-foreground mb-1">Disponible para Retiro</p>
                     <p className="text-2xl font-bold text-green-600">
                       ${balanceData.available.toLocaleString("es-CL")}
                     </p>
+                    {balanceData.available > 0 && (
+                      <Button 
+                        className="w-full mt-3"
+                        onClick={() => {
+                          toast({
+                            title: "Retiro simulado exitoso",
+                            description: `Se ha procesado el retiro de $${balanceData.available.toLocaleString("es-CL")} a tu cuenta personal.`,
+                          });
+                        }}
+                      >
+                        Retirar a Cuenta Personal
+                      </Button>
+                    )}
                   </div>
                   <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
-                    <p className="text-sm text-muted-foreground mb-1">Dinero Pendiente</p>
+                    <p className="text-sm text-muted-foreground mb-1">Pendiente de Liberación</p>
                     <p className="text-2xl font-bold text-yellow-600">
                       ${balanceData.pending.toLocaleString("es-CL")}
                     </p>
@@ -517,6 +543,75 @@ const TechnicianProfile = () => {
                     </BarChart>
                   </ResponsiveContainer>
                 </ChartContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Historial de Comisiones</CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Detalle de pagos recibidos y comisiones descontadas
+                </p>
+              </CardHeader>
+              <CardContent>
+                {balanceData.payments && balanceData.payments.length > 0 ? (
+                  <div className="space-y-4">
+                    {balanceData.payments
+                      .filter((pago: any) => pago.estado_pago === "liberado_tecnico")
+                      .map((pago: any) => (
+                        <div key={pago.id} className="border rounded-lg p-4 space-y-3">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="font-medium">{pago.cotizacion.ticket.titulo}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {new Date(pago.created_at).toLocaleDateString("es-CL", {
+                                  year: 'numeric',
+                                  month: 'long',
+                                  day: 'numeric'
+                                })}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-green-600">
+                                ${pago.monto_neto?.toLocaleString("es-CL") || 0}
+                              </p>
+                              <p className="text-xs text-muted-foreground">Monto Neto</p>
+                            </div>
+                          </div>
+                          <div className="pt-3 border-t space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Monto Total del Servicio:</span>
+                              <span className="font-medium">${pago.monto_total.toLocaleString("es-CL")}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">
+                                Comisión de Plataforma ({pago.comision_porcentaje || 15}%):
+                              </span>
+                              <span className="text-red-600 font-medium">
+                                -${pago.comision_monto?.toLocaleString("es-CL") || 0}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-base font-semibold pt-2 border-t">
+                              <span>Recibes:</span>
+                              <span className="text-green-600">
+                                ${pago.monto_neto?.toLocaleString("es-CL") || 0}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground">
+                      No hay pagos liberados todavía
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Cuando completes servicios y el cliente libere el pago, aparecerán aquí
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
