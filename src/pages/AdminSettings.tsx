@@ -13,8 +13,17 @@ export default function AdminSettings() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  useState(() => {
+    const fetchEmail = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) setEmail(user.email || "");
+    };
+    fetchEmail();
+  });
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,6 +49,21 @@ export default function AdminSettings() {
     setLoading(true);
 
     try {
+      // Verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Error",
+          description: "La contraseña actual es incorrecta",
+          variant: "destructive",
+        });
+        return;
+      }
+
       // Update password
       const { error } = await supabase.auth.updateUser({
         password: newPassword,

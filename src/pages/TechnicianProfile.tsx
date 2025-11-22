@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { ProfilePictureUpload } from "@/components/ProfilePictureUpload";
-import { Loader2, Edit2 } from "lucide-react";
+import { Loader2, Edit2, Lock } from "lucide-react";
 import { formatRut } from "@/lib/utils";
 
 
@@ -17,6 +17,12 @@ const TechnicianProfile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
   const [profile, setProfile] = useState({
     id: "",
     nombre: "",
@@ -119,6 +125,75 @@ const TechnicianProfile = () => {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Las contraseñas no coinciden",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast({
+        title: "Error",
+        description: "La contraseña debe tener al menos 6 caracteres",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setChangingPassword(true);
+
+    try {
+      // Verify current password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: profile.email,
+        password: passwordData.currentPassword,
+      });
+
+      if (signInError) {
+        toast({
+          title: "Error",
+          description: "La contraseña actual es incorrecta",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Update password
+      const { error } = await supabase.auth.updateUser({
+        password: passwordData.newPassword,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Contraseña Actualizada",
+        description: "Tu contraseña ha sido cambiada exitosamente",
+      });
+
+      // Clear form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: any) {
+      console.error("Error changing password:", error);
+      toast({
+        title: "Error",
+        description: error.message || "No se pudo cambiar la contraseña",
+        variant: "destructive",
+      });
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -262,6 +337,70 @@ const TechnicianProfile = () => {
               </div>
             )}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mt-6">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Lock className="w-5 h-5 text-primary" />
+              <CardTitle>Cambiar Contraseña</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Contraseña Actual</Label>
+                <Input
+                  id="current-password"
+                  type="password"
+                  value={passwordData.currentPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                  placeholder="Ingresa tu contraseña actual"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nueva Contraseña</Label>
+                <Input
+                  id="new-password"
+                  type="password"
+                  value={passwordData.newPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                  placeholder="Ingresa tu nueva contraseña"
+                  required
+                  minLength={6}
+                />
+                <p className="text-xs text-muted-foreground">
+                  La contraseña debe tener al menos 6 caracteres
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar Nueva Contraseña</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={passwordData.confirmPassword}
+                  onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                  placeholder="Confirma tu nueva contraseña"
+                  required
+                  minLength={6}
+                />
+              </div>
+
+              <Button type="submit" disabled={changingPassword} className="w-full">
+                {changingPassword ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Cambiando Contraseña...
+                  </>
+                ) : (
+                  "Cambiar Contraseña"
+                )}
+              </Button>
+            </form>
           </CardContent>
         </Card>
       </main>
