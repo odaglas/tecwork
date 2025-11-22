@@ -144,14 +144,14 @@ const TechnicianTicketDetail = () => {
           .from("cliente_profile")
           .select("user_id")
           .eq("id", ticketData.cliente_id)
-          .single();
+          .maybeSingle();
 
         if (clienteProfile) {
           const { data: profileData } = await supabase
             .from("profiles")
             .select("nombre")
             .eq("id", clienteProfile.user_id)
-            .single();
+            .maybeSingle();
           
           if (profileData) {
             clientName = profileData.nombre;
