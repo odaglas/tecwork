@@ -151,7 +151,7 @@ const TechnicianQuoteForm = () => {
             </p>
             
             {/* Commission Breakdown */}
-            {valorTotal && Number(valorTotal) > 0 && (
+            {valorTotal && parseInt(valorTotal) >= 1000 && (
               <Alert className="mt-3 bg-muted/50 border-primary/20">
                 <Info className="h-4 w-4 text-primary" />
                 <AlertDescription>
@@ -159,15 +159,15 @@ const TechnicianQuoteForm = () => {
                     <div className="font-semibold text-foreground">Desglose de Comisión:</div>
                     <div className="flex justify-between">
                       <span>Valor Total de la Cotización:</span>
-                      <span className="font-medium">${Number(valorTotal).toLocaleString('es-CL')}</span>
+                      <span className="font-medium">${parseInt(valorTotal).toLocaleString('es-CL')}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Comisión TecWork (15%):</span>
-                      <span>-${Math.round(Number(valorTotal) * 0.15).toLocaleString('es-CL')}</span>
+                      <span>-${Math.round(parseInt(valorTotal) * 0.15).toLocaleString('es-CL')}</span>
                     </div>
                     <div className="flex justify-between pt-1 border-t font-semibold text-primary">
                       <span>Recibirás:</span>
-                      <span>${Math.round(Number(valorTotal) * 0.85).toLocaleString('es-CL')}</span>
+                      <span>${Math.round(parseInt(valorTotal) * 0.85).toLocaleString('es-CL')}</span>
                     </div>
                   </div>
                 </AlertDescription>
