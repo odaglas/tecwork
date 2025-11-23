@@ -151,23 +151,23 @@ const TechnicianQuoteForm = () => {
             </p>
             
             {/* Commission Breakdown */}
-            {valorTotal && parseInt(valorTotal) > 0 && (
-              <Alert className="mt-3">
-                <Info className="h-4 w-4" />
+            {valorTotal && Number(valorTotal) > 0 && (
+              <Alert className="mt-3 bg-muted/50 border-primary/20">
+                <Info className="h-4 w-4 text-primary" />
                 <AlertDescription>
                   <div className="space-y-1 text-sm">
-                    <div className="font-semibold">Desglose de Comisión:</div>
+                    <div className="font-semibold text-foreground">Desglose de Comisión:</div>
                     <div className="flex justify-between">
                       <span>Valor Total de la Cotización:</span>
-                      <span className="font-medium">${parseInt(valorTotal).toLocaleString('es-CL')}</span>
+                      <span className="font-medium">${Number(valorTotal).toLocaleString('es-CL')}</span>
                     </div>
                     <div className="flex justify-between text-muted-foreground">
                       <span>Comisión TecWork (15%):</span>
-                      <span>-${Math.round(parseInt(valorTotal) * 0.15).toLocaleString('es-CL')}</span>
+                      <span>-${Math.round(Number(valorTotal) * 0.15).toLocaleString('es-CL')}</span>
                     </div>
                     <div className="flex justify-between pt-1 border-t font-semibold text-primary">
                       <span>Recibirás:</span>
-                      <span>${Math.round(parseInt(valorTotal) * 0.85).toLocaleString('es-CL')}</span>
+                      <span>${Math.round(Number(valorTotal) * 0.85).toLocaleString('es-CL')}</span>
                     </div>
                   </div>
                 </AlertDescription>
