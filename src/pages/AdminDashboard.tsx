@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import tecworkLogo from "@/assets/tecwork-logo.png";
+import { FinancialReportExport } from "@/components/FinancialReportExport";
 
 const AdminDashboard = () => {
   const location = useLocation();
@@ -562,7 +563,13 @@ const AdminDashboard = () => {
                   </Card>
                 </div>
 
+                {/* Financial Report Export */}
+                <div className="mt-6">
+                  <FinancialReportExport />
+                </div>
+
                 {/* User Analytics Charts */}
+                <h3 className="text-xl font-bold mt-8 mb-4">Análisis de Usuarios</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>
