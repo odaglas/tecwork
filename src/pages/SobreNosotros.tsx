@@ -2,24 +2,35 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Shield, Eye, Lightbulb, GraduationCap } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect } from "react";
+import diegoPhoto from "@/assets/diego-polanco.png";
+import felipePhoto from "@/assets/felipe-vidal.png";
+import luisPhoto from "@/assets/luis-salgado.png";
 
 const SobreNosotros = () => {
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   const team = [
     {
       name: "Diego Polanco",
       role: "Co-Fundador & Desarrollador",
       initials: "DP",
-    },
-    {
-      name: "Luis Salgado",
-      role: "Co-Fundador & Desarrollador",
-      initials: "LS",
+      photo: diegoPhoto,
     },
     {
       name: "Felipe Vidal",
       role: "Co-Fundador & Desarrollador",
       initials: "FV",
+      photo: felipePhoto,
+    },
+    {
+      name: "Luis Salgado",
+      role: "Co-Fundador & Desarrollador",
+      initials: "LS",
+      photo: luisPhoto,
     },
   ];
 
@@ -125,6 +136,7 @@ const SobreNosotros = () => {
               <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-primary/20">
+                    <AvatarImage src={member.photo} alt={member.name} />
                     <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
                       {member.initials}
                     </AvatarFallback>
