@@ -21,6 +21,7 @@ const TechnicianProfile = () => {
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
+  const [withdrawing, setWithdrawing] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -513,7 +514,11 @@ const TechnicianProfile = () => {
                       {balanceData.available > 0 && (
                       <Button 
                         className="w-full mt-3"
+                        disabled={withdrawing}
                         onClick={async () => {
+                          if (withdrawing) return;
+                          
+                          setWithdrawing(true);
                           const amount = balanceData.available;
                           
                           try {
@@ -553,10 +558,19 @@ const TechnicianProfile = () => {
                               description: "No se pudo procesar el retiro",
                               variant: "destructive",
                             });
+                          } finally {
+                            setWithdrawing(false);
                           }
                         }}
                       >
-                        Retirar a Cuenta Personal
+                        {withdrawing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Procesando...
+                          </>
+                        ) : (
+                          "Retirar a Cuenta Personal"
+                        )}
                       </Button>
                     )}
                   </div>
