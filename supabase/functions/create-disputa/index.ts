@@ -45,30 +45,49 @@ Deno.serve(async (req) => {
       .from('pago')
       .select(`
         *,
-        ticket:ticket_id!inner(
+        ticket:ticket_id(
           id,
-          cliente_id,
-          cliente_profile!inner(user_id)
+          cliente_id
         ),
-        cotizacion:cotizacion_id!inner(
-          tecnico_id,
-          tecnico_profile!inner(user_id)
+        cotizacion:cotizacion_id(
+          tecnico_id
         )
       `)
       .eq('id', pago_id)
-      .single();
+      .maybeSingle();
 
-    if (pagoError || !pago) {
-      console.error('Payment error:', pagoError);
+    if (pagoError) {
+      console.error('Payment query error:', pagoError);
+      return new Response(
+        JSON.stringify({ error: 'Error al buscar el pago' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!pago) {
+      console.error('Payment not found for id:', pago_id);
       return new Response(
         JSON.stringify({ error: 'Pago no encontrado' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    // Get cliente and tecnico profiles separately for better RLS handling
+    const { data: clienteProfile } = await supabase
+      .from('cliente_profile')
+      .select('user_id')
+      .eq('id', pago.ticket.cliente_id)
+      .maybeSingle();
+
+    const { data: tecnicoProfile } = await supabase
+      .from('tecnico_profile')
+      .select('user_id')
+      .eq('id', pago.cotizacion.tecnico_id)
+      .maybeSingle();
+
     // Determine if user is cliente or tecnico
-    const isCliente = pago.ticket.cliente_profile.user_id === user.id;
-    const isTecnico = pago.cotizacion.tecnico_profile.user_id === user.id;
+    const isCliente = clienteProfile?.user_id === user.id;
+    const isTecnico = tecnicoProfile?.user_id === user.id;
 
     if (!isCliente && !isTecnico) {
       return new Response(
