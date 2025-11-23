@@ -9,7 +9,8 @@ const corsHeaders = {
 const CreateDisputaSchema = z.object({
   pago_id: z.string().uuid({ message: "pago_id debe ser un UUID válido" }),
   motivo: z.string().min(1, { message: "El motivo es requerido" }).max(100),
-  descripcion: z.string().min(10, { message: "La descripción debe tener al menos 10 caracteres" }).max(1000)
+  descripcion: z.string().min(10, { message: "La descripción debe tener al menos 10 caracteres" }).max(1000),
+  imagen_url: z.string().nullable().optional()
 });
 
 Deno.serve(async (req) => {
@@ -38,7 +39,7 @@ Deno.serve(async (req) => {
     // Parse and validate input
     const rawBody = await req.json();
     const validatedBody = CreateDisputaSchema.parse(rawBody);
-    const { pago_id, motivo, descripcion } = validatedBody;
+    const { pago_id, motivo, descripcion, imagen_url } = validatedBody;
 
     // Get payment details with relationships
     const { data: pago, error: pagoError } = await supabase
@@ -128,6 +129,7 @@ Deno.serve(async (req) => {
         tipo_iniciador: isCliente ? 'cliente' : 'tecnico',
         motivo,
         descripcion,
+        imagen_url,
         estado: 'pendiente'
       })
       .select()

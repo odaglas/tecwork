@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Upload, Image as ImageIcon } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -49,6 +49,8 @@ export default function DisputaDialog({
   onSuccess,
 }: DisputaDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<DisputaFormValues>({
@@ -59,14 +61,68 @@ export default function DisputaDialog({
     },
   });
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Error",
+          description: "Solo se permiten archivos de imagen",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "Error",
+          description: "La imagen no puede superar los 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+      setImageFile(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
   const onSubmit = async (data: DisputaFormValues) => {
     setIsSubmitting(true);
     try {
+      let imagenUrl = null;
+
+      // Upload image if provided
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `disputas/${pagoId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('tecnico-documents')
+          .upload(filePath, imageFile);
+
+        if (uploadError) {
+          toast({
+            title: "Error",
+            description: "Error al subir la imagen",
+            variant: "destructive",
+          });
+          console.error(uploadError);
+          return;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from('tecnico-documents')
+          .getPublicUrl(filePath);
+
+        imagenUrl = urlData.publicUrl;
+      }
+
       const { error } = await supabase.functions.invoke("create-disputa", {
         body: {
           pago_id: pagoId,
           motivo: data.motivo,
           descripcion: data.descripcion,
+          imagen_url: imagenUrl,
         },
       });
 
@@ -78,6 +134,8 @@ export default function DisputaDialog({
       });
 
       form.reset();
+      setImageFile(null);
+      setImagePreview(null);
       onOpenChange(false);
       onSuccess?.();
     } catch (error: any) {
@@ -139,6 +197,53 @@ export default function DisputaDialog({
                 </FormItem>
               )}
             />
+
+            {/* Image Upload */}
+            <div className="space-y-2">
+              <Label htmlFor="disputaImage">Imagen de Evidencia (Opcional)</Label>
+              <div className="flex flex-col gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('disputaImage')?.click()}
+                  className="flex items-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  {imageFile ? 'Cambiar Imagen' : 'Subir Imagen'}
+                </Button>
+                {imagePreview && (
+                  <div className="relative w-full h-40 border rounded-lg overflow-hidden">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={() => {
+                        setImageFile(null);
+                        setImagePreview(null);
+                      }}
+                    >
+                      Eliminar
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <Input
+                id="disputaImage"
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+              <p className="text-xs text-muted-foreground">
+                Adjunta una imagen como evidencia (máx. 5MB)
+              </p>
+            </div>
 
             <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4 flex gap-3">
               <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />

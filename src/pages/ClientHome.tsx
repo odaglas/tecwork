@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Droplet, Zap, Monitor, Wind, Hammer, PaintBucket, Clock, Loader2, AlertCircle } from "lucide-react";
+import { Droplet, Zap, Monitor, Wind, Hammer, PaintBucket, Clock, Loader2, AlertCircle } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -140,15 +139,6 @@ const ClientHome = () => {
           ¿Qué servicio necesitas hoy?
         </h1>
 
-        {/* Search Bar */}
-        <div className="relative mb-8">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Ej: Electricista, Gásfiter..."
-            className="pl-12 h-14 text-lg border-2 focus:border-primary shadow-md"
-          />
-        </div>
 
         {/* Categories */}
         <div className="mb-8">

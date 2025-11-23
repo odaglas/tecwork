@@ -192,6 +192,7 @@ export type Database = {
           descripcion: string
           estado: string
           id: string
+          imagen_url: string | null
           iniciado_por: string
           motivo: string
           pago_id: string
@@ -205,6 +206,7 @@ export type Database = {
           descripcion: string
           estado?: string
           id?: string
+          imagen_url?: string | null
           iniciado_por: string
           motivo: string
           pago_id: string
@@ -218,6 +220,7 @@ export type Database = {
           descripcion?: string
           estado?: string
           id?: string
+          imagen_url?: string | null
           iniciado_por?: string
           motivo?: string
           pago_id?: string
