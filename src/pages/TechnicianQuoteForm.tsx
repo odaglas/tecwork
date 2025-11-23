@@ -2,12 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useNavigate, useParams } from "react-router-dom";
 import { useState } from "react";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Upload, FileText } from "lucide-react";
+import { Loader2, Upload, FileText, Info } from "lucide-react";
 
 const TechnicianQuoteForm = () => {
   const navigate = useNavigate();
@@ -148,6 +149,30 @@ const TechnicianQuoteForm = () => {
             <p className="text-xs text-muted-foreground">
               Ingresa el costo total del trabajo
             </p>
+            
+            {/* Commission Breakdown */}
+            {valorTotal && parseInt(valorTotal) > 0 && (
+              <Alert className="mt-3">
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  <div className="space-y-1 text-sm">
+                    <div className="font-semibold">Desglose de Comisión:</div>
+                    <div className="flex justify-between">
+                      <span>Valor Total de la Cotización:</span>
+                      <span className="font-medium">${parseInt(valorTotal).toLocaleString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Comisión TecWork (15%):</span>
+                      <span>-${Math.round(parseInt(valorTotal) * 0.15).toLocaleString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t font-semibold text-primary">
+                      <span>Recibirás:</span>
+                      <span>${Math.round(parseInt(valorTotal) * 0.85).toLocaleString('es-CL')}</span>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
+            )}
           </div>
 
           {/* Descripción del Trabajo */}
