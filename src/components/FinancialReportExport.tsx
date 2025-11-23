@@ -29,52 +29,85 @@ export const FinancialReportExport = () => {
 
     setIsExporting(true);
     try {
-      // Fetch payment data with related information
-      const { data: pagos, error } = await supabase
+      // Fetch payment data
+      const { data: pagos, error: pagosError } = await supabase
         .from("pago")
-        .select(`
-          id,
-          monto_total,
-          comision_monto,
-          comision_porcentaje,
-          monto_neto,
-          estado_pago,
-          created_at,
-          ticket_id,
-          cotizacion:cotizacion_id (
-            id,
-            tecnico:tecnico_id (
-              id,
-              user:user_id (
-                nombre,
-                email,
-                rut
-              )
-            )
-          ),
-          ticket:ticket_id (
-            titulo,
-            categoria,
-            cliente:cliente_id (
-              user:user_id (
-                nombre,
-                email,
-                rut
-              )
-            )
-          )
-        `)
+        .select("*")
         .gte("created_at", startDate.toISOString())
         .lte("created_at", endDate.toISOString())
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (pagosError) throw pagosError;
 
       if (!pagos || pagos.length === 0) {
         toast.error("No se encontraron pagos en el rango seleccionado");
         setIsExporting(false);
         return;
       }
+
+      // Fetch related data separately for each payment
+      const enrichedData = await Promise.all(
+        pagos.map(async (pago) => {
+          // Get cotizacion and tecnico info
+          const { data: cotizacion } = await supabase
+            .from("cotizacion")
+            .select("id, ticket_id, tecnico_id")
+            .eq("id", pago.cotizacion_id)
+            .single();
+
+          let tecnicoInfo = null;
+          if (cotizacion?.tecnico_id) {
+            const { data: tecnicoProfile } = await supabase
+              .from("tecnico_profile")
+              .select("user_id")
+              .eq("id", cotizacion.tecnico_id)
+              .single();
+
+            if (tecnicoProfile?.user_id) {
+              const { data: tecnicoUser } = await supabase
+                .from("profiles")
+                .select("nombre, email, rut")
+                .eq("id", tecnicoProfile.user_id)
+                .single();
+              
+              tecnicoInfo = tecnicoUser;
+            }
+          }
+
+          // Get ticket and cliente info
+          const { data: ticket } = await supabase
+            .from("ticket")
+            .select("titulo, categoria, cliente_id")
+            .eq("id", pago.ticket_id)
+            .single();
+
+          let clienteInfo = null;
+          if (ticket?.cliente_id) {
+            const { data: clienteProfile } = await supabase
+              .from("cliente_profile")
+              .select("user_id")
+              .eq("id", ticket.cliente_id)
+              .single();
+
+            if (clienteProfile?.user_id) {
+              const { data: clienteUser } = await supabase
+                .from("profiles")
+                .select("nombre, email, rut")
+                .eq("id", clienteProfile.user_id)
+                .single();
+              
+              clienteInfo = clienteUser;
+            }
+          }
+
+          return {
+            pago,
+            ticket,
+            tecnicoInfo,
+            clienteInfo,
+          };
+        })
+      );
 
       // Prepare CSV data
       const headers = [
@@ -95,23 +128,20 @@ export const FinancialReportExport = () => {
         "Estado"
       ];
 
-      const rows = pagos.map((pago: any) => {
-        const ticket = pago.ticket;
-        const cotizacion = pago.cotizacion;
-        const cliente = ticket?.cliente?.user;
-        const tecnico = cotizacion?.tecnico?.user;
+      const rows = enrichedData.map((item) => {
+        const { pago, ticket, tecnicoInfo, clienteInfo } = item;
 
         return [
           pago.id,
           format(new Date(pago.created_at), "dd/MM/yyyy HH:mm", { locale: es }),
           ticket?.titulo || "N/A",
           ticket?.categoria || "N/A",
-          cliente?.nombre || "N/A",
-          cliente?.email || "N/A",
-          cliente?.rut || "N/A",
-          tecnico?.nombre || "N/A",
-          tecnico?.email || "N/A",
-          tecnico?.rut || "N/A",
+          clienteInfo?.nombre || "N/A",
+          clienteInfo?.email || "N/A",
+          clienteInfo?.rut || "N/A",
+          tecnicoInfo?.nombre || "N/A",
+          tecnicoInfo?.email || "N/A",
+          tecnicoInfo?.rut || "N/A",
           pago.monto_total,
           pago.comision_porcentaje || 15,
           pago.comision_monto || 0,
