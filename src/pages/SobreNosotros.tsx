@@ -136,7 +136,7 @@ const SobreNosotros = () => {
               <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-primary/20">
-                    <AvatarImage src={member.photo} alt={member.name} />
+                    <AvatarImage src={member.photo} alt={member.name} className="object-cover object-top" />
                     <AvatarFallback className="bg-primary text-primary-foreground text-2xl font-bold">
                       {member.initials}
                     </AvatarFallback>
