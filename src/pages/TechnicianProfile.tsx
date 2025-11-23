@@ -41,6 +41,7 @@ const TechnicianProfile = () => {
     available: 0,
     pending: 0,
     payments: [] as any[],
+    withdrawals: [] as any[],
   });
 
   useEffect(() => {
@@ -129,6 +130,15 @@ const TechnicianProfile = () => {
 
       if (error) throw error;
 
+      // Get withdrawals for this technician
+      const { data: withdrawals, error: withdrawalsError } = await supabase
+        .from("retiros")
+        .select("*")
+        .eq("tecnico_id", techData.id)
+        .order("created_at", { ascending: false });
+
+      if (withdrawalsError) throw withdrawalsError;
+
       // Calculate available and pending balances using net amounts
       const available = payments
         ?.filter(p => p.estado_pago === "liberado_tecnico")
@@ -138,7 +148,16 @@ const TechnicianProfile = () => {
         ?.filter(p => p.estado_pago === "pagado_retenido")
         .reduce((sum, p) => sum + (p.monto_neto || 0), 0) || 0;
 
-      setBalanceData({ available, pending, payments: payments || [] });
+      // Subtract total withdrawals from available
+      const totalWithdrawn = withdrawals?.reduce((sum, w) => sum + w.monto, 0) || 0;
+      const actualAvailable = available - totalWithdrawn;
+
+      setBalanceData({ 
+        available: actualAvailable, 
+        pending, 
+        payments: payments || [], 
+        withdrawals: withdrawals || [] 
+      });
     } catch (error) {
       console.error("Error fetching balance data:", error);
     }
@@ -494,16 +513,47 @@ const TechnicianProfile = () => {
                       {balanceData.available > 0 && (
                       <Button 
                         className="w-full mt-3"
-                        onClick={() => {
+                        onClick={async () => {
                           const amount = balanceData.available;
-                          setBalanceData(prev => ({
-                            ...prev,
-                            available: 0
-                          }));
-                          toast({
-                            title: "Retiro simulado exitoso",
-                            description: `Se ha procesado el retiro de $${amount.toLocaleString("es-CL")} a tu cuenta personal.`,
-                          });
+                          
+                          try {
+                            // Get tecnico_id
+                            const { data: { user } } = await supabase.auth.getUser();
+                            if (!user) return;
+
+                            const { data: techData } = await supabase
+                              .from("tecnico_profile")
+                              .select("id")
+                              .eq("user_id", user.id)
+                              .single();
+
+                            if (!techData) return;
+
+                            // Insert withdrawal record
+                            const { error } = await supabase
+                              .from("retiros")
+                              .insert({
+                                tecnico_id: techData.id,
+                                monto: amount,
+                              });
+
+                            if (error) throw error;
+
+                            // Refresh balance data
+                            await fetchBalanceData();
+
+                            toast({
+                              title: "Retiro simulado exitoso",
+                              description: `Se ha procesado el retiro de $${amount.toLocaleString("es-CL")} a tu cuenta personal.`,
+                            });
+                          } catch (error: any) {
+                            console.error("Error creating withdrawal:", error);
+                            toast({
+                              title: "Error",
+                              description: "No se pudo procesar el retiro",
+                              variant: "destructive",
+                            });
+                          }
                         }}
                       >
                         Retirar a Cuenta Personal
@@ -553,67 +603,102 @@ const TechnicianProfile = () => {
 
             <Card>
               <CardHeader>
-                <CardTitle>Historial de Comisiones</CardTitle>
+                <CardTitle>Historial de Movimientos</CardTitle>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Detalle de pagos recibidos y comisiones descontadas
+                  Detalle de pagos recibidos, comisiones descontadas y retiros realizados
                 </p>
               </CardHeader>
               <CardContent>
-                {balanceData.payments && balanceData.payments.length > 0 ? (
+                {(balanceData.payments && balanceData.payments.length > 0) || (balanceData.withdrawals && balanceData.withdrawals.length > 0) ? (
                   <div className="space-y-4">
-                    {balanceData.payments
-                      .filter((pago: any) => pago.estado_pago === "liberado_tecnico")
-                      .map((pago: any) => (
-                        <div key={pago.id} className="border rounded-lg p-4 space-y-3">
-                          <div className="flex justify-between items-start">
-                            <div>
-                              <p className="font-medium">{pago.cotizacion.ticket.titulo}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {new Date(pago.created_at).toLocaleDateString("es-CL", {
-                                  year: 'numeric',
-                                  month: 'long',
-                                  day: 'numeric'
-                                })}
-                              </p>
+                    {/* Combine payments and withdrawals, then sort by date */}
+                    {[
+                      ...balanceData.payments
+                        .filter((pago: any) => pago.estado_pago === "liberado_tecnico")
+                        .map((pago: any) => ({ type: 'payment', data: pago, date: pago.created_at })),
+                      ...balanceData.withdrawals.map((retiro: any) => ({ type: 'withdrawal', data: retiro, date: retiro.created_at }))
+                    ]
+                      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                      .map((item: any, index: number) => {
+                        if (item.type === 'payment') {
+                          const pago = item.data;
+                          return (
+                            <div key={`payment-${pago.id}`} className="border rounded-lg p-4 space-y-3">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium">{pago.cotizacion.ticket.titulo}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(pago.created_at).toLocaleDateString("es-CL", {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    })}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-green-600">
+                                    +${pago.monto_neto?.toLocaleString("es-CL") || 0}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">Pago Recibido</p>
+                                </div>
+                              </div>
+                              <div className="pt-3 border-t space-y-2">
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">Monto Total del Servicio:</span>
+                                  <span className="font-medium">${pago.monto_total.toLocaleString("es-CL")}</span>
+                                </div>
+                                <div className="flex justify-between text-sm">
+                                  <span className="text-muted-foreground">
+                                    Comisión de Plataforma ({pago.comision_porcentaje || 15}%):
+                                  </span>
+                                  <span className="text-red-600 font-medium">
+                                    -${pago.comision_monto?.toLocaleString("es-CL") || 0}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between text-base font-semibold pt-2 border-t">
+                                  <span>Recibes:</span>
+                                  <span className="text-green-600">
+                                    ${pago.monto_neto?.toLocaleString("es-CL") || 0}
+                                  </span>
+                                </div>
+                              </div>
                             </div>
-                            <div className="text-right">
-                              <p className="text-lg font-bold text-green-600">
-                                ${pago.monto_neto?.toLocaleString("es-CL") || 0}
-                              </p>
-                              <p className="text-xs text-muted-foreground">Monto Neto</p>
+                          );
+                        } else {
+                          const retiro = item.data;
+                          return (
+                            <div key={`withdrawal-${retiro.id}`} className="border border-blue-500/20 rounded-lg p-4 bg-blue-500/5">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-medium">Retiro a Cuenta Personal</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {new Date(retiro.created_at).toLocaleDateString("es-CL", {
+                                      year: 'numeric',
+                                      month: 'long',
+                                      day: 'numeric'
+                                    })}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-blue-600">
+                                    -${retiro.monto.toLocaleString("es-CL")}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">Retirado</p>
+                                </div>
+                              </div>
                             </div>
-                          </div>
-                          <div className="pt-3 border-t space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">Monto Total del Servicio:</span>
-                              <span className="font-medium">${pago.monto_total.toLocaleString("es-CL")}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-muted-foreground">
-                                Comisión de Plataforma ({pago.comision_porcentaje || 15}%):
-                              </span>
-                              <span className="text-red-600 font-medium">
-                                -${pago.comision_monto?.toLocaleString("es-CL") || 0}
-                              </span>
-                            </div>
-                            <div className="flex justify-between text-base font-semibold pt-2 border-t">
-                              <span>Recibes:</span>
-                              <span className="text-green-600">
-                                ${pago.monto_neto?.toLocaleString("es-CL") || 0}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                          );
+                        }
+                      })}
                   </div>
                 ) : (
                   <div className="text-center py-12">
                     <DollarSign className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
                     <p className="text-muted-foreground">
-                      No hay pagos liberados todavía
+                      No hay movimientos todavía
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Cuando completes servicios y el cliente libere el pago, aparecerán aquí
+                      Cuando completes servicios y realices retiros, aparecerán aquí
                     </p>
                   </div>
                 )}

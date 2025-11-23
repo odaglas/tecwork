@@ -400,6 +400,38 @@ export type Database = {
         }
         Relationships: []
       }
+      retiros: {
+        Row: {
+          created_at: string | null
+          estado: string
+          id: string
+          monto: number
+          tecnico_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          estado?: string
+          id?: string
+          monto: number
+          tecnico_id: string
+        }
+        Update: {
+          created_at?: string | null
+          estado?: string
+          id?: string
+          monto?: number
+          tecnico_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retiros_tecnico_id_fkey"
+            columns: ["tecnico_id"]
+            isOneToOne: false
+            referencedRelation: "tecnico_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_attachments: {
         Row: {
           created_at: string
