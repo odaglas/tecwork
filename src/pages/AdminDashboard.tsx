@@ -335,8 +335,8 @@ const AdminDashboard = () => {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <Sidebar>
-          <SidebarContent>
+        <Sidebar className="bg-card border-r">
+          <SidebarContent className="bg-card">
             <div className="p-4 border-b border-border">
               <div className="flex items-center gap-2">
                 <img src={tecworkLogo} alt="TecWork Logo" className="w-10 h-10" />
@@ -478,12 +478,12 @@ const AdminDashboard = () => {
                     </CardContent>
                   </Card>
 
-                  <Card className="border-accent/20">
+                  <Card className="border-muted-foreground/20">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">Pagado a Técnicos</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-3xl font-bold text-accent">
+                      <div className="text-3xl font-bold text-foreground">
                         ${analytics.totalNetRevenue.toLocaleString('es-CL')}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">Monto neto</p>
