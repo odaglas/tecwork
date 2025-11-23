@@ -40,6 +40,11 @@ const AdminDashboard = () => {
     totalUsers: 0,
     totalClientes: 0,
     totalTecnicos: 0,
+    revenuePerDay: [] as any[],
+    paymentsByState: [] as any[],
+    totalRevenue: 0,
+    totalCommissions: 0,
+    totalNetRevenue: 0,
   });
   const [notifications, setNotifications] = useState({
     supportChats: 0,
@@ -256,6 +261,44 @@ const AdminDashboard = () => {
         .from("profiles")
         .select("id");
 
+      // Payment analytics
+      const { data: pagos } = await supabase
+        .from("pago")
+        .select("monto_total, comision_monto, monto_neto, estado_pago, created_at");
+
+      // Revenue per day (last 7 days)
+      const revenueByDay: Record<string, { total: number; comision: number; neto: number }> = {};
+      let totalRevenue = 0;
+      let totalCommissions = 0;
+      let totalNetRevenue = 0;
+
+      pagos?.forEach((p) => {
+        const day = new Date(p.created_at).toLocaleDateString();
+        if (!revenueByDay[day]) {
+          revenueByDay[day] = { total: 0, comision: 0, neto: 0 };
+        }
+        revenueByDay[day].total += p.monto_total;
+        revenueByDay[day].comision += p.comision_monto || 0;
+        revenueByDay[day].neto += p.monto_neto || 0;
+        
+        totalRevenue += p.monto_total;
+        totalCommissions += p.comision_monto || 0;
+        totalNetRevenue += p.monto_neto || 0;
+      });
+
+      // Payment states distribution
+      const paymentStates: Record<string, number> = {};
+      pagos?.forEach((p) => {
+        const stateLabel = {
+          'pendiente_cliente': 'Pendiente Cliente',
+          'pagado_retenido': 'Retenido',
+          'liberado_tecnico': 'Liberado',
+          'disputa': 'En Disputa'
+        }[p.estado_pago] || p.estado_pago;
+        
+        paymentStates[stateLabel] = (paymentStates[stateLabel] || 0) + 1;
+      });
+
       setAnalytics({
         ticketsPerDay: Object.entries(ticketsByDay).map(([day, count]) => ({ day, count })),
         ticketsByComuna: Object.entries(comunaCounts).map(([comuna, count]) => ({ comuna, count })).slice(0, 5),
@@ -270,6 +313,16 @@ const AdminDashboard = () => {
         totalUsers: allProfiles?.length || 0,
         totalClientes: roleCounts.cliente,
         totalTecnicos: roleCounts.tecnico,
+        revenuePerDay: Object.entries(revenueByDay).map(([day, amounts]) => ({ 
+          day, 
+          total: amounts.total,
+          comision: amounts.comision,
+          neto: amounts.neto
+        })),
+        paymentsByState: Object.entries(paymentStates).map(([estado, count]) => ({ estado, count })),
+        totalRevenue,
+        totalCommissions,
+        totalNetRevenue,
       });
     } catch (error) {
       console.error("Error fetching analytics:", error);
@@ -393,6 +446,118 @@ const AdminDashboard = () => {
                     <CardContent>
                       <div className="text-3xl font-bold">{analytics.ticketsPerDay.reduce((sum, d) => sum + d.count, 0)}</div>
                       <p className="text-xs text-muted-foreground mt-1">Últimos 7 días</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Money Flow Summary Cards */}
+                <h3 className="text-xl font-bold mt-8 mb-4">Flujo de Dinero</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Card className="border-primary/20">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Ingresos Totales</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-primary">
+                        ${analytics.totalRevenue.toLocaleString('es-CL')}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Pagos totales</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-success/20">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Comisiones Ganadas</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-success">
+                        ${analytics.totalCommissions.toLocaleString('es-CL')}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">15% de comisión</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-accent/20">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium text-muted-foreground">Pagado a Técnicos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold text-accent">
+                        ${analytics.totalNetRevenue.toLocaleString('es-CL')}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">Monto neto</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Money Flow Charts */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Flujo de Ingresos</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <LineChart data={analytics.revenuePerDay}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="day" />
+                            <YAxis />
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                            <Line 
+                              type="monotone" 
+                              dataKey="total" 
+                              stroke="hsl(var(--primary))" 
+                              strokeWidth={2}
+                              name="Total"
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="comision" 
+                              stroke="hsl(var(--success))" 
+                              strokeWidth={2}
+                              name="Comisión"
+                            />
+                            <Line 
+                              type="monotone" 
+                              dataKey="neto" 
+                              stroke="hsl(var(--accent))" 
+                              strokeWidth={2}
+                              name="Neto"
+                            />
+                          </LineChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Estados de Pago</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ChartContainer config={{}} className="h-[300px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={analytics.paymentsByState}
+                              dataKey="count"
+                              nameKey="estado"
+                              cx="50%"
+                              cy="50%"
+                              outerRadius={80}
+                              label
+                            >
+                              {analytics.paymentsByState.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                              ))}
+                            </Pie>
+                            <ChartTooltip content={<ChartTooltipContent />} />
+                            <Legend />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </ChartContainer>
                     </CardContent>
                   </Card>
                 </div>
