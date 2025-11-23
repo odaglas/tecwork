@@ -263,12 +263,13 @@ const TicketDetail = () => {
       if (adjuntosError) throw adjuntosError;
       setAdjuntos(adjuntosData || []);
 
-      // Fetch payment data if ticket is in progress or finalized
+      // Fetch payment data if ticket has been paid
       if (ticketData.estado === "en_progreso" || ticketData.estado === "finalizado") {
         const { data: paymentInfo } = await supabase
           .from("pago")
           .select("id, monto_total, estado_pago")
           .eq("ticket_id", ticketId)
+          .in("estado_pago", ["pagado_retenido", "liberado_tecnico"])
           .maybeSingle();
         
         if (paymentInfo) {
@@ -574,18 +575,18 @@ const TicketDetail = () => {
                   <AlertTriangle className="w-4 h-4" />
                   <span className="hidden sm:inline">Reportar</span>
                 </Button>
-                {paymentData && (paymentData.estado_pago === "pagado_retenido" || paymentData.estado_pago === "liberado_tecnico") && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setIsDisputaDialogOpen(true)}
-                    className="gap-2 text-xs md:text-sm border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                  >
-                    <AlertCircle className="w-4 h-4" />
-                    <span className="hidden sm:inline">Disputa</span>
-                  </Button>
-                )}
               </>
+            )}
+            {paymentData && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsDisputaDialogOpen(true)}
+                className="gap-2 text-xs md:text-sm border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                <AlertCircle className="w-4 h-4" />
+                <span className="hidden sm:inline">Disputa</span>
+              </Button>
             )}
             {ticket.estado !== "cancelado" && ticket.estado !== "finalizado" && ticket.estado !== "en_progreso" && (
               <Button
