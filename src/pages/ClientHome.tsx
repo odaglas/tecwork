@@ -158,6 +158,7 @@ const ClientHome = () => {
               <Card
                 key={category.label}
                 className="hover:shadow-lg transition-smooth cursor-pointer border-2 hover:border-primary group"
+                onClick={() => navigate(`/cliente/crear-ticket?categoria=${encodeURIComponent(category.label)}`)}
               >
                 <CardContent className="p-4 md:p-6 flex flex-col items-center text-center gap-2 md:gap-3">
                   <div className="p-3 md:p-4 rounded-full bg-primary/10 group-hover:bg-primary transition-smooth">

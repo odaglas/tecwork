@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Camera, ArrowLeft, Zap, Droplet, Laptop, WashingMachine, Hammer, Wrench } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
@@ -29,6 +29,7 @@ const CATEGORIES = [
 
 const CreateTicket = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [description, setDescription] = useState("");
@@ -36,6 +37,14 @@ const CreateTicket = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [clienteId, setClienteId] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Pre-select category from URL parameter
+    const categoriaParam = searchParams.get('categoria');
+    if (categoriaParam) {
+      setCategory(categoriaParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const fetchOrCreateClienteProfile = async () => {
