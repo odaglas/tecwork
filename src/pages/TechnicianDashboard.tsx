@@ -2,10 +2,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { MapPin, Clock, Filter, AlertCircle } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MapPin, Clock, Filter, AlertCircle, Briefcase } from "lucide-react";
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import DisputasHistorial from "@/components/DisputasHistorial";
 
 
 interface Ticket {
@@ -137,141 +139,170 @@ const TechnicianDashboard = () => {
           </Alert>
         )}
 
-        {/* Quoted Tickets Section - Always visible */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-2xl font-bold text-foreground">Mis Cotizaciones</h2>
-            <Badge variant="secondary" className="text-lg px-3 py-1">
-              {quotedTickets.length}
-            </Badge>
-          </div>
-          {quotedTickets.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {quotedTickets.map((ticket) => (
-                <Card key={ticket.id} className="hover:shadow-lg transition-shadow border-primary/50">
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-4">
-                      <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
-                      <div className="flex flex-col gap-2">
-                        <Badge variant="secondary">{ticket.categoria}</Badge>
-                        {ticket.estado === "en_progreso" && (
-                          <Badge className="bg-green-500/10 text-green-500 border-green-500">
-                            En Progreso
-                          </Badge>
-                        )}
-                        {ticket.estado === "cotizando" && (
-                          <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
-                            Cotizando
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-muted-foreground text-sm">{ticket.descripcion}</p>
-                    
-                    <div className="flex flex-col gap-2 text-sm">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        <span>{ticket.comuna}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Clock className="w-4 h-4" />
-                        <span>Publicado {new Date(ticket.created_at).toLocaleDateString('es-CL')}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      className="w-full"
-                      onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
-                    >
-                      Ver Detalles
-                    </Button>
-                  </CardFooter>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <Card className="border-dashed">
-              <CardContent className="py-8">
-                <p className="text-center text-muted-foreground">
-                  Aún no has enviado cotizaciones. Los tickets que cotices aparecerán aquí.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+        {/* Tabs Section */}
+        <Tabs defaultValue="cotizaciones" className="w-full">
+          <TabsList className="grid w-full md:w-auto grid-cols-3 mb-6">
+            <TabsTrigger value="cotizaciones" className="gap-2">
+              <Briefcase className="w-4 h-4" />
+              Mis Cotizaciones
+            </TabsTrigger>
+            <TabsTrigger value="trabajos" className="gap-2">
+              <Clock className="w-4 h-4" />
+              Trabajos Disponibles
+            </TabsTrigger>
+            <TabsTrigger value="disputas" className="gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Disputas
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Title and Filters */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-foreground mb-6">Nuevos Trabajos Disponibles</h2>
-          
-          <div className="flex flex-wrap gap-3">
-            <Button variant="outline" className="gap-2">
-              <Filter className="w-4 h-4" />
-              Filtrar por Comuna
-            </Button>
-          </div>
-        </div>
-
-        {/* Job Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {tickets.map((ticket) => {
-            const isQuoted = quotedTicketIds.includes(ticket.id);
-            return (
-              <Card key={ticket.id} className={`hover:shadow-lg transition-shadow ${isQuoted ? 'border-blue-500/50 bg-blue-50/5' : ''}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-4">
-                    <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
-                    <div className="flex flex-col gap-2">
-                      <Badge variant="secondary">{ticket.categoria}</Badge>
-                      {isQuoted && (
-                        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
-                          Ya Cotizado
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-              <CardContent className="space-y-3">
-                <p className="text-muted-foreground text-sm">{ticket.descripcion}</p>
-                
-                <div className="flex flex-col gap-2 text-sm">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{ticket.comuna}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Clock className="w-4 h-4" />
-                    <span>Publicado {new Date(ticket.created_at).toLocaleDateString('es-CL')}</span>
-                  </div>
+          {/* Quoted Tickets Tab */}
+          <TabsContent value="cotizaciones">
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-foreground">Mis Cotizaciones</h2>
+                <Badge variant="secondary" className="text-lg px-3 py-1">
+                  {quotedTickets.length}
+                </Badge>
+              </div>
+              {quotedTickets.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {quotedTickets.map((ticket) => (
+                    <Card key={ticket.id} className="hover:shadow-lg transition-shadow border-primary/50">
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
+                          <div className="flex flex-col gap-2">
+                            <Badge variant="secondary">{ticket.categoria}</Badge>
+                            {ticket.estado === "en_progreso" && (
+                              <Badge className="bg-green-500/10 text-green-500 border-green-500">
+                                En Progreso
+                              </Badge>
+                            )}
+                            {ticket.estado === "cotizando" && (
+                              <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
+                                Cotizando
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-muted-foreground text-sm">{ticket.descripcion}</p>
+                        
+                        <div className="flex flex-col gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="w-4 h-4" />
+                            <span>{ticket.comuna}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <span>Publicado {new Date(ticket.created_at).toLocaleDateString('es-CL')}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          className="w-full"
+                          onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
+                        >
+                          Ver Detalles
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full"
-                  onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
-                >
-                  {isQuoted ? "Ver/Editar Cotización" : "Ver Detalles"}
-                </Button>
-              </CardFooter>
-            </Card>
-          );
-          })}
-        </div>
+              ) : (
+                <Card className="border-dashed">
+                  <CardContent className="py-8">
+                    <p className="text-center text-muted-foreground">
+                      Aún no has enviado cotizaciones. Los tickets que cotices aparecerán aquí.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
 
-        {/* Empty State */}
-        {tickets.length === 0 && !loading && (
-          <div className="text-center py-16">
-            <p className="text-muted-foreground text-lg">
-              No hay trabajos disponibles en tu especialidad en este momento.
-            </p>
-            <p className="text-muted-foreground text-sm mt-2">
-              Revisa más tarde para ver nuevas oportunidades.
-            </p>
-          </div>
-        )}
+          {/* Available Jobs Tab */}
+          <TabsContent value="trabajos">
+            <div>
+              <div className="mb-6">
+                <h2 className="text-2xl font-bold text-foreground mb-6">Nuevos Trabajos Disponibles</h2>
+                
+                <div className="flex flex-wrap gap-3">
+                  <Button variant="outline" className="gap-2">
+                    <Filter className="w-4 h-4" />
+                    Filtrar por Comuna
+                  </Button>
+                </div>
+              </div>
+
+              {/* Job Cards Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {tickets.map((ticket) => {
+                  const isQuoted = quotedTicketIds.includes(ticket.id);
+                  return (
+                    <Card key={ticket.id} className={`hover:shadow-lg transition-shadow ${isQuoted ? 'border-blue-500/50 bg-blue-50/5' : ''}`}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <CardTitle className="text-xl">{ticket.titulo}</CardTitle>
+                          <div className="flex flex-col gap-2">
+                            <Badge variant="secondary">{ticket.categoria}</Badge>
+                            {isQuoted && (
+                              <Badge className="bg-blue-500/10 text-blue-500 border-blue-500">
+                                Ya Cotizado
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <p className="text-muted-foreground text-sm">{ticket.descripcion}</p>
+                        
+                        <div className="flex flex-col gap-2 text-sm">
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <MapPin className="w-4 h-4" />
+                            <span>{ticket.comuna}</span>
+                          </div>
+                          <div className="flex items-center gap-2 text-muted-foreground">
+                            <Clock className="w-4 h-4" />
+                            <span>Publicado {new Date(ticket.created_at).toLocaleDateString('es-CL')}</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                      <CardFooter>
+                        <Button 
+                          className="w-full"
+                          onClick={() => window.location.href = `/tecnico/ticket/${ticket.id}`}
+                        >
+                          {isQuoted ? "Ver/Editar Cotización" : "Ver Detalles"}
+                        </Button>
+                      </CardFooter>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Empty State */}
+              {tickets.length === 0 && !loading && (
+                <div className="text-center py-16">
+                  <p className="text-muted-foreground text-lg">
+                    No hay trabajos disponibles en tu especialidad en este momento.
+                  </p>
+                  <p className="text-muted-foreground text-sm mt-2">
+                    Revisa más tarde para ver nuevas oportunidades.
+                  </p>
+                </div>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Disputes Tab */}
+          <TabsContent value="disputas">
+            <DisputasHistorial userType="tecnico" />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

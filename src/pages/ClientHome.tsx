@@ -2,7 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Droplet, Zap, Monitor, Wind, Hammer, PaintBucket, Clock, Loader2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Droplet, Zap, Monitor, Wind, Hammer, PaintBucket, Clock, Loader2, AlertCircle } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
@@ -10,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
+import DisputasHistorial from "@/components/DisputasHistorial";
 
 const categories = [
   { icon: Zap, label: "Electricidad", color: "text-primary" },
@@ -180,75 +182,93 @@ const ClientHome = () => {
           </Button>
         </div>
 
-        {/* Active Tickets Section */}
-        <div>
-          <h2 className="text-2xl font-bold text-foreground mb-4">Mis Tickets</h2>
-          
-          {isLoading ? (
-            <div className="flex justify-center items-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : tickets.length === 0 ? (
-            <Card className="border-2">
-              <CardContent className="p-8 text-center">
-                <p className="text-muted-foreground mb-4">
-                  Aún no tienes tickets creados
-                </p>
-                <Button 
-                  variant="default" 
-                  onClick={() => navigate("/cliente/crear-ticket")}
-                >
-                  Crear tu primer ticket
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {tickets.map((ticket) => (
-                <Card key={ticket.id} className="border-2 hover:shadow-lg transition-smooth">
-                  <CardContent className="p-4 md:p-6">
-                    <div className="flex flex-col gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2 break-words">
-                          {ticket.titulo}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mb-3 line-clamp-2 break-words">
-                          {ticket.descripcion}
-                        </p>
-                        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
-                          <div className="flex items-center gap-2 text-muted-foreground">
-                            <Clock className="h-4 w-4 shrink-0" />
-                            <span className="text-xs md:text-sm">
-                              {formatDistanceToNow(new Date(ticket.created_at), { 
-                                addSuffix: true, 
-                                locale: es 
-                              })}
-                            </span>
-                          </div>
-                          <Badge variant="outline" className="text-xs w-fit">
-                            {ticket.categoria}
-                          </Badge>
-                        </div>
-                        {getEstadoBadge(ticket.estado)}
-                      </div>
-                      
-                      <div className="flex flex-col gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="w-full text-xs md:text-sm"
-                          onClick={() => navigate(`/cliente/ticket/${ticket.id}`)}
-                        >
-                          Ver Detalles
-                        </Button>
-                      </div>
-                    </div>
+
+        {/* Tabs Section */}
+        <Tabs defaultValue="tickets" className="w-full">
+          <TabsList className="grid w-full md:w-auto grid-cols-2 mb-6">
+            <TabsTrigger value="tickets" className="gap-2">
+              <Clock className="w-4 h-4" />
+              Mis Tickets
+            </TabsTrigger>
+            <TabsTrigger value="disputas" className="gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Disputas
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="tickets">
+            <div>
+              {isLoading ? (
+                <div className="flex justify-center items-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : tickets.length === 0 ? (
+                <Card className="border-2">
+                  <CardContent className="p-8 text-center">
+                    <p className="text-muted-foreground mb-4">
+                      Aún no tienes tickets creados
+                    </p>
+                    <Button 
+                      variant="default" 
+                      onClick={() => navigate("/cliente/crear-ticket")}
+                    >
+                      Crear tu primer ticket
+                    </Button>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                <div className="space-y-4">
+                  {tickets.map((ticket) => (
+                    <Card key={ticket.id} className="border-2 hover:shadow-lg transition-smooth">
+                      <CardContent className="p-4 md:p-6">
+                        <div className="flex flex-col gap-4">
+                          <div className="flex-1">
+                            <h3 className="text-lg md:text-xl font-semibold text-foreground mb-2 break-words">
+                              {ticket.titulo}
+                            </h3>
+                            <p className="text-sm text-muted-foreground mb-3 line-clamp-2 break-words">
+                              {ticket.descripcion}
+                            </p>
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-3">
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Clock className="h-4 w-4 shrink-0" />
+                                <span className="text-xs md:text-sm">
+                                  {formatDistanceToNow(new Date(ticket.created_at), { 
+                                    addSuffix: true, 
+                                    locale: es 
+                                  })}
+                                </span>
+                              </div>
+                              <Badge variant="outline" className="text-xs w-fit">
+                                {ticket.categoria}
+                              </Badge>
+                            </div>
+                            {getEstadoBadge(ticket.estado)}
+                          </div>
+                          
+                          <div className="flex flex-col gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="w-full text-xs md:text-sm"
+                              onClick={() => navigate(`/cliente/ticket/${ticket.id}`)}
+                            >
+                              Ver Detalles
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </TabsContent>
+
+          <TabsContent value="disputas">
+            <DisputasHistorial userType="cliente" />
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
