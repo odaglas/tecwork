@@ -40,6 +40,7 @@ interface Disputa {
   estado: string;
   tipo_iniciador: string;
   created_at: string;
+  imagen_url: string | null;
   pago: {
     monto_total: number;
     ticket_id: string;
@@ -372,6 +373,16 @@ export default function AdminDisputas() {
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                   {selectedDisputa.descripcion}
                 </p>
+                {selectedDisputa.imagen_url && (
+                  <div className="mt-3">
+                    <p className="font-medium mb-2">Imagen de Evidencia:</p>
+                    <img 
+                      src={selectedDisputa.imagen_url} 
+                      alt="Evidencia de disputa" 
+                      className="w-full max-h-96 object-contain rounded-lg border"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
