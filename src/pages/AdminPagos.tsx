@@ -227,11 +227,26 @@ export default function AdminPagos() {
 
     setReleasing(true);
     try {
+      // Check if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast({
+          title: "Sesión Expirada",
+          description: "Por favor, inicia sesión nuevamente",
+          variant: "destructive",
+        });
+        navigate("/admin/login");
+        return;
+      }
+
       const { data, error } = await supabase.functions.invoke("release-payment", {
         body: { pago_id: selectedPayment.id },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Edge function error:", error);
+        throw error;
+      }
 
       toast({
         title: "Pago Liberado",
@@ -247,7 +262,7 @@ export default function AdminPagos() {
       console.error("Error releasing payment:", error);
       toast({
         title: "Error",
-        description: error.message || "No se pudo liberar el pago",
+        description: error.message || "No se pudo liberar el pago. Verifica tu sesión e intenta nuevamente.",
         variant: "destructive",
       });
     } finally {
