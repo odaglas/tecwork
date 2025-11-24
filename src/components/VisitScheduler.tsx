@@ -55,9 +55,6 @@ export const VisitScheduler = ({
 
   // Use the schedule from props if available
   const existingSchedule = existingVisit?.visita_schedule;
-  
-  console.log("VisitScheduler - existingVisit:", existingVisit);
-  console.log("VisitScheduler - existingSchedule:", existingSchedule);
 
   // Generate time slots from 8:00 to 22:00 (end time can be up to 22:00)
   const timeSlots = Array.from({ length: 15 }, (_, i) => {
