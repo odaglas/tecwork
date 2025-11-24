@@ -49,6 +49,7 @@ export const VisitScheduler = ({
   const [loading, setLoading] = useState(false);
   const [busySlots, setBusySlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [calendarKey, setCalendarKey] = useState(0);
 
   // Generate time slots from 8:00 to 21:00 (workday ends at 22:00, last selectable is 21:00)
   const timeSlots = Array.from({ length: 14 }, (_, i) => {
@@ -110,6 +111,21 @@ export const VisitScheduler = ({
       return;
     }
 
+    // Check if this date already exists in schedules
+    const dateStr = format(selectedDate, "yyyy-MM-dd");
+    const existingSchedule = daySchedules.find(
+      s => format(s.date, "yyyy-MM-dd") === dateStr
+    );
+
+    if (existingSchedule) {
+      toast({
+        title: "Día duplicado",
+        description: "Ya agregaste este día al programa. Selecciona otro día.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const newSchedule: DaySchedule = {
       date: selectedDate,
       time: selectedTime,
@@ -117,9 +133,17 @@ export const VisitScheduler = ({
     };
 
     setDaySchedules([...daySchedules, newSchedule]);
+    
+    // Reset all selections and force calendar refresh
     setSelectedDate(undefined);
     setSelectedTime("");
     setSelectedHours(2);
+    setCalendarKey(prev => prev + 1);
+    
+    toast({
+      title: "Día agregado",
+      description: `${format(selectedDate, "dd/MM/yyyy", { locale: es })} agregado al programa`,
+    });
   };
 
   const removeDaySchedule = (index: number) => {
@@ -380,10 +404,21 @@ export const VisitScheduler = ({
         <div className="space-y-2">
           <Label className="text-sm font-medium">Selecciona el Día</Label>
           <Calendar
+            key={calendarKey}
             mode="single"
             selected={selectedDate}
-            onSelect={setSelectedDate}
-            disabled={(date) => isBefore(date, startOfDay(new Date()))}
+            onSelect={(date) => {
+              setSelectedDate(date);
+              setSelectedTime(""); // Reset time when date changes
+            }}
+            disabled={(date) => {
+              // Disable past dates
+              if (isBefore(date, startOfDay(new Date()))) return true;
+              
+              // Disable already scheduled dates
+              const dateStr = format(date, "yyyy-MM-dd");
+              return daySchedules.some(s => format(s.date, "yyyy-MM-dd") === dateStr);
+            }}
             className="rounded-md border pointer-events-auto"
           />
         </div>
