@@ -30,6 +30,7 @@ interface VisitSchedulerProps {
     estado: string | null;
     propuestaPor: string | null;
     visita_duracion_horas?: number | null;
+    visita_schedule?: any;
   };
 }
 
@@ -51,7 +52,9 @@ export const VisitScheduler = ({
   const [busySlots, setBusySlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [calendarKey, setCalendarKey] = useState(0);
-  const [existingSchedule, setExistingSchedule] = useState<any>(null);
+
+  // Use the schedule from props if available
+  const existingSchedule = existingVisit?.visita_schedule;
 
   // Generate time slots from 8:00 to 22:00 (end time can be up to 22:00)
   const timeSlots = Array.from({ length: 15 }, (_, i) => {
@@ -70,24 +73,6 @@ export const VisitScheduler = ({
       fetchBusySlots(selectedDate);
     }
   }, [selectedDate, tecnicoId]);
-
-  // Load existing schedule from database
-  useEffect(() => {
-    const loadSchedule = async () => {
-      if (cotizacionId) {
-        const { data, error } = await supabase
-          .from("cotizacion")
-          .select("visita_schedule")
-          .eq("id", cotizacionId)
-          .single();
-
-        if (!error && data?.visita_schedule) {
-          setExistingSchedule(data.visita_schedule);
-        }
-      }
-    };
-    loadSchedule();
-  }, [cotizacionId]);
 
   const fetchBusySlots = async (date: Date) => {
     setLoadingSlots(true);
