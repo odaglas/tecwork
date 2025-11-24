@@ -12,7 +12,8 @@ import { es } from "date-fns/locale";
 
 interface DaySchedule {
   date: Date;
-  time: string;
+  startTime: string;
+  endTime: string;
   hours: number;
 }
 
@@ -43,19 +44,25 @@ export const VisitScheduler = ({
 }: VisitSchedulerProps) => {
   const { toast } = useToast();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
-  const [selectedTime, setSelectedTime] = useState<string>("");
-  const [selectedHours, setSelectedHours] = useState<number>(2);
+  const [selectedStartTime, setSelectedStartTime] = useState<string>("");
+  const [selectedEndTime, setSelectedEndTime] = useState<string>("");
   const [daySchedules, setDaySchedules] = useState<DaySchedule[]>([]);
   const [loading, setLoading] = useState(false);
   const [busySlots, setBusySlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [calendarKey, setCalendarKey] = useState(0);
 
-  // Generate time slots from 8:00 to 21:00 (workday ends at 22:00, last selectable is 21:00)
-  const timeSlots = Array.from({ length: 14 }, (_, i) => {
+  // Generate time slots from 8:00 to 22:00 (end time can be up to 22:00)
+  const timeSlots = Array.from({ length: 15 }, (_, i) => {
     const hour = 8 + i;
     return `${hour.toString().padStart(2, "0")}:00`;
   });
+
+  const calculateHours = (start: string, end: string): number => {
+    const startHour = parseInt(start.split(':')[0]);
+    const endHour = parseInt(end.split(':')[0]);
+    return endHour - startHour;
+  };
 
   useEffect(() => {
     if (selectedDate) {
@@ -102,10 +109,30 @@ export const VisitScheduler = ({
   };
 
   const addDaySchedule = () => {
-    if (!selectedDate || !selectedTime) {
+    if (!selectedDate || !selectedStartTime || !selectedEndTime) {
       toast({
         title: "Campos incompletos",
-        description: "Por favor selecciona una fecha y hora",
+        description: "Por favor selecciona fecha, hora de inicio y hora de fin",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const hours = calculateHours(selectedStartTime, selectedEndTime);
+    
+    if (hours <= 0) {
+      toast({
+        title: "Horario inválido",
+        description: "La hora de fin debe ser posterior a la hora de inicio",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (hours > 14) {
+      toast({
+        title: "Horario inválido",
+        description: "No se pueden programar más de 14 horas en un día (8:00 a 22:00)",
         variant: "destructive",
       });
       return;
@@ -128,21 +155,22 @@ export const VisitScheduler = ({
 
     const newSchedule: DaySchedule = {
       date: selectedDate,
-      time: selectedTime,
-      hours: selectedHours,
+      startTime: selectedStartTime,
+      endTime: selectedEndTime,
+      hours,
     };
 
     setDaySchedules([...daySchedules, newSchedule]);
     
     // Reset all selections and force calendar refresh
     setSelectedDate(undefined);
-    setSelectedTime("");
-    setSelectedHours(2);
+    setSelectedStartTime("");
+    setSelectedEndTime("");
     setCalendarKey(prev => prev + 1);
     
     toast({
       title: "Día agregado",
-      description: `${format(selectedDate, "dd/MM/yyyy", { locale: es })} agregado al programa`,
+      description: `${format(selectedDate, "dd/MM/yyyy", { locale: es })} de ${selectedStartTime} a ${selectedEndTime} (${hours}h)`,
     });
   };
 
@@ -172,7 +200,8 @@ export const VisitScheduler = ({
       
       const scheduleData = daySchedules.map(s => ({
         date: format(s.date, "yyyy-MM-dd"),
-        time: s.time,
+        startTime: s.startTime,
+        endTime: s.endTime,
         hours: s.hours,
       }));
 
@@ -180,7 +209,7 @@ export const VisitScheduler = ({
         .from("cotizacion")
         .update({
           visita_fecha_propuesta: dateStr,
-          visita_hora_propuesta: firstSchedule.time,
+          visita_hora_propuesta: firstSchedule.startTime,
           visita_duracion_horas: getTotalHours(),
           visita_schedule: scheduleData,
           visita_estado: "pendiente",
@@ -370,7 +399,7 @@ export const VisitScheduler = ({
                       Día {index + 1}: {format(schedule.date, "dd/MM/yyyy", { locale: es })}
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      Hora: {schedule.time} • Duración: {schedule.hours}h
+                      {schedule.startTime} - {schedule.endTime} ({schedule.hours}h)
                     </div>
                   </div>
                   <Button
@@ -386,20 +415,6 @@ export const VisitScheduler = ({
           </div>
         )}
 
-        {/* Hours Input */}
-        <div className="space-y-2">
-          <Label className="text-sm font-medium">Horas para este Día</Label>
-          <input
-            type="number"
-            min="1"
-            max="14"
-            value={selectedHours}
-            onChange={(e) => setSelectedHours(Math.max(1, Math.min(14, parseInt(e.target.value) || 1)))}
-            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-          <p className="text-xs text-muted-foreground">Máximo 14 horas por día (8:00 a 22:00)</p>
-        </div>
-
         {/* Calendar */}
         <div className="space-y-2">
           <Label className="text-sm font-medium">Selecciona el Día</Label>
@@ -409,13 +424,11 @@ export const VisitScheduler = ({
             selected={selectedDate}
             onSelect={(date) => {
               setSelectedDate(date);
-              setSelectedTime(""); // Reset time when date changes
+              setSelectedStartTime("");
+              setSelectedEndTime("");
             }}
             disabled={(date) => {
-              // Disable past dates
               if (isBefore(date, startOfDay(new Date()))) return true;
-              
-              // Disable already scheduled dates
               const dateStr = format(date, "yyyy-MM-dd");
               return daySchedules.some(s => format(s.date, "yyyy-MM-dd") === dateStr);
             }}
@@ -423,11 +436,11 @@ export const VisitScheduler = ({
           />
         </div>
 
-        {/* Time Slots */}
+        {/* Start Time Slots */}
         {selectedDate && (
           <div className="space-y-3">
             <Label className="text-sm font-medium">
-              Horarios Disponibles para el {format(selectedDate, "dd/MM/yyyy", { locale: es })}
+              Hora de Inicio para el {format(selectedDate, "dd/MM/yyyy", { locale: es })}
             </Label>
             
             {loadingSlots ? (
@@ -436,16 +449,19 @@ export const VisitScheduler = ({
               </div>
             ) : (
               <div className="grid grid-cols-3 gap-2">
-                {timeSlots.map((time) => {
+                {timeSlots.slice(0, -1).map((time) => {
                   const isBusy = busySlots.includes(time);
-                  const isSelected = selectedTime === time;
+                  const isSelected = selectedStartTime === time;
 
                   return (
                     <Button
                       key={time}
                       variant={isSelected ? "default" : "outline"}
                       disabled={isBusy}
-                      onClick={() => setSelectedTime(time)}
+                      onClick={() => {
+                        setSelectedStartTime(time);
+                        setSelectedEndTime("");
+                      }}
                       className={`${isBusy ? "opacity-50 cursor-not-allowed" : ""}`}
                     >
                       <Clock className="mr-1 h-3 w-3" />
@@ -458,15 +474,52 @@ export const VisitScheduler = ({
           </div>
         )}
 
+        {/* End Time Slots */}
+        {selectedDate && selectedStartTime && (
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">
+              Hora de Fin (hasta las 22:00)
+            </Label>
+            
+            <div className="grid grid-cols-3 gap-2">
+              {timeSlots.map((time) => {
+                const startHour = parseInt(selectedStartTime.split(':')[0]);
+                const endHour = parseInt(time.split(':')[0]);
+                const isDisabled = endHour <= startHour;
+                const isSelected = selectedEndTime === time;
+
+                return (
+                  <Button
+                    key={time}
+                    variant={isSelected ? "default" : "outline"}
+                    disabled={isDisabled}
+                    onClick={() => setSelectedEndTime(time)}
+                    className={`${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    <Clock className="mr-1 h-3 w-3" />
+                    {time}
+                  </Button>
+                );
+              })}
+            </div>
+            
+            {selectedEndTime && (
+              <p className="text-sm text-muted-foreground">
+                Duración: {calculateHours(selectedStartTime, selectedEndTime)} horas
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Add Day Button */}
-        {selectedDate && selectedTime && (
+        {selectedDate && selectedStartTime && selectedEndTime && (
           <Button
             onClick={addDaySchedule}
             variant="outline"
             className="w-full"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Agregar Día al Programa
+            Agregar Día al Programa ({calculateHours(selectedStartTime, selectedEndTime)}h)
           </Button>
         )}
 
