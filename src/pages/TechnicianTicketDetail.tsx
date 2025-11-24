@@ -12,6 +12,7 @@ import { Loader2, ArrowLeft, MapPin, Upload, FileText, AlertTriangle, CheckCircl
 import { TechnicianHeader } from "@/components/TechnicianHeader";
 import { SupportChatDialog } from "@/components/SupportChatDialog";
 import DisputaDialog from "@/components/DisputaDialog";
+import { VisitScheduler } from "@/components/VisitScheduler";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -540,49 +541,71 @@ const TechnicianTicketDetail = () => {
 
         {/* Quote Form Card */}
         {existingQuote?.estado === "aceptada" ? (
-          <Card className="border-green-500/50">
-            <CardHeader>
-              <CardTitle className="text-green-600">Cotización Aceptada</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-muted-foreground">Tu cotización ha sido aceptada por el cliente.</p>
-              <div className="space-y-2">
-                <p><span className="font-semibold">Descripción:</span> {existingQuote.descripcion}</p>
-                <p><span className="font-semibold">Precio:</span> ${existingQuote.valor_total.toLocaleString('es-CL')} CLP</p>
-                <p><span className="font-semibold">Tiempo estimado:</span> {existingQuote.tiempo_estimado_dias} días</p>
+          <>
+            <Card className="border-green-500/50">
+              <CardHeader>
+                <CardTitle className="text-green-600">Cotización Aceptada</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">Tu cotización ha sido aceptada por el cliente.</p>
+                <div className="space-y-2">
+                  <p><span className="font-semibold">Descripción:</span> {existingQuote.descripcion}</p>
+                  <p><span className="font-semibold">Precio:</span> ${existingQuote.valor_total.toLocaleString('es-CL')} CLP</p>
+                  <p><span className="font-semibold">Tiempo estimado:</span> {existingQuote.tiempo_estimado_dias} días</p>
+                </div>
+                {ticket.estado === "en_progreso" && (
+                  <Button
+                    onClick={handleRequestCompletion}
+                    disabled={requestingCompletion}
+                    className="w-full gap-2"
+                    variant="default"
+                  >
+                    {requestingCompletion ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Enviando solicitud...
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        Solicitar Finalización del Ticket
+                      </>
+                    )}
+                  </Button>
+                )}
+                {paymentData && (paymentData.estado_pago === "pagado_retenido" || paymentData.estado_pago === "liberado_tecnico") && (
+                  <Button
+                    onClick={() => setIsDisputaDialogOpen(true)}
+                    variant="destructive"
+                    className="w-full gap-2 mt-3"
+                  >
+                    <AlertCircle className="h-4 w-4" />
+                    Crear Disputa de Pago
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+            
+            {/* Visit Scheduler for accepted quote */}
+            {currentUser && existingQuote && (
+              <div className="mt-6">
+                <VisitScheduler
+                  cotizacionId={existingQuote.id}
+                  tecnicoId={existingQuote.tecnico_id}
+                  currentUserId={currentUser.id}
+                  isCliente={false}
+                  duracionEstimadaHoras={Math.ceil(existingQuote.tiempo_estimado_dias * 8) || 2}
+                  onVisitScheduled={fetchTicketDetails}
+                  existingVisit={{
+                    fecha: existingQuote.visita_fecha_propuesta || null,
+                    hora: existingQuote.visita_hora_propuesta || null,
+                    estado: existingQuote.visita_estado || null,
+                    propuestaPor: existingQuote.visita_propuesta_por || null,
+                  }}
+                />
               </div>
-              {ticket.estado === "en_progreso" && (
-                <Button
-                  onClick={handleRequestCompletion}
-                  disabled={requestingCompletion}
-                  className="w-full gap-2"
-                  variant="default"
-                >
-                  {requestingCompletion ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Enviando solicitud...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="h-4 w-4" />
-                      Solicitar Finalización del Ticket
-                    </>
-                  )}
-                </Button>
-              )}
-              {paymentData && (paymentData.estado_pago === "pagado_retenido" || paymentData.estado_pago === "liberado_tecnico") && (
-                <Button
-                  onClick={() => setIsDisputaDialogOpen(true)}
-                  variant="destructive"
-                  className="w-full gap-2 mt-3"
-                >
-                  <AlertCircle className="h-4 w-4" />
-                  Crear Disputa de Pago
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </>
         ) : existingQuote?.estado === "rechazada" ? (
           <Card className="border-red-500/50">
             <CardHeader>

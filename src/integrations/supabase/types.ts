@@ -144,6 +144,11 @@ export type Database = {
           tiempo_estimado_dias: number
           updated_at: string | null
           valor_total: number
+          visita_duracion_horas: number | null
+          visita_estado: string | null
+          visita_fecha_propuesta: string | null
+          visita_hora_propuesta: string | null
+          visita_propuesta_por: string | null
         }
         Insert: {
           created_at?: string | null
@@ -156,6 +161,11 @@ export type Database = {
           tiempo_estimado_dias: number
           updated_at?: string | null
           valor_total: number
+          visita_duracion_horas?: number | null
+          visita_estado?: string | null
+          visita_fecha_propuesta?: string | null
+          visita_hora_propuesta?: string | null
+          visita_propuesta_por?: string | null
         }
         Update: {
           created_at?: string | null
@@ -168,6 +178,11 @@ export type Database = {
           tiempo_estimado_dias?: number
           updated_at?: string | null
           valor_total?: number
+          visita_duracion_horas?: number | null
+          visita_estado?: string | null
+          visita_fecha_propuesta?: string | null
+          visita_hora_propuesta?: string | null
+          visita_propuesta_por?: string | null
         }
         Relationships: [
           {
@@ -182,6 +197,13 @@ export type Database = {
             columns: ["ticket_id"]
             isOneToOne: false
             referencedRelation: "ticket"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cotizacion_visita_propuesta_por_fkey"
+            columns: ["visita_propuesta_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]

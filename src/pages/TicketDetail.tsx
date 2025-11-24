@@ -26,6 +26,7 @@ import { PdfViewerDialog } from "@/components/PdfViewerDialog";
 import { CalificacionDialog } from "@/components/CalificacionDialog";
 import { SupportChatDialog } from "@/components/SupportChatDialog";
 import DisputaDialog from "@/components/DisputaDialog";
+import { VisitScheduler } from "@/components/VisitScheduler";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -65,6 +66,11 @@ interface CotizacionData {
   tecnico_calificacion_promedio?: number;
   tecnico_calificaciones_count?: number;
   tecnico_picture_url?: string | null;
+  visita_fecha_propuesta?: string | null;
+  visita_hora_propuesta?: string | null;
+  visita_duracion_horas?: number;
+  visita_estado?: string | null;
+  visita_propuesta_por?: string | null;
 }
 
 const TicketDetail = () => {
@@ -241,6 +247,11 @@ const TicketDetail = () => {
             tecnico_calificacion_promedio: ratings?.avg,
             tecnico_calificaciones_count: ratings?.count,
             tecnico_picture_url: userProfile?.profile_picture_url || null,
+            visita_fecha_propuesta: cot.visita_fecha_propuesta,
+            visita_hora_propuesta: cot.visita_hora_propuesta,
+            visita_duracion_horas: cot.visita_duracion_horas,
+            visita_estado: cot.visita_estado,
+            visita_propuesta_por: cot.visita_propuesta_por,
           };
         });
 
@@ -925,15 +936,42 @@ const TicketDetail = () => {
 
         {/* Chat button if quote accepted */}
         {cotizaciones.some(c => c.estado === 'aceptada') && (
-          <div className="flex justify-center mt-6">
-            <Button 
-              onClick={() => navigate(`/chat/${ticketId}`)}
-              size="lg"
-              className="bg-primary hover:bg-primary/90"
-            >
-              Chat con Técnico
-            </Button>
-          </div>
+          <>
+            {/* Visit Scheduler for accepted quote */}
+            {(() => {
+              const acceptedQuote = cotizaciones.find(c => c.estado === 'aceptada');
+              if (!acceptedQuote || !currentUser) return null;
+              
+              return (
+                <div className="mb-6">
+                  <VisitScheduler
+                    cotizacionId={acceptedQuote.id}
+                    tecnicoId={acceptedQuote.tecnico_id}
+                    currentUserId={currentUser.id}
+                    isCliente={true}
+                    duracionEstimadaHoras={Math.ceil(acceptedQuote.tiempo_estimado_dias * 8) || 2}
+                    onVisitScheduled={fetchTicketDetails}
+                    existingVisit={{
+                      fecha: acceptedQuote.visita_fecha_propuesta || null,
+                      hora: acceptedQuote.visita_hora_propuesta || null,
+                      estado: acceptedQuote.visita_estado || null,
+                      propuestaPor: acceptedQuote.visita_propuesta_por || null,
+                    }}
+                  />
+                </div>
+              );
+            })()}
+            
+            <div className="flex justify-center">
+              <Button 
+                onClick={() => navigate(`/chat/${ticketId}`)}
+                size="lg"
+                className="bg-primary hover:bg-primary/90"
+              >
+                Chat con Técnico
+              </Button>
+            </div>
+          </>
         )}
       </div>
 
