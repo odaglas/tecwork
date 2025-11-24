@@ -230,7 +230,7 @@ const TicketDetail = () => {
             userProfile
           });
           
-          return {
+          const result = {
             id: cot.id,
             descripcion: cot.descripcion,
             valor_total: cot.valor_total,
@@ -255,6 +255,11 @@ const TicketDetail = () => {
             visita_propuesta_por: cot.visita_propuesta_por,
             visita_schedule: cot.visita_schedule,
           };
+          
+          console.log("Formatted cotizacion:", result);
+          console.log("visita_schedule:", cot.visita_schedule);
+          
+          return result;
         });
 
         console.log("Formatted cotizaciones:", formattedCotizaciones);
