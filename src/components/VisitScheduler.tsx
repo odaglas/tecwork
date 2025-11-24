@@ -458,41 +458,6 @@ export const VisitScheduler = ({
           </div>
         )}
 
-        {/* Time Slots */}
-        {selectedDate && (
-          <div className="space-y-3">
-            <Label className="text-sm font-medium">
-              Horarios Disponibles para el {format(selectedDate, "dd/MM/yyyy", { locale: es })}
-            </Label>
-            
-            {loadingSlots ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {timeSlots.map((time) => {
-                  const isBusy = busySlots.includes(time);
-                  const isSelected = selectedTime === time;
-
-                  return (
-                    <Button
-                      key={time}
-                      variant={isSelected ? "default" : "outline"}
-                      disabled={isBusy}
-                      onClick={() => setSelectedTime(time)}
-                      className={`${isBusy ? "opacity-50 cursor-not-allowed" : ""}`}
-                    >
-                      <Clock className="mr-1 h-3 w-3" />
-                      {time}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Add Day Button */}
         {selectedDate && selectedTime && (
           <Button
