@@ -51,6 +51,7 @@ export const VisitScheduler = ({
   const [busySlots, setBusySlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [calendarKey, setCalendarKey] = useState(0);
+  const [existingSchedule, setExistingSchedule] = useState<any>(null);
 
   // Generate time slots from 8:00 to 22:00 (end time can be up to 22:00)
   const timeSlots = Array.from({ length: 15 }, (_, i) => {
@@ -69,6 +70,24 @@ export const VisitScheduler = ({
       fetchBusySlots(selectedDate);
     }
   }, [selectedDate, tecnicoId]);
+
+  // Load existing schedule from database
+  useEffect(() => {
+    const loadSchedule = async () => {
+      if (cotizacionId) {
+        const { data, error } = await supabase
+          .from("cotizacion")
+          .select("visita_schedule")
+          .eq("id", cotizacionId)
+          .single();
+
+        if (!error && data?.visita_schedule) {
+          setExistingSchedule(data.visita_schedule);
+        }
+      }
+    };
+    loadSchedule();
+  }, [cotizacionId]);
 
   const fetchBusySlots = async (date: Date) => {
     setLoadingSlots(true);
@@ -348,12 +367,33 @@ export const VisitScheduler = ({
           <Alert className="bg-muted/50 border-primary/20">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription>
-              <div className="font-semibold text-foreground">
+              <div className="font-semibold text-foreground mb-3">
                 {isProposeByCurrentUser ? "Tu propuesta:" : "Propuesta recibida:"}
               </div>
-              <div className="mt-2">
-                {format(visitDate, "dd/MM/yyyy", { locale: es })} a las {format(parse(existingVisit.hora, "HH:mm:ss", visitDate), "HH:mm")}
-              </div>
+              
+              {/* Show multi-day schedule if available */}
+              {existingSchedule && Array.isArray(existingSchedule) && existingSchedule.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="font-medium text-sm">Programa de trabajo ({existingSchedule.length} {existingSchedule.length === 1 ? 'día' : 'días'}):</div>
+                  {existingSchedule.map((schedule: any, index: number) => (
+                    <div key={index} className="pl-3 border-l-2 border-primary/30">
+                      <div className="font-medium">
+                        Día {index + 1}: {format(new Date(schedule.date), "dd/MM/yyyy", { locale: es })}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {schedule.startTime} - {schedule.endTime} ({schedule.hours}h)
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-2 border-t">
+                    <span className="font-medium">Total:</span> {existingSchedule.reduce((sum: number, s: any) => sum + s.hours, 0)} horas
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {format(visitDate, "dd/MM/yyyy", { locale: es })} a las {format(parse(existingVisit.hora, "HH:mm:ss", visitDate), "HH:mm")}
+                </div>
+              )}
             </AlertDescription>
           </Alert>
 
@@ -377,6 +417,7 @@ export const VisitScheduler = ({
       </Card>
     );
   }
+
 
   return (
     <Card className="border-primary/20">
