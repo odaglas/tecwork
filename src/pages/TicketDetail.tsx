@@ -253,6 +253,7 @@ const TicketDetail = () => {
             visita_duracion_horas: cot.visita_duracion_horas,
             visita_estado: cot.visita_estado,
             visita_propuesta_por: cot.visita_propuesta_por,
+            visita_schedule: cot.visita_schedule,
           };
         });
 
@@ -958,6 +959,7 @@ const TicketDetail = () => {
                       estado: acceptedQuote.visita_estado || null,
                       propuestaPor: acceptedQuote.visita_propuesta_por || null,
                       visita_duracion_horas: acceptedQuote.visita_duracion_horas || null,
+                      visita_schedule: acceptedQuote.visita_schedule,
                     }}
                   />
                 </div>
