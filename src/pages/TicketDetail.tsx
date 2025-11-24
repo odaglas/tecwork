@@ -230,31 +230,36 @@ const TicketDetail = () => {
             userProfile
           });
           
-          return {
+          const result = {
             id: cot.id,
             descripcion: cot.descripcion,
             valor_total: cot.valor_total,
             tiempo_estimado_dias: cot.tiempo_estimado_dias,
             estado: cot.estado,
             created_at: cot.created_at,
-            documento_url: cot.documento_url,
-            tecnico_nombre: userProfile?.nombre || "Técnico",
+            tecnico_nombre: userProfile?.nombre || "Desconocido",
             tecnico_email: userProfile?.email || "",
             tecnico_id: cot.tecnico_id,
             tecnico_user_id: tecnicoProfile?.user_id || null,
-            tecnico_especialidad: tecnicoProfile?.especialidad_principal || "",
-            tecnico_descripcion: tecnicoProfile?.descripcion_perfil || null,
-            tecnico_comunas: tecnicoProfile?.comunas_cobertura || null,
+            documento_url: cot.documento_url || null,
+            tecnico_especialidad: tecnicoProfile?.especialidad_principal,
+            tecnico_descripcion: tecnicoProfile?.descripcion_perfil,
+            tecnico_comunas: tecnicoProfile?.comunas_cobertura,
             tecnico_calificacion_promedio: ratings?.avg,
             tecnico_calificaciones_count: ratings?.count,
             tecnico_picture_url: userProfile?.profile_picture_url || null,
             visita_fecha_propuesta: cot.visita_fecha_propuesta,
             visita_hora_propuesta: cot.visita_hora_propuesta,
-            visita_estado: cot.visita_estado,
             visita_duracion_horas: cot.visita_duracion_horas,
+            visita_estado: cot.visita_estado,
             visita_propuesta_por: cot.visita_propuesta_por,
             visita_schedule: cot.visita_schedule,
           };
+          
+          console.log("Formatted cotizacion:", result);
+          console.log("visita_schedule:", cot.visita_schedule);
+          
+          return result;
         });
 
         console.log("Formatted cotizaciones:", formattedCotizaciones);
