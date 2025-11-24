@@ -317,8 +317,6 @@ export const VisitScheduler = ({
   if (isConfirmed && existingVisit?.fecha && existingVisit?.hora) {
     const visitDate = new Date(existingVisit.fecha);
     const visitHours = existingVisit.visita_duracion_horas || duracionEstimadaHoras;
-    const { endDate, endTime, daysNeeded } = calculateEndTime(visitDate, format(parse(existingVisit.hora, "HH:mm:ss", visitDate), "HH:mm"), visitHours);
-    const bufferEndTime = addHours(endTime, 2);
 
     return (
       <Card className="border-primary/20">
@@ -331,19 +329,38 @@ export const VisitScheduler = ({
         <CardContent>
           <Alert className="bg-primary/10 border-primary/20">
             <Info className="h-4 w-4 text-primary" />
-            <AlertDescription className="space-y-2">
-              <div className="font-semibold text-foreground">
-                Visita programada: {format(visitDate, "dd/MM/yyyy", { locale: es })} a las {format(parse(existingVisit.hora, "HH:mm:ss", visitDate), "HH:mm")}
-              </div>
-              <div>Duración estimada: {visitHours} {visitHours === 1 ? "hora" : "horas"}</div>
-              {daysNeeded && daysNeeded > 1 && (
-                <div className="text-sm">
-                  Trabajo de múltiples días: {daysNeeded} {daysNeeded === 1 ? "día" : "días"}
+            <AlertDescription className="space-y-3">
+              {/* Show multi-day schedule if available */}
+              {existingSchedule && Array.isArray(existingSchedule) && existingSchedule.length > 0 ? (
+                <div className="space-y-3">
+                  <div className="font-semibold text-foreground">
+                    Visita confirmada - Programa de trabajo ({existingSchedule.length} {existingSchedule.length === 1 ? 'día' : 'días'}):
+                  </div>
+                  {existingSchedule.map((schedule: any, index: number) => (
+                    <div key={index} className="pl-3 border-l-2 border-primary">
+                      <div className="font-medium">
+                        Día {index + 1}: {format(new Date(schedule.date), "dd/MM/yyyy", { locale: es })}
+                      </div>
+                      <div className="text-sm">
+                        Horario: {schedule.startTime} - {schedule.endTime} ({schedule.hours}h)
+                      </div>
+                    </div>
+                  ))}
+                  <div className="pt-2 border-t border-primary/20">
+                    <div className="font-medium">Total: {visitHours} horas de trabajo</div>
+                    <div className="text-muted-foreground text-sm mt-1">
+                      Incluye 2 horas de margen para viaje después del último día
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="font-semibold text-foreground">
+                    Visita programada: {format(visitDate, "dd/MM/yyyy", { locale: es })} a las {format(parse(existingVisit.hora, "HH:mm:ss", visitDate), "HH:mm")}
+                  </div>
+                  <div>Duración estimada: {visitHours} {visitHours === 1 ? "hora" : "horas"}</div>
                 </div>
               )}
-              <div className="text-muted-foreground text-sm">
-                Técnico quedará ocupado hasta: {format(endDate, "dd/MM/yyyy", { locale: es })} a las {format(bufferEndTime, "HH:mm")} (incluye 2 horas de margen de viaje)
-              </div>
             </AlertDescription>
           </Alert>
         </CardContent>
