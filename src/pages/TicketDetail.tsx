@@ -68,9 +68,10 @@ interface CotizacionData {
   tecnico_picture_url?: string | null;
   visita_fecha_propuesta?: string | null;
   visita_hora_propuesta?: string | null;
-  visita_duracion_horas?: number;
+  visita_duracion_horas?: number | null;
   visita_estado?: string | null;
   visita_propuesta_por?: string | null;
+  visita_schedule?: any;
 }
 
 const TicketDetail = () => {
@@ -956,6 +957,7 @@ const TicketDetail = () => {
                       hora: acceptedQuote.visita_hora_propuesta || null,
                       estado: acceptedQuote.visita_estado || null,
                       propuestaPor: acceptedQuote.visita_propuesta_por || null,
+                      visita_duracion_horas: acceptedQuote.visita_duracion_horas || null,
                     }}
                   />
                 </div>
