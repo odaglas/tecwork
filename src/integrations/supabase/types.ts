@@ -149,6 +149,7 @@ export type Database = {
           visita_fecha_propuesta: string | null
           visita_hora_propuesta: string | null
           visita_propuesta_por: string | null
+          visita_schedule: Json | null
         }
         Insert: {
           created_at?: string | null
@@ -166,6 +167,7 @@ export type Database = {
           visita_fecha_propuesta?: string | null
           visita_hora_propuesta?: string | null
           visita_propuesta_por?: string | null
+          visita_schedule?: Json | null
         }
         Update: {
           created_at?: string | null
@@ -183,6 +185,7 @@ export type Database = {
           visita_fecha_propuesta?: string | null
           visita_hora_propuesta?: string | null
           visita_propuesta_por?: string | null
+          visita_schedule?: Json | null
         }
         Relationships: [
           {
