@@ -336,9 +336,11 @@ export const VisitScheduler = ({
                   ))}
                   <div className="pt-2 border-t border-primary/20">
                     <div className="font-medium">Total: {visitHours} horas de trabajo</div>
-                    <div className="text-muted-foreground text-sm mt-1">
-                      Incluye 2 horas de margen para viaje después del último día
-                    </div>
+                    {!isCliente && (
+                      <div className="text-muted-foreground text-sm mt-1">
+                        Incluye 2 horas de margen para viaje después del último día
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
