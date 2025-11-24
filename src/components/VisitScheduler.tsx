@@ -22,6 +22,7 @@ interface VisitSchedulerProps {
     hora: string | null;
     estado: string | null;
     propuestaPor: string | null;
+    visita_duracion_horas?: number | null;
   };
 }
 
@@ -40,9 +41,10 @@ export const VisitScheduler = ({
   const [loading, setLoading] = useState(false);
   const [busySlots, setBusySlots] = useState<string[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  const [estimatedHours, setEstimatedHours] = useState<number>(duracionEstimadaHoras);
 
-  // Generate time slots from 8:00 to 18:00
-  const timeSlots = Array.from({ length: 11 }, (_, i) => {
+  // Generate time slots from 8:00 to 21:00 (workday ends at 22:00, last selectable is 21:00)
+  const timeSlots = Array.from({ length: 14 }, (_, i) => {
     const hour = 8 + i;
     return `${hour.toString().padStart(2, "0")}:00`;
   });
@@ -110,7 +112,7 @@ export const VisitScheduler = ({
         .update({
           visita_fecha_propuesta: dateStr,
           visita_hora_propuesta: selectedTime,
-          visita_duracion_horas: duracionEstimadaHoras,
+          visita_duracion_horas: estimatedHours,
           visita_estado: "pendiente",
           visita_propuesta_por: currentUserId,
         })
@@ -168,9 +170,36 @@ export const VisitScheduler = ({
   const canConfirm = existingVisit?.estado === "pendiente" && existingVisit?.propuestaPor !== currentUserId;
   const isConfirmed = existingVisit?.estado === "confirmada";
 
+  const calculateEndTime = (startDate: Date, startTime: string, hours: number) => {
+    const workdayStart = 8;
+    const workdayEnd = 22;
+    const maxHoursPerDay = workdayEnd - workdayStart;
+    
+    const startHour = parseInt(startTime.split(':')[0]);
+    const hoursRemainingToday = workdayEnd - startHour;
+    
+    if (hours <= hoursRemainingToday) {
+      return { endDate: startDate, endTime: addHours(parse(startTime, "HH:mm", startDate), hours) };
+    }
+    
+    let remainingHours = hours - hoursRemainingToday;
+    let currentDate = addHours(startDate, 24);
+    let daysNeeded = 1;
+    
+    while (remainingHours > maxHoursPerDay) {
+      remainingHours -= maxHoursPerDay;
+      currentDate = addHours(currentDate, 24);
+      daysNeeded++;
+    }
+    
+    const finalEndTime = addHours(parse(`${workdayStart}:00`, "HH:mm", currentDate), remainingHours);
+    return { endDate: currentDate, endTime: finalEndTime, daysNeeded: daysNeeded + 1 };
+  };
+
   if (isConfirmed && existingVisit?.fecha && existingVisit?.hora) {
     const visitDate = new Date(existingVisit.fecha);
-    const endTime = addHours(parse(existingVisit.hora, "HH:mm:ss", visitDate), duracionEstimadaHoras);
+    const visitHours = existingVisit.visita_duracion_horas || duracionEstimadaHoras;
+    const { endDate, endTime, daysNeeded } = calculateEndTime(visitDate, format(parse(existingVisit.hora, "HH:mm:ss", visitDate), "HH:mm"), visitHours);
     const bufferEndTime = addHours(endTime, 2);
 
     return (
@@ -188,9 +217,14 @@ export const VisitScheduler = ({
               <div className="font-semibold text-foreground">
                 Visita programada: {format(visitDate, "dd/MM/yyyy", { locale: es })} a las {format(parse(existingVisit.hora, "HH:mm:ss", visitDate), "HH:mm")}
               </div>
-              <div>Duración estimada: {duracionEstimadaHoras} {duracionEstimadaHoras === 1 ? "hora" : "horas"}</div>
+              <div>Duración estimada: {visitHours} {visitHours === 1 ? "hora" : "horas"}</div>
+              {daysNeeded && daysNeeded > 1 && (
+                <div className="text-sm">
+                  Trabajo de múltiples días: {daysNeeded} {daysNeeded === 1 ? "día" : "días"}
+                </div>
+              )}
               <div className="text-muted-foreground text-sm">
-                Técnico quedará ocupado hasta: {format(bufferEndTime, "HH:mm")} (incluye 2 horas de margen de viaje)
+                Técnico quedará ocupado hasta: {format(endDate, "dd/MM/yyyy", { locale: es })} a las {format(bufferEndTime, "HH:mm")} (incluye 2 horas de margen de viaje)
               </div>
             </AlertDescription>
           </Alert>
@@ -254,9 +288,22 @@ export const VisitScheduler = ({
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Estimated Hours Input */}
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Horas Estimadas de Trabajo</Label>
+          <input
+            type="number"
+            min="1"
+            max="168"
+            value={estimatedHours}
+            onChange={(e) => setEstimatedHours(Math.max(1, parseInt(e.target.value) || 1))}
+            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+
         {/* Calendar */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">Selecciona el Día</Label>
+          <Label className="text-sm font-medium">Selecciona el Día de Inicio</Label>
           <Calendar
             mode="single"
             selected={selectedDate}
@@ -306,14 +353,27 @@ export const VisitScheduler = ({
           <Alert className="bg-muted/50 border-primary/20">
             <Info className="h-4 w-4 text-primary" />
             <AlertDescription className="space-y-1 text-sm">
-              <div className="font-semibold text-foreground">
-                Visita programada: {format(selectedDate, "dd/MM/yyyy", { locale: es })} a las {selectedTime}
-              </div>
-              <div>Duración estimada: {duracionEstimadaHoras} {duracionEstimadaHoras === 1 ? "hora" : "horas"}</div>
-              <div className="text-muted-foreground">
-                Técnico quedará ocupado hasta: {format(addHours(parse(selectedTime, "HH:mm", new Date()), duracionEstimadaHoras + 2), "HH:mm")}
-                <span className="text-xs"> (incluye 2h de margen de viaje)</span>
-              </div>
+              {(() => {
+                const { endDate, endTime, daysNeeded } = calculateEndTime(selectedDate, selectedTime, estimatedHours);
+                const bufferEndTime = addHours(endTime, 2);
+                return (
+                  <>
+                    <div className="font-semibold text-foreground">
+                      Visita programada: {format(selectedDate, "dd/MM/yyyy", { locale: es })} a las {selectedTime}
+                    </div>
+                    <div>Duración estimada: {estimatedHours} {estimatedHours === 1 ? "hora" : "horas"}</div>
+                    {daysNeeded && daysNeeded > 1 && (
+                      <div className="font-medium">
+                        Trabajo de múltiples días: {daysNeeded} {daysNeeded === 1 ? "día" : "días"}
+                      </div>
+                    )}
+                    <div className="text-muted-foreground">
+                      Técnico quedará ocupado hasta: {format(endDate, "dd/MM/yyyy", { locale: es })} a las {format(bufferEndTime, "HH:mm")}
+                      <span className="text-xs"> (incluye 2h de margen de viaje)</span>
+                    </div>
+                  </>
+                );
+              })()}
             </AlertDescription>
           </Alert>
         )}
