@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { X, Download } from "lucide-react";
+import { X } from "lucide-react";
 
 export const PWAInstallPrompt = () => {
   const isMobile = useIsMobile();
@@ -62,7 +62,11 @@ export const PWAInstallPrompt = () => {
   return (
     <div className="fixed bottom-4 left-4 right-4 z-50 animate-in slide-in-from-bottom-5">
       <div className="bg-card border border-border rounded-lg shadow-lg p-4 flex items-start gap-3">
-        <Download className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+        <img 
+          src="/tecwork-pwa-icon.png" 
+          alt="TecWork" 
+          className="h-12 w-12 rounded-lg flex-shrink-0"
+        />
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-sm mb-1">Instala TecWork</h3>
           <p className="text-xs text-muted-foreground mb-3">
