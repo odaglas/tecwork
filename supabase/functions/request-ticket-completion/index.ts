@@ -12,10 +12,22 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
+    // Authenticate the user making the request
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('No autorizado');
+    }
+
+    const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+      { global: { headers: { Authorization: authHeader } } }
     );
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    if (authError || !user) {
+      throw new Error('No autorizado');
+    }
 
     const { ticketId } = await req.json();
 
@@ -24,6 +36,12 @@ serve(async (req) => {
     }
 
     console.log('Procesando solicitud de finalización para ticket:', ticketId);
+
+    // Use service role client for privileged operations
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
     // Get ticket details
     const { data: ticket, error: ticketError } = await supabase
@@ -59,17 +77,18 @@ serve(async (req) => {
       throw new Error('Cotización aceptada no encontrada');
     }
 
-    // Get tecnico name
-    const { data: tecnicoProfile, error: tecnicoProfileError } = await supabase
+    // Verify that the authenticated user is the tecnico assigned to this ticket
+    const { data: tecnicoProfile, error: tecnicoVerifyError } = await supabase
       .from('tecnico_profile')
       .select('user_id')
       .eq('id', cotizacion.tecnico_id)
       .single();
 
-    if (tecnicoProfileError || !tecnicoProfile) {
-      throw new Error('Técnico no encontrado');
+    if (tecnicoVerifyError || !tecnicoProfile || tecnicoProfile.user_id !== user.id) {
+      throw new Error('No autorizado para solicitar finalización de este ticket');
     }
 
+    // Get tecnico name
     const { data: tecnicoUser, error: tecnicoUserError } = await supabase
       .from('profiles')
       .select('nombre')
