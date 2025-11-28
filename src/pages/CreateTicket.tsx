@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/select";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Camera, ArrowLeft, Zap, Droplet, Laptop, WashingMachine, Hammer, Wrench } from "lucide-react";
+import { Camera, ArrowLeft, Zap, Droplet, Laptop, WashingMachine, Hammer, Wrench, Sparkles, Loader2 } from "lucide-react";
 import { ClientHeader } from "@/components/ClientHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -36,6 +36,7 @@ const CreateTicket = () => {
   const [comuna, setComuna] = useState("");
   const [files, setFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
+  const [analyzingImage, setAnalyzingImage] = useState(false);
   const [clienteId, setClienteId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -155,6 +156,61 @@ const CreateTicket = () => {
     }
     
     setFiles(convertedFiles);
+  };
+
+  const handleAnalyzeImage = async () => {
+    if (files.length === 0) {
+      toast.error("Por favor selecciona una imagen primero");
+      return;
+    }
+
+    setAnalyzingImage(true);
+    try {
+      // Get the first image file
+      const imageFile = files.find(f => f.type.startsWith('image/'));
+      if (!imageFile) {
+        toast.error("Por favor selecciona una imagen para analizar");
+        return;
+      }
+
+      // Convert image to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          // Remove data:image/jpeg;base64, prefix
+          const base64Data = base64.split(',')[1];
+          resolve(base64Data);
+        };
+        reader.onerror = reject;
+      });
+      reader.readAsDataURL(imageFile);
+      
+      const imageBase64 = await base64Promise;
+
+      // Call edge function
+      const { data, error } = await supabase.functions.invoke('analyze-image', {
+        body: { imageBase64 }
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      // Auto-fill form fields
+      setTitle(data.title);
+      setDescription(data.description);
+      setCategory(data.category);
+
+      toast.success("¡Análisis completado! Revisa los campos sugeridos.");
+    } catch (error: any) {
+      console.error('Error analyzing image:', error);
+      toast.error("Error al analizar la imagen: " + error.message);
+    } finally {
+      setAnalyzingImage(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -314,7 +370,31 @@ const CreateTicket = () => {
 
           {/* Adjuntar Fotos o Video */}
           <div className="space-y-2">
-            <Label htmlFor="files">Adjuntar Fotos o Video</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="files">Adjuntar Fotos o Video</Label>
+              {files.length > 0 && files.some(f => f.type.startsWith('image/')) && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAnalyzeImage}
+                  disabled={analyzingImage}
+                  className="gap-2"
+                >
+                  {analyzingImage ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Analizando...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4" />
+                      Analizar foto con IA
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
             <div className="relative">
               <input
                 id="files"
