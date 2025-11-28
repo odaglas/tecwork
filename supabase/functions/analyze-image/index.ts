@@ -22,11 +22,11 @@ serve(async (req) => {
       throw new Error('GOOGLE_API_KEY no configurada');
     }
 
-    console.log('Analizando imagen con Gemini...');
+    console.log('Analizando imagen con Gemini 1.5 Flash...');
 
-    // Call Google Gemini API with gemini-2.5-flash (current stable model)
+    // Direct fetch call to Gemini API with gemini-1.5-flash
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
       {
         method: 'POST',
         headers: {
@@ -75,8 +75,9 @@ serve(async (req) => {
     );
 
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Gemini API error:', error);
+      const errorText = await response.text();
+      console.error('Gemini API error status:', response.status);
+      console.error('Gemini API error response:', errorText);
       throw new Error(`Error de Gemini API: ${response.status}`);
     }
 
