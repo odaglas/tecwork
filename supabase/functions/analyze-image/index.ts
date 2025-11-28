@@ -24,9 +24,9 @@ serve(async (req) => {
 
     console.log('Analizando imagen con Gemini...');
 
-    // Call Google Gemini API with gemini-2.5-flash (current fast model)
+    // Call Google Gemini API with gemini-1.5-flash
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
       {
         method: 'POST',
         headers: {
@@ -36,7 +36,7 @@ serve(async (req) => {
           contents: [{
             parts: [
               {
-                text: "You are an expert home repair technician. Analyze this image and identify the problem. Return ONLY a valid JSON object (no markdown, no code blocks) with: 'title' (a brief problem title in Spanish), 'description' (a short 2-3 sentence description in Spanish), and 'category' (must be EXACTLY one of: Electricidad, Gasfitería, Línea Blanca, Carpintería, Soporte Informático, Mantenimiento General)."
+                text: "Eres un experto en reparaciones del hogar. Analiza esta imagen e identifica el problema. Responde con un JSON que tenga: 'title' (título breve del problema en español), 'description' (descripción corta de 2-3 oraciones en español), y 'category' (debe ser EXACTAMENTE uno de: Electricidad, Gasfitería, Línea Blanca, Carpintería, Soporte Informático, Mantenimiento General)."
               },
               {
                 inline_data: {
@@ -48,7 +48,27 @@ serve(async (req) => {
           }],
           generationConfig: {
             temperature: 0.4,
-            maxOutputTokens: 500,
+            maxOutputTokens: 1000,
+            responseMimeType: "application/json",
+            responseSchema: {
+              type: "object",
+              properties: {
+                title: {
+                  type: "string",
+                  description: "Título breve del problema"
+                },
+                description: {
+                  type: "string",
+                  description: "Descripción detallada del problema"
+                },
+                category: {
+                  type: "string",
+                  enum: ["Electricidad", "Gasfitería", "Línea Blanca", "Carpintería", "Soporte Informático", "Mantenimiento General"],
+                  description: "Categoría del servicio"
+                }
+              },
+              required: ["title", "description", "category"]
+            }
           }
         })
       }
@@ -63,21 +83,15 @@ serve(async (req) => {
     const data = await response.json();
     console.log('Respuesta de Gemini:', JSON.stringify(data));
 
+    // With responseMimeType: "application/json", the response is already structured JSON
     const textContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
     if (!textContent) {
-      throw new Error('Respuesta inválida de Gemini');
+      console.error('Estructura de respuesta completa:', JSON.stringify(data, null, 2));
+      throw new Error('Respuesta inválida de Gemini - no se encontró contenido de texto');
     }
 
-    // Parse the JSON from the text content
-    // Remove markdown code blocks if present
-    let cleanedText = textContent.trim();
-    if (cleanedText.startsWith('```json')) {
-      cleanedText = cleanedText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-    } else if (cleanedText.startsWith('```')) {
-      cleanedText = cleanedText.replace(/```\n?/g, '');
-    }
-
-    const parsedResponse = JSON.parse(cleanedText);
+    // Parse the JSON response
+    const parsedResponse = JSON.parse(textContent);
 
     // Validate the response structure
     if (!parsedResponse.title || !parsedResponse.description || !parsedResponse.category) {
