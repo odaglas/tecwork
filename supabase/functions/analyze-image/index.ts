@@ -45,7 +45,7 @@ serve(async (req) => {
             {
               parts: [
                 {
-                  text: "Eres un experto técnico en reparaciones. Analiza la imagen. Responde con un JSON: { title, description, category }.\nIMPORTANTE PARA LA DESCRIPCIÓN:\n1. Sé directo y conciso.\n2. NO uses frases introductorias como 'La imagen muestra', 'Se observa', o 'En la foto hay'.\n3. Comienza directamente con el problema (Ej: 'Enchufe quemado con signos de sobrecarga...').\n4. Usa un tono técnico y profesional.\nLa categoría debe ser EXACTAMENTE una de: Electricidad, Gasfitería, Línea Blanca, Carpintería, Soporte Informático, Mantenimiento General.",
+                  text: "Analiza esta imagen para crear un ticket de reparación. Responde con un JSON: { title, description, category }.\n\nINSTRUCCIONES DE PERSONALIDAD (IMPORTANTE):\n1. **Actúa como el cliente (dueño de casa):** Describe el problema con palabras sencillas y cotidianas, como si le estuvieras contando a un amigo qué se rompió.\n2. **Cero tecnicismos:** No uses palabras como 'deficiente', 'irregular' o 'comprometiendo'. Usa 'suelto', 'roto', 'feo', 'cuelga'.\n3. **Sé directo:** No empieces con 'La imagen muestra'. Ve al grano.\n4. **Ejemplo de Tono:** En vez de decir 'Luminaria con instalación deficiente', di: 'La lámpara del techo quedó mal puesta y se ve el agujero y los cables'.\n\nLa categoría debe ser EXACTAMENTE una de: Electricidad, Gasfitería, Línea Blanca, Carpintería, Soporte Informático, Mantenimiento General.",
                 },
                 {
                   inline_data: {
