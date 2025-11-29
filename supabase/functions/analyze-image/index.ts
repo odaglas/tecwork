@@ -26,9 +26,15 @@ serve(async (req) => {
       throw new Error('No se proporcionó imagen en el request body');
     }
 
+    // Step 3: Sanitize base64 string - remove data URL prefix if present
+    const cleanBase64 = imageBase64.includes(',') 
+      ? imageBase64.split(',')[1] 
+      : imageBase64;
+
+    console.log('Image base64 sanitized, length:', cleanBase64.length);
     console.log('Analizando imagen con Gemini 1.5 Flash...');
 
-    // Step 3: Direct fetch call to Gemini API with gemini-1.5-flash
+    // Step 4: Direct fetch call to Gemini API with gemini-1.5-flash
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
       {
@@ -45,7 +51,7 @@ serve(async (req) => {
               {
                 inline_data: {
                   mime_type: "image/jpeg",
-                  data: imageBase64
+                  data: cleanBase64
                 }
               }
             ]
@@ -80,7 +86,7 @@ serve(async (req) => {
 
     console.log('Google API responded with status:', response.status);
 
-    // Step 4: Check if Google API returned an error
+    // Step 5: Check if Google API returned an error
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API error status:', response.status);
