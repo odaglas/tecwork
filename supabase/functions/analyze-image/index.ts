@@ -45,7 +45,7 @@ serve(async (req) => {
             {
               parts: [
                 {
-                  text: "Eres un experto en reparaciones del hogar. Analiza esta imagen e identifica el problema. Responde con un JSON que tenga: 'title' (título breve del problema en español), 'description' (descripción corta de 2-3 oraciones en español), y 'category' (debe ser EXACTAMENTE uno de: Electricidad, Gasfitería, Línea Blanca, Carpintería, Soporte Informático, Mantenimiento General).",
+                  text: "Eres un experto técnico en reparaciones. Analiza la imagen. Responde con un JSON: { title, description, category }.\nIMPORTANTE PARA LA DESCRIPCIÓN:\n1. Sé directo y conciso.\n2. NO uses frases introductorias como 'La imagen muestra', 'Se observa', o 'En la foto hay'.\n3. Comienza directamente con el problema (Ej: 'Enchufe quemado con signos de sobrecarga...').\n4. Usa un tono técnico y profesional.\nLa categoría debe ser EXACTAMENTE una de: Electricidad, Gasfitería, Línea Blanca, Carpintería, Soporte Informático, Mantenimiento General.",
                 },
                 {
                   inline_data: {
