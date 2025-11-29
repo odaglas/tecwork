@@ -32,11 +32,11 @@ serve(async (req) => {
       : imageBase64;
 
     console.log('Image base64 sanitized, length:', cleanBase64.length);
-    console.log('Analizando imagen con Gemini 1.5 Flash...');
+    console.log('Analizando imagen con Gemini 1.5 Pro...');
 
-    // Step 4: Direct fetch call to Gemini API with gemini-1.5-flash
+    // Step 4: Direct fetch call to Gemini API with gemini-1.5-pro
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${GOOGLE_API_KEY}`,
       {
         method: 'POST',
         headers: {
