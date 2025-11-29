@@ -1,23 +1,29 @@
-import { Search, UserCheck, Sparkles } from "lucide-react";
+import { FileText, Users, CreditCard, Star } from "lucide-react";
 
 const steps = [
   {
-    icon: Search,
+    icon: FileText,
     number: "01",
-    title: "Busca el Servicio",
-    description: "Selecciona el tipo de técnico que necesitas y describe tu problema",
+    title: "Publica tu Problema",
+    description: "Describe lo que necesitas reparar (gratis).",
   },
   {
-    icon: UserCheck,
+    icon: Users,
     number: "02",
-    title: "Elige tu Técnico",
-    description: "Revisa perfiles verificados, calificaciones y precios",
+    title: "Recibe Cotizaciones",
+    description: "Expertos verificados te envían sus presupuestos.",
   },
   {
-    icon: Sparkles,
+    icon: CreditCard,
     number: "03",
-    title: "¡Listo!",
-    description: "Coordina la visita y recibe un servicio profesional garantizado",
+    title: "Elige y Paga",
+    description: "Selecciona al técnico y paga con seguridad (Escrow).",
+  },
+  {
+    icon: Star,
+    number: "04",
+    title: "Califica el Servicio",
+    description: "Tu opinión ayuda a mantener la calidad de la plataforma.",
   },
 ];
 
@@ -34,7 +40,7 @@ export const HowItWorks = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           {steps.map((step, index) => (
             <div key={step.number} className="relative">
               <div className="flex flex-col items-center text-center">
