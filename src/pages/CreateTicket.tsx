@@ -369,7 +369,7 @@ const CreateTicket = () => {
           </div>
 
           {/* Adjuntar Fotos o Video */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="files">Adjuntar Fotos o Video</Label>
               {files.length > 0 && files.some(f => f.type.startsWith('image/')) && (
@@ -395,6 +395,25 @@ const CreateTicket = () => {
                 </Button>
               )}
             </div>
+
+            {/* AI Feature Explanation */}
+            <div className="bg-accent/50 border border-border rounded-md p-3">
+              <div className="flex items-start gap-2">
+                <Sparkles className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                <div className="text-sm space-y-1">
+                  <p className="font-medium text-foreground">
+                    ✨ Análisis con IA disponible
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    Sube una foto del problema y usa el botón "Analizar foto con IA" para obtener sugerencias automáticas de título, descripción y categoría.
+                  </p>
+                  <p className="text-muted-foreground text-xs italic">
+                    <strong>Nota:</strong> Las sugerencias de la IA son orientativas y pueden no ser precisas. Revisa y ajusta los campos según sea necesario.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             <div className="relative">
               <input
                 id="files"
@@ -421,6 +440,30 @@ const CreateTicket = () => {
                 </div>
               </label>
             </div>
+
+            {/* Image Preview */}
+            {files.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {files.map((file, index) => (
+                  <div key={index} className="relative aspect-square rounded-md overflow-hidden border border-border bg-muted">
+                    {file.type.startsWith('image/') ? (
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Camera className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="absolute bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm p-1">
+                      <p className="text-xs text-foreground truncate">{file.name}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Comuna */}
