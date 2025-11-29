@@ -11,20 +11,24 @@ serve(async (req) => {
   }
 
   try {
+    // Step 1: Check for GOOGLE_API_KEY immediately
+    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY');
+    if (!GOOGLE_API_KEY || GOOGLE_API_KEY.trim() === '') {
+      throw new Error('GOOGLE_API_KEY is missing in environment variables');
+    }
+
+    console.log('GOOGLE_API_KEY found');
+
+    // Step 2: Parse request body
     const { imageBase64 } = await req.json();
 
     if (!imageBase64) {
-      throw new Error('No se proporcionó imagen');
-    }
-
-    const GOOGLE_API_KEY = Deno.env.get('GOOGLE_API_KEY');
-    if (!GOOGLE_API_KEY) {
-      throw new Error('GOOGLE_API_KEY no configurada');
+      throw new Error('No se proporcionó imagen en el request body');
     }
 
     console.log('Analizando imagen con Gemini 1.5 Flash...');
 
-    // Direct fetch call to Gemini API with gemini-1.5-flash
+    // Step 3: Direct fetch call to Gemini API with gemini-1.5-flash
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GOOGLE_API_KEY}`,
       {
@@ -74,11 +78,14 @@ serve(async (req) => {
       }
     );
 
+    console.log('Google API responded with status:', response.status);
+
+    // Step 4: Check if Google API returned an error
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API error status:', response.status);
       console.error('Gemini API error response:', errorText);
-      throw new Error(`Error de Gemini API: ${response.status}`);
+      throw new Error(`Gemini API returned ${response.status}: ${errorText}`);
     }
 
     const data = await response.json();
@@ -125,12 +132,16 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error en analyze-image:', error);
+    
+    // Return 200 OK with error details for frontend debugging
     return new Response(
       JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Error desconocido' 
+        error: 'DEBUG INFO',
+        details: error instanceof Error ? error.message : 'Error desconocido',
+        stack: error instanceof Error ? error.stack : undefined
       }),
       { 
-        status: 500, 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
