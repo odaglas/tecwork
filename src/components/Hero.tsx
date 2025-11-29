@@ -16,38 +16,39 @@ export const Hero = () => {
         <div className="max-w-3xl">
           <div className="flex items-center gap-2 mb-6">
             <Shield className="h-8 w-8" />
-            <span className="text-lg font-semibold">100% Validados</span>
+            <span className="text-lg font-semibold">100% Certificados y Validados</span>
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            Contrata servicios técnicos con confianza y seguridad
+            Conectamos tu Hogar con los Mejores Técnicos de Chile
           </h1>
           
           <p className="text-xl md:text-2xl mb-8 text-white/90">
-            La única plataforma en Chile con técnicos 100% validados y pago protegido.
+            Encuentra profesionales certificados y confiables para cualquier trabajo en tu hogar. 
+            Rápido, seguro y garantizado.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <Button size="lg" className="text-lg px-8 py-6 bg-primary hover:bg-primary/90" asChild>
-              <Link to="/registro-cliente">Busco un Técnico</Link>
+            <Button size="lg" variant="success" className="text-lg px-8 py-6" asChild>
+              <Link to="/login">Buscar Técnico Ahora</Link>
             </Button>
             <Button size="lg" variant="outline" className="text-lg px-8 py-6 border-white/30 text-white hover:bg-white/10" asChild>
-              <Link to="/registro-tecnico">Quiero trabajar</Link>
+              <Link to="/registro-tecnico">Registrarse como Técnico</Link>
             </Button>
           </div>
           
           <div className="flex flex-wrap gap-6 text-sm">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5" />
-              <span>Pago protegido con Escrow</span>
+              <span>Verificación en 24 horas</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5" />
-              <span>Técnicos verificados</span>
+              <span>Garantía de servicio</span>
             </div>
             <div className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5" />
-              <span>Calificaciones reales</span>
+              <span>Atención inmediata</span>
             </div>
           </div>
         </div>

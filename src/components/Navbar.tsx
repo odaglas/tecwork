@@ -27,11 +27,25 @@ export const Navbar = () => {
           
           <div className="hidden md:flex items-center gap-8">
             <a 
+              href="#servicios" 
+              onClick={(e) => handleSmoothScroll(e, 'servicios')}
+              className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+            >
+              Servicios
+            </a>
+            <a 
               href="#como-funciona" 
               onClick={(e) => handleSmoothScroll(e, 'como-funciona')}
               className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
             >
               Cómo Funciona
+            </a>
+            <a 
+              href="#seguridad" 
+              onClick={(e) => handleSmoothScroll(e, 'seguridad')}
+              className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+            >
+              Seguridad
             </a>
             <Link to="/login">
               <Button variant="outline" size="sm">
@@ -52,11 +66,25 @@ export const Navbar = () => {
           <div className="md:hidden py-4 border-t border-border">
             <div className="flex flex-col gap-4">
               <a 
+                href="#servicios" 
+                onClick={(e) => handleSmoothScroll(e, 'servicios')}
+                className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+              >
+                Servicios
+              </a>
+              <a 
                 href="#como-funciona" 
                 onClick={(e) => handleSmoothScroll(e, 'como-funciona')}
                 className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
               >
                 Cómo Funciona
+              </a>
+              <a 
+                href="#seguridad" 
+                onClick={(e) => handleSmoothScroll(e, 'seguridad')}
+                className="text-foreground hover:text-primary transition-fast font-medium cursor-pointer"
+              >
+                Seguridad
               </a>
               <Link to="/login">
                 <Button variant="outline" size="sm" className="w-full">
