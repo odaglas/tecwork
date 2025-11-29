@@ -1,23 +1,29 @@
-import { Search, UserCheck, Sparkles } from "lucide-react";
+import { FileText, Search, CreditCard, Star } from "lucide-react";
 
 const steps = [
   {
-    icon: Search,
+    icon: FileText,
     number: "01",
-    title: "Busca el Servicio",
-    description: "Selecciona el tipo de técnico que necesitas y describe tu problema",
+    title: "Publica tu problema",
+    description: "Describe lo que necesitas reparar (gratis)",
   },
   {
-    icon: UserCheck,
+    icon: Search,
     number: "02",
-    title: "Elige tu Técnico",
-    description: "Revisa perfiles verificados, calificaciones y precios",
+    title: "Recibe cotizaciones",
+    description: "Expertos te envían presupuestos",
   },
   {
-    icon: Sparkles,
+    icon: CreditCard,
     number: "03",
-    title: "¡Listo!",
-    description: "Coordina la visita y recibe un servicio profesional garantizado",
+    title: "Elige y paga con seguridad",
+    description: "Tu dinero está protegido hasta que terminen",
+  },
+  {
+    icon: Star,
+    number: "04",
+    title: "Califica el servicio",
+    description: "Ayuda a otros con tu experiencia real",
   },
 ];
 
@@ -34,7 +40,7 @@ export const HowItWorks = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12">
           {steps.map((step, index) => (
             <div key={step.number} className="relative">
               <div className="flex flex-col items-center text-center">
@@ -57,7 +63,7 @@ export const HowItWorks = () => {
               </div>
               
               {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary to-transparent" />
+                <div className="hidden lg:block absolute top-10 left-[60%] w-[80%] h-0.5 bg-gradient-to-r from-primary to-transparent" />
               )}
             </div>
           ))}
