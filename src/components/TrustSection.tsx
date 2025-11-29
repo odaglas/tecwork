@@ -1,26 +1,21 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, Award, Clock, Star } from "lucide-react";
+import { Shield, CreditCard, Star } from "lucide-react";
 
 const features = [
   {
     icon: Shield,
-    title: "Técnicos Verificados",
-    description: "Todos los profesionales pasan por un riguroso proceso de validación y verificación de antecedentes",
+    title: "Validación Real",
+    description: "Verificamos identidad y antecedentes de cada técnico.",
   },
   {
-    icon: Award,
-    title: "Certificaciones Reales",
-    description: "Validamos certificaciones profesionales y experiencia comprobable",
-  },
-  {
-    icon: Clock,
-    title: "Atención Rápida",
-    description: "Respuesta en menos de 24 horas para servicios urgentes",
+    icon: CreditCard,
+    title: "Pago Seguro",
+    description: "Tu dinero se libera solo cuando el trabajo está terminado (Escrow).",
   },
   {
     icon: Star,
     title: "Calidad Garantizada",
-    description: "Sistema de calificaciones transparente y garantía de satisfacción",
+    description: "Sistema de reputación real y transparente.",
   },
 ];
 
@@ -37,7 +32,7 @@ export const TrustSection = () => {
           </p>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {features.map((feature) => (
             <Card key={feature.title} className="bg-primary-foreground/10 border-primary-foreground/20 backdrop-blur-sm hover:bg-primary-foreground/20 transition-smooth">
               <CardContent className="p-6 text-center">
