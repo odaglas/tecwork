@@ -9,13 +9,13 @@ const testimonials = [
     rating: 5,
   },
   {
-    name: "Diego Polanco",
+    name: "Carlos Ramírez",
     role: "Técnico - Providencia",
     text: "TecWork me permitió encontrar clientes de forma constante. La plataforma es fácil de usar y el pago es seguro y puntual.",
     rating: 5,
   },
   {
-    name: "Felipe Vidal",
+    name: "Andrés Morales",
     role: "Cliente - Ñuñoa",
     text: "Contraté un gasfíter para mi casa. La comunicación fue perfecta, el precio justo y el trabajo impecable. 100% recomendado.",
     rating: 5,
