@@ -16,6 +16,7 @@ import { z } from "zod";
 import { formatRut, cleanRut, validateRut } from "@/lib/utils";
 import tecworkLogo from "@/assets/tecwork-logo.png";
 import { ArrowLeft } from "lucide-react";
+import { TermsCheckbox } from "@/components/TermsCheckbox";
 
 const clientRegisterSchema = z.object({
   email: z.string().email({ message: "Correo electrónico inválido" }),
@@ -28,6 +29,9 @@ const clientRegisterSchema = z.object({
   telefono: z.string().min(9, { message: "Teléfono inválido" }),
   direccion: z.string().min(5, { message: "Dirección inválida" }),
   comuna: z.string().min(1, { message: "Debe seleccionar una comuna" }),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: "Debe aceptar los términos y condiciones"
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -47,6 +51,8 @@ const ClientRegister = () => {
     direccion: "",
     comuna: "",
   });
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [termsError, setTermsError] = useState<string>("");
   const [rutError, setRutError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -54,8 +60,9 @@ const ClientRegister = () => {
     setLoading(true);
 
     try {
+      setTermsError("");
       // Validate form data
-      const validatedData = clientRegisterSchema.parse(formData);
+      const validatedData = clientRegisterSchema.parse({ ...formData, acceptTerms });
 
       // Sign up the user with Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -125,6 +132,16 @@ const ClientRegister = () => {
       navigate("/cliente/home");
     } catch (error: any) {
       console.error("Error en registro:", error);
+      
+      // Handle zod validation errors for terms
+      if (error.errors) {
+        const termsError = error.errors.find((e: any) => e.path?.includes("acceptTerms"));
+        if (termsError) {
+          setTermsError(termsError.message);
+          setLoading(false);
+          return;
+        }
+      }
       
       let errorMessage = error.message || "Por favor verifica tus datos e intenta nuevamente.";
       
@@ -302,6 +319,15 @@ const ClientRegister = () => {
               required
             />
           </div>
+
+          <TermsCheckbox
+            checked={acceptTerms}
+            onCheckedChange={(checked) => {
+              setAcceptTerms(checked);
+              if (checked) setTermsError("");
+            }}
+            error={termsError}
+          />
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
             {loading ? "Registrando..." : "Crear Cuenta"}
