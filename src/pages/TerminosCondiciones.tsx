@@ -56,12 +56,8 @@ const TerminosCondiciones = () => {
             <div className="bg-[hsl(210,100%,31%)]/10 border border-[hsl(210,100%,31%)]/20 rounded-lg p-4">
               <div className="flex items-start gap-3">
                 <AlertCircle className="w-5 h-5 text-[hsl(210,100%,31%)] mt-0.5 flex-shrink-0" />
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Última actualización: {new Date().toLocaleDateString('es-CL', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                  Última actualización: 1 de diciembre de 2024
                 </p>
               </div>
             </div>
