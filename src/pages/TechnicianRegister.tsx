@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { formatRut, cleanRut, validateRut } from "@/lib/utils";
 import tecworkLogo from "@/assets/tecwork-logo.png";
 import { ArrowLeft, Zap, Droplet, Laptop, WashingMachine, Hammer, Wrench } from "lucide-react";
+import { TermsCheckbox } from "@/components/TermsCheckbox";
 
 // Service specialties with icons
 const SPECIALTIES = [
@@ -42,6 +43,9 @@ const technicianRegisterSchema = z.object({
   cedula: z.instanceof(File, { message: "Debe cargar su cédula de identidad" }),
   curriculum: z.instanceof(File, { message: "Debe cargar su curriculum vitae" }),
   certificado: z.instanceof(File).optional(),
+  acceptTerms: z.boolean().refine((val) => val === true, {
+    message: "Debe aceptar los términos y condiciones"
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Las contraseñas no coinciden",
   path: ["confirmPassword"],
@@ -65,6 +69,8 @@ const TechnicianRegister = () => {
   const [cedula, setCedula] = useState<File | null>(null);
   const [curriculum, setCurriculum] = useState<File | null>(null);
   const [certificado, setCertificado] = useState<File | null>(null);
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [termsError, setTermsError] = useState<string>("");
   const [rutError, setRutError] = useState<string>("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -72,6 +78,8 @@ const TechnicianRegister = () => {
     setLoading(true);
 
     try {
+      setTermsError("");
+      
       if (!cedula) {
         throw new Error("Debe cargar su cédula de identidad");
       }
@@ -83,7 +91,8 @@ const TechnicianRegister = () => {
         ...formData, 
         cedula,
         curriculum,
-        certificado: certificado || undefined
+        certificado: certificado || undefined,
+        acceptTerms
       });
 
       const { data: authData, error: authError } = await supabase.auth.signUp({
@@ -220,6 +229,16 @@ const TechnicianRegister = () => {
 
     } catch (error: any) {
       console.error("Error en registro:", error);
+      
+      // Handle zod validation errors for terms
+      if (error.errors) {
+        const termsError = error.errors.find((e: any) => e.path?.includes("acceptTerms"));
+        if (termsError) {
+          setTermsError(termsError.message);
+          setLoading(false);
+          return;
+        }
+      }
       
       let errorMessage = error.message || "Por favor verifica tus datos e intenta nuevamente.";
       
@@ -448,6 +467,15 @@ const TechnicianRegister = () => {
               required
             />
           </div>
+
+          <TermsCheckbox
+            checked={acceptTerms}
+            onCheckedChange={(checked) => {
+              setAcceptTerms(checked);
+              if (checked) setTermsError("");
+            }}
+            error={termsError}
+          />
 
           <Button type="submit" className="w-full" size="lg" disabled={loading}>
             {loading ? "Registrando..." : "Crear Cuenta"}
